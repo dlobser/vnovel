@@ -48,6 +48,20 @@ const VNovelApp = {
     { key: 'missions', label: 'Missions', singular: 'mission', cssClass: 'mission' }
   ],
 
+  MODELS: {
+    anthropic: [
+      { id: "claude-3-5-sonnet-latest", name: "Claude 3.5 Sonnet" },
+      { id: "claude-3-5-haiku-latest", name: "Claude 3.5 Haiku" },
+      { id: "claude-3-opus-latest", name: "Claude 3 Opus" }
+    ],
+    gemini: [
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" }
+    ]
+  },
+
   // ================= INIT =================
 
   init() {
@@ -636,6 +650,7 @@ const VNovelApp = {
     this.renderGlobalTags();
     this.renderBookmarks();
     this.closeInspector();
+    this.updateLLMModels();
   },
 
   renderGlobalTags() {
@@ -2212,10 +2227,39 @@ ${scriptClose}
     return sel ? sel.value : "anthropic";
   },
 
-  async callLLMApi(key, action, content) {
-    let prompt = "";
-    if (action === "screenplay") {
-      prompt = `You are a story compiler for a visual-novel node engine used to prototype a game. Convert the screenplay / premise below into ONE JSON object. Return ONLY raw JSON — no markdown fences, no commentary.
+  getSelectedModel() {
+    const sel = document.getElementById("llm_model_select");
+    return sel ? sel.value : "";
+  },
+
+  updateLLMModels() {
+    const providerSelect = document.getElementById("llm_provider_select");
+    const modelSelect = document.getElementById("llm_model_select");
+    if (!providerSelect || !modelSelect) return;
+
+    const provider = providerSelect.value;
+    const models = this.MODELS[provider] || [];
+
+    modelSelect.innerHTML = "";
+    models.forEach(model => {
+      const opt = document.createElement("option");
+      opt.value = model.id;
+      opt.textContent = model.name;
+      modelSelect.appendChild(opt);
+    });
+
+    // Load saved model for this provider if it exists
+    const savedModel = localStorage.getItem(`vnovel_llm_model_${provider}`);
+    if (savedModel && models.some(m => m.id === savedModel)) {
+      modelSelect.value = savedModel;
+    } else if (models.length > 0) {
+      modelSelect.value = models[0].id;
+    }
+    localStorage.setItem(`vnovel_llm_model_${provider}`, modelSelect.value);
+  },
+
+  getScreenplayPrompt(content) {
+    return `You are a story compiler for a visual-novel node engine used to prototype a game. Convert the screenplay / premise below into ONE JSON object. Return ONLY raw JSON — no markdown fences, no commentary.
 
 Schema:
 {
@@ -2251,6 +2295,41 @@ Rules:
 
 Source material:
 ${content}`;
+  },
+
+  copyLLMPrompt() {
+    const text = document.getElementById("llm_screenplay_input").value;
+    if (!text || !text.trim()) {
+      this.toast("Paste or write a screenplay in the textbox first to generate a full prompt.", "warning");
+      return;
+    }
+    const prompt = this.getScreenplayPrompt(text);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(prompt).then(
+        () => this.toast("Prompt copied to clipboard!", "success"),
+        (err) => this.toast("Failed to copy: " + err, "danger")
+      );
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = prompt;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        this.toast("Prompt copied to clipboard!", "success");
+      } catch (err) {
+        this.toast("Failed to copy to clipboard", "danger");
+      }
+      document.body.removeChild(textarea);
+    }
+  },
+
+  async callLLMApi(key, action, content) {
+    let prompt = "";
+    if (action === "screenplay") {
+      prompt = this.getScreenplayPrompt(content);
     } else {
       prompt = `Flesh out this visual novel dialogue to make it engaging and descriptive. Keep the "Name: line" format intact for each spoken line:
 ${content}`;
@@ -2273,6 +2352,7 @@ ${content}`;
   },
 
   async callAnthropicApi(key, prompt) {
+    const model = this.getSelectedModel() || "claude-3-5-sonnet-latest";
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: 'POST',
       headers: {
@@ -2283,7 +2363,7 @@ ${content}`;
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-8',
+        model: model,
         max_tokens: 16000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -2310,7 +2390,8 @@ ${content}`;
   },
 
   async callGeminiApi(key, prompt) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+    const model = this.getSelectedModel() || "gemini-2.5-flash";
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2673,6 +2754,7 @@ ${content}`;
     on("btn_new_empty", () => this.newEmptyGraph());
     on("btn_new_template", () => this.newTemplateGraph());
     on("btn_close_llm_modal", () => this.closeLLMModal());
+    on("btn_llm_copy_prompt", () => this.copyLLMPrompt());
     on("btn_llm_run_screenplay", () => this.runScreenplayImporter());
     on("btn_llm_run_debugger", () => this.runLogicDebugger());
     on("btn_do_import", () => this.doImport());
@@ -2692,6 +2774,34 @@ ${content}`;
         this.toast(assetSelect.value === "embed"
           ? "Picked files will be embedded into the project (fully portable)."
           : "Picked files will be referenced as assets/<name> — keep an assets folder next to the editor and published HTML.");
+      });
+    }
+
+    // Save/Load LLM key and provider in localStorage
+    const apiKeyInput = document.getElementById("llm_api_key_input");
+    if (apiKeyInput) {
+      const savedKey = localStorage.getItem("vnovel_llm_api_key");
+      if (savedKey) apiKeyInput.value = savedKey;
+      apiKeyInput.addEventListener("input", () => {
+        localStorage.setItem("vnovel_llm_api_key", apiKeyInput.value.trim());
+      });
+    }
+
+    const providerSelect = document.getElementById("llm_provider_select");
+    if (providerSelect) {
+      const savedProvider = localStorage.getItem("vnovel_llm_provider");
+      if (savedProvider) providerSelect.value = savedProvider;
+      providerSelect.addEventListener("change", () => {
+        localStorage.setItem("vnovel_llm_provider", providerSelect.value);
+        this.updateLLMModels();
+      });
+    }
+
+    const modelSelect = document.getElementById("llm_model_select");
+    if (modelSelect) {
+      modelSelect.addEventListener("change", () => {
+        const provider = providerSelect ? providerSelect.value : "anthropic";
+        localStorage.setItem(`vnovel_llm_model_${provider}`, modelSelect.value);
       });
     }
 

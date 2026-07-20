@@ -152,6 +152,11 @@
             </select>
           </div>
           <div class="form-group">
+            <label><i class="fas fa-microchip"></i> Model</label>
+            <select class="select-input" id="llm_model_select">
+            </select>
+          </div>
+          <div class="form-group">
             <label><i class="fas fa-key"></i> API Key (Optional)</label>
             <input type="password" class="input-text" id="llm_api_key_input" placeholder="Enter key for live LLM requests. Leave blank to run smart offline compiler simulation.">
             <span style="font-size:10px; color:var(--text-dark);">Your key is used directly from your browser to call the selected provider and never sent elsewhere.</span>
@@ -180,7 +185,10 @@ HERO
 Did you hear that?
 GOBLIN
 Run!"></textarea>
-            <button class="btn btn-primary" id="btn_llm_run_screenplay" style="align-self:flex-end;">Compile Script to Node Graph</button>
+            <div style="display:flex; gap:8px; justify-content:flex-end; align-self:flex-end;">
+              <button class="btn" id="btn_llm_copy_prompt" title="Copy the system instructions and screenplay prompt to clipboard"><i class="fas fa-copy"></i> Copy LLM Prompt</button>
+              <button class="btn btn-primary" id="btn_llm_run_screenplay">Compile Script to Node Graph</button>
+            </div>
           </div>
 
           <!-- Tool: Logic Debugger -->
