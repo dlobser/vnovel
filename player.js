@@ -114,6 +114,10 @@ class StoryPlayer {
 .sp-ending-title { font-family:'EB Garamond',Georgia,serif; font-size:30px; color:#34d399; margin-bottom:14px; }
 .sp-ending-text { font-family:'EB Garamond',Georgia,serif; font-size:17px; color:#cbd5e1; line-height:1.6; margin-bottom:24px; }
 .sp-ending-actions { display:flex; gap:12px; justify-content:center; }
+
+.sp-char-container { display:flex; justify-content:center; align-items:flex-end; width:min(860px, 92%); height:240px; pointer-events:none; margin-bottom:12px; z-index:5; }
+.sp-char-img { max-height:100%; max-width:33%; object-fit:contain; animation:spSlideUp .4s ease; }
+@keyframes spSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 `;
 
   constructor(container, story, opts = {}) {
@@ -138,15 +142,28 @@ class StoryPlayer {
 
   // ---------- lifecycle ----------
 
-  start(entryId) {
+  start(entryId, startState = null) {
     this._entryId = (entryId !== undefined && entryId !== null) ? entryId : this.story.entry;
     this.state = {
-      inventory: new Set(),
-      knowledge: new Set(),
-      missions: new Map(),   // name -> 'active' | 'done'
+      inventory: startState && startState.inventory ? new Set(startState.inventory) : new Set(),
+      knowledge: startState && startState.knowledge ? new Set(startState.knowledge) : new Set(),
+      missions: startState && startState.missions ? new Map(Object.entries(startState.missions)) : new Map(),
       diary: [],
       scores: {}
     };
+    if (startState) {
+      if (startState.inventory && startState.inventory.length) {
+        this.state.diary.push("Started with items: " + startState.inventory.join(", "));
+      }
+      if (startState.knowledge && startState.knowledge.length) {
+        this.state.diary.push("Started with knowledge: " + startState.knowledge.join(", "));
+      }
+      if (startState.missions) {
+        Object.entries(startState.missions).forEach(([name, status]) => {
+          this.state.diary.push(`Mission "${name}" preset to: ${status}`);
+        });
+      }
+    }
     this._stopAllAudio();
     if (this.opts.standalone && !this._begun) {
       this._renderSplash();
@@ -288,10 +305,22 @@ class StoryPlayer {
   }
 
   _renderLine(node) {
+    const p = node.p || {};
     const line = this._queue[this._queueIdx];
     const parsed = this._parseLine(line);
     const last = this._queueIdx >= this._queue.length - 1;
+
+    let charImgHtml = "";
+    if (p.showCharacterImages !== false && parsed.speaker) {
+      const charMeta = this.story.varMeta && this.story.varMeta.characters && this.story.varMeta.characters[parsed.speaker];
+      const charImg = charMeta && charMeta.image;
+      if (charImg) {
+        charImgHtml = `<div class="sp-char-container"><img class="sp-char-img" src="${this._esc(charImg)}" alt="${this._esc(parsed.speaker)}"></div>`;
+      }
+    }
+
     this.el.stage.innerHTML = `
+      ${charImgHtml}
       <div class="sp-dialogue">
         ${parsed.speaker ? `<div class="sp-speaker" style="color:${this._charColor(parsed.speaker)}">${this._esc(parsed.speaker)}</div>` : ""}
         <div class="sp-text">${this._richText(parsed.text)}</div>
@@ -336,6 +365,10 @@ class StoryPlayer {
 
   _playChoice(node) {
     const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
     const choices = p.choices || [];
     let html = `
       <div class="sp-dialogue" style="cursor:default; min-height:auto;">
@@ -370,6 +403,10 @@ class StoryPlayer {
 
   _playTraversal(node, id) {
     const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
     const key = "n" + id;
     if (this.state.scores[key] === undefined) this.state.scores[key] = 0;
     const target = p.targetAccumulation || 100;

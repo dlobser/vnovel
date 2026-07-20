@@ -355,6 +355,7 @@ const VNovelApp = {
         audioOneShotName: "",
         background: "",
         backgroundName: "",
+        showCharacterImages: true,
         rewardItems: "",
         rewardKnowledge: "",
         startMission: "",
@@ -408,6 +409,13 @@ const VNovelApp = {
       this.addInput("In", LiteGraph.ACTION);
       this.properties = {
         title: "Path Selection",
+        location: "",
+        background: "",
+        backgroundName: "",
+        audioLoop: "",
+        audioLoopName: "",
+        audioOneShot: "",
+        audioOneShotName: "",
         choices: [
           { text: "Fight the Goblin", condition: "", mission: "" },
           { text: "Unlock the hidden gate", condition: "has_item('rusty_key')", mission: "" }
@@ -458,6 +466,13 @@ const VNovelApp = {
       this.addInput("In", LiteGraph.ACTION);
       this.properties = {
         title: "Dice Maze Challenge",
+        location: "",
+        background: "",
+        backgroundName: "",
+        audioLoop: "",
+        audioLoopName: "",
+        audioOneShot: "",
+        audioOneShotName: "",
         targetAccumulation: 100,
         outcomes: [
           { label: "Become Monster", probability: 10, description: "You got bitten by a shadow creature and mutated!" },
@@ -548,7 +563,8 @@ const VNovelApp = {
       graphSchema: this.graph.serialize(),
       globalVars: this.globalVars,
       varMeta: this.varMeta,
-      projectTitle: this.projectTitle
+      projectTitle: this.projectTitle,
+      bookmarks: this.bookmarks
     };
   },
 
@@ -736,15 +752,105 @@ const VNovelApp = {
 
   // Item background-info modal (double-click a sidebar tag)
   openItemModal(category, name) {
+    this.stopAudioPreview();
     this._itemModalTarget = { category, name };
     const meta = this.getMeta(category, name);
     const catDef = this.VAR_CATEGORIES.find(c => c.key === category);
     document.getElementById("item_modal_title").innerHTML =
       `<i class="fas fa-feather"></i> ${this.escapeHtml(name)} <span style="font-size:11px; color:var(--text-dark); font-weight:400;">(${catDef ? catDef.singular : category})</span>`;
     document.getElementById("item_modal_info").value = meta.info || "";
+    
     const reqGroup = document.getElementById("item_modal_required_group");
     reqGroup.style.display = category === "missions" ? "flex" : "none";
     document.getElementById("item_modal_required").checked = !!meta.required;
+
+    // Show/Hide Location vs Character meta panels
+    const locPanel = document.getElementById("item_modal_location_fields");
+    const charPanel = document.getElementById("item_modal_character_fields");
+    locPanel.style.display = category === "locations" ? "flex" : "none";
+    charPanel.style.display = category === "characters" ? "flex" : "none";
+
+    if (category === "locations") {
+      document.getElementById("item_modal_loc_bg").value = meta.background || "";
+      document.getElementById("item_modal_loc_music").value = meta.audioLoop || "";
+
+      document.getElementById("item_modal_loc_bg_pick").onclick = () => {
+        this.pickFile("image/*", (val, file) => {
+          document.getElementById("item_modal_loc_bg").value = val;
+          meta.background = val;
+          meta.backgroundName = file.name;
+        });
+      };
+      document.getElementById("item_modal_loc_bg_clear").onclick = () => {
+        document.getElementById("item_modal_loc_bg").value = "";
+        meta.background = "";
+        meta.backgroundName = "";
+      };
+
+      document.getElementById("item_modal_loc_music_pick").onclick = () => {
+        this.pickFile("audio/*", (val, file) => {
+          document.getElementById("item_modal_loc_music").value = val;
+          meta.audioLoop = val;
+          meta.audioLoopName = file.name;
+        });
+      };
+      document.getElementById("item_modal_loc_music_play").onclick = () => {
+        this.toggleAudioPreview(document.getElementById("item_modal_loc_music").value, document.getElementById("item_modal_loc_music_play"), true);
+      };
+
+      document.getElementById("btn_propagate_location").onclick = () => {
+        meta.background = document.getElementById("item_modal_loc_bg").value;
+        meta.audioLoop = document.getElementById("item_modal_loc_music").value;
+        let count = 0;
+        const nodesList = this.graph._nodes || [];
+        nodesList.forEach(node => {
+          if (node.properties && node.properties.location === name) {
+            node.properties.background = meta.background;
+            node.properties.backgroundName = meta.backgroundName || "";
+            node.properties.audioLoop = meta.audioLoop;
+            node.properties.audioLoopName = meta.audioLoopName || "";
+            node.setDirtyCanvas(true, true);
+            count++;
+          }
+        });
+        this.saveToLocalStorage();
+        this.checkpoint();
+        this.toast(`Populated ${count} nodes with location background and music!`, "success");
+      };
+    }
+
+    if (category === "characters") {
+      document.getElementById("item_modal_char_img").value = meta.image || "";
+      const updateCharPreview = () => {
+        const img = document.getElementById("item_modal_char_img").value.trim();
+        const preview = document.getElementById("item_modal_char_img_preview");
+        if (img) {
+          preview.style.backgroundImage = `url("${img}")`;
+          preview.textContent = "";
+        } else {
+          preview.style.backgroundImage = "";
+          preview.textContent = "No image set";
+        }
+      };
+      updateCharPreview();
+
+      document.getElementById("item_modal_char_img_pick").onclick = () => {
+        this.pickFile("image/*", (val, file) => {
+          document.getElementById("item_modal_char_img").value = val;
+          meta.image = val;
+          meta.imageName = file.name;
+          updateCharPreview();
+        });
+      };
+      document.getElementById("item_modal_char_img_clear").onclick = () => {
+        document.getElementById("item_modal_char_img").value = "";
+        meta.image = "";
+        meta.imageName = "";
+        updateCharPreview();
+      };
+      document.getElementById("item_modal_char_img").oninput = updateCharPreview;
+    }
+
     this.openModal("item_modal_overlay");
     document.getElementById("item_modal_info").focus();
   },
@@ -757,6 +863,13 @@ const VNovelApp = {
     if (category === "missions") {
       meta.required = document.getElementById("item_modal_required").checked;
     }
+    if (category === "locations") {
+      meta.background = document.getElementById("item_modal_loc_bg").value;
+      meta.audioLoop = document.getElementById("item_modal_loc_music").value;
+    }
+    if (category === "characters") {
+      meta.image = document.getElementById("item_modal_char_img").value;
+    }
     this.closeModal("item_modal_overlay");
     this.renderGlobalTags();
     this.saveToLocalStorage();
@@ -764,40 +877,58 @@ const VNovelApp = {
     this.toast(`Details saved for "${name}"`, "success");
   },
 
+  ensureBookmarksMigrated() {
+    if (!this.bookmarks) this.bookmarks = [];
+    const nodesList = this.graph._nodes || [];
+    nodesList.forEach(node => {
+      if (node.properties && node.properties.isChapterStart) {
+        const alreadyExists = this.bookmarks.some(bm => bm.nodeId === node.id);
+        if (!alreadyExists) {
+          this.bookmarks.push({
+            id: "bm_migrated_" + node.id + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+            nodeId: node.id,
+            name: node.properties.title || `Chapter Node #${node.id}`,
+            location: node.properties.location || "Unknown Location",
+            startState: {
+              inventory: [],
+              knowledge: [],
+              missions: {}
+            }
+          });
+        }
+        delete node.properties.isChapterStart;
+      }
+    });
+  },
+
   renderBookmarks() {
     const container = document.getElementById("bookmarks_list");
     if (!container) return;
     container.innerHTML = "";
 
-    this.bookmarks = [];
-    const nodesList = this.graph._nodes || [];
+    this.ensureBookmarksMigrated();
 
-    nodesList.forEach(node => {
-      if (node.properties && node.properties.isChapterStart) {
-        this.bookmarks.push({
-          nodeId: node.id,
-          title: node.properties.title || `Node #${node.id}`,
-          location: node.properties.location || "Unknown Location"
-        });
-      }
-    });
-
-    if (this.bookmarks.length === 0) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No chapters bookmarked. Check "Chapter Entry Point" on a Dialogue node.</div>`;
+    if (!this.bookmarks || this.bookmarks.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No bookmarks defined. Select a node and click the "Bookmark" button in the inspector to create one.</div>`;
       return;
     }
 
     this.bookmarks.forEach(bm => {
       const el = document.createElement("div");
       el.className = "bookmark-item";
+      el.style.display = "flex";
+      el.style.justifyContent = "space-between";
+      el.style.alignItems = "center";
       el.innerHTML = `
-        <div>
-          <strong>${this.escapeHtml(bm.title)}</strong>
-          <div style="font-size:10px; color:var(--text-dark); margin-top:2px;">${this.escapeHtml(bm.location)}</div>
+        <div style="flex:1; cursor:pointer;">
+          <strong>${this.escapeHtml(bm.name)}</strong>
+          <div style="font-size:10px; color:var(--text-dark); margin-top:2px;">Node #${bm.nodeId} &bull; ${this.escapeHtml(bm.location || "Unknown")}</div>
         </div>
-        <i class="fas fa-chevron-right" style="font-size:10px; color:var(--accent-primary);"></i>
+        <button class="btn btn-primary btn-play-bm" style="padding: 4px 8px; font-size:10px; background:linear-gradient(135deg, var(--accent-primary), var(--accent-success)); color:white;" title="Play starting from here"><i class="fas fa-play"></i></button>
       `;
-      el.onclick = () => {
+
+      el.onclick = (e) => {
+        if (e.target.closest(".btn-play-bm")) return;
         const node = this.graph.getNodeById(bm.nodeId);
         if (node) {
           this.canvas.centerOnNode(node);
@@ -805,8 +936,145 @@ const VNovelApp = {
           this.openInspector(node);
         }
       };
+
+      el.ondblclick = (e) => {
+        if (e.target.closest(".btn-play-bm")) return;
+        this.openBookmarkConfigModal(bm);
+      };
+
+      el.querySelector(".btn-play-bm").onclick = (e) => {
+        e.stopPropagation();
+        this.openBookmarkConfigModal(bm);
+      };
+
       container.appendChild(el);
     });
+  },
+
+  createBookmark(node) {
+    const bookmark = {
+      id: "bm_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      nodeId: node.id,
+      name: node.properties.title || `Bookmark for Node #${node.id}`,
+      location: node.properties.location || "Unknown Location",
+      startState: {
+        inventory: [],
+        knowledge: [],
+        missions: {}
+      }
+    };
+    if (!this.bookmarks) this.bookmarks = [];
+    this.bookmarks.push(bookmark);
+    this.renderBookmarks();
+    this.saveToLocalStorage();
+    this.toast("Bookmark created! Double-click it in the sidebar to configure starting state.", "success");
+  },
+
+  openBookmarkConfigModal(bm) {
+    document.getElementById("bm_config_name").value = bm.name || "";
+    
+    // Inventory
+    const invContainer = document.getElementById("bm_config_inventory");
+    invContainer.innerHTML = "";
+    if (this.globalVars.collectibles.length === 0) {
+      invContainer.innerHTML = `<div style="font-size:11px; color:var(--text-dark); font-style:italic;">No collectibles defined in Globals.</div>`;
+    } else {
+      this.globalVars.collectibles.forEach(item => {
+        const checked = bm.startState && bm.startState.inventory && bm.startState.inventory.includes(item) ? "checked" : "";
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "8px";
+        label.style.cursor = "pointer";
+        label.innerHTML = `<input type="checkbox" class="bm-inv-check" value="${this.escapeHtml(item)}" ${checked}> ${this.escapeHtml(item)}`;
+        invContainer.appendChild(label);
+      });
+    }
+
+    // Knowledge
+    const knowContainer = document.getElementById("bm_config_knowledge");
+    knowContainer.innerHTML = "";
+    if (this.globalVars.knowledge.length === 0) {
+      knowContainer.innerHTML = `<div style="font-size:11px; color:var(--text-dark); font-style:italic;">No knowledge flags defined in Globals.</div>`;
+    } else {
+      this.globalVars.knowledge.forEach(kw => {
+        const checked = bm.startState && bm.startState.knowledge && bm.startState.knowledge.includes(kw) ? "checked" : "";
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "8px";
+        label.style.cursor = "pointer";
+        label.innerHTML = `<input type="checkbox" class="bm-know-check" value="${this.escapeHtml(kw)}" ${checked}> ${this.escapeHtml(kw)}`;
+        knowContainer.appendChild(label);
+      });
+    }
+
+    // Missions
+    const missContainer = document.getElementById("bm_config_missions");
+    missContainer.innerHTML = "";
+    if (this.globalVars.missions.length === 0) {
+      missContainer.innerHTML = `<div style="font-size:11px; color:var(--text-dark); font-style:italic;">No missions defined in Globals.</div>`;
+    } else {
+      this.globalVars.missions.forEach(m => {
+        const status = bm.startState && bm.startState.missions && bm.startState.missions[m] ? bm.startState.missions[m] : "none";
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "center";
+        row.innerHTML = `
+          <span style="font-size:12px;">${this.escapeHtml(m)}</span>
+          <select class="select-input bm-mission-select" data-mission="${this.escapeHtml(m)}" style="width:120px; padding:3px 6px; font-size:11px;">
+            <option value="none" ${status === "none" ? "selected" : ""}>Inactive</option>
+            <option value="active" ${status === "active" ? "selected" : ""}>Active</option>
+            <option value="done" ${status === "done" ? "selected" : ""}>Completed</option>
+          </select>
+        `;
+        missContainer.appendChild(row);
+      });
+    }
+
+    // Save and play click
+    document.getElementById("btn_play_bookmark").onclick = () => {
+      // Save name
+      bm.name = document.getElementById("bm_config_name").value.trim() || `Bookmark for Node #${bm.nodeId}`;
+      
+      // Save startState
+      bm.startState = {
+        inventory: Array.from(invContainer.querySelectorAll(".bm-inv-check:checked")).map(el => el.value),
+        knowledge: Array.from(knowContainer.querySelectorAll(".bm-know-check:checked")).map(el => el.value),
+        missions: {}
+      };
+      missContainer.querySelectorAll(".bm-mission-select").forEach(sel => {
+        const mName = sel.dataset.mission;
+        const val = sel.value;
+        if (val !== "none") {
+          bm.startState.missions[mName] = val;
+        }
+      });
+
+      this.saveToLocalStorage();
+      this.renderBookmarks();
+      this.closeModal("bookmark_modal_overlay");
+      
+      // Play!
+      const startNode = this.graph.getNodeById(bm.nodeId);
+      if (!startNode) {
+        this.toast(`Node #${bm.nodeId} no longer exists. Playback failed.`, "danger");
+        return;
+      }
+      this.startPlayback(startNode, bm.startState);
+    };
+
+    // Delete bookmark click
+    document.getElementById("btn_delete_bookmark").onclick = () => {
+      this.bookmarks = this.bookmarks.filter(x => x.id !== bm.id);
+      this.saveToLocalStorage();
+      this.renderBookmarks();
+      this.closeModal("bookmark_modal_overlay");
+      this.toast("Bookmark deleted", "success");
+    };
+
+    this.openModal("bookmark_modal_overlay");
   },
 
   // ================= INSPECTOR (live-apply, no save buttons) =================
@@ -834,13 +1102,19 @@ const VNovelApp = {
           <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:4px;">${typeNames[node.type] || "Node"}</h3>
           <span style="font-size:11px; color:var(--accent-primary); text-transform:uppercase; font-weight:600;">#${node.id}</span>
         </div>
-        <button class="btn btn-primary" id="btn_play_from_here" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));">
-          <i class="fas fa-play" style="font-size: 10px;"></i> Play from Here
-        </button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn" id="btn_create_bookmark" style="padding: 6px 10px; font-size: 11px; border: 1px solid var(--accent-info); color: var(--accent-info); background: transparent;">
+            <i class="fas fa-bookmark" style="font-size: 10px;"></i> Bookmark
+          </button>
+          <button class="btn btn-primary" id="btn_play_from_here" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));">
+            <i class="fas fa-play" style="font-size: 10px;"></i> Play
+          </button>
+        </div>
       </div>
     `;
     container.appendChild(nodeHeader);
     nodeHeader.querySelector("#btn_play_from_here").onclick = () => this.startPlayback(node);
+    nodeHeader.querySelector("#btn_create_bookmark").onclick = () => this.createBookmark(node);
 
     if (node.type === "vnovel/passthrough") {
       this.renderPassthroughInspector(node, container);
@@ -888,21 +1162,26 @@ const VNovelApp = {
         <input type="text" class="input-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
       </div>
 
-      <div class="form-group">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <input type="checkbox" id="insp_chapter" ${p.isChapterStart ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;">
-          <label style="cursor:pointer;" for="insp_chapter">Chapter entry point (shows in Bookmarks)</label>
-        </div>
-      </div>
+
 
       <div class="form-group">
         <label>Location</label>
-        <select class="select-input" id="insp_location">
-          ${locOptions}
-          <option value="__add__">＋ Add new location…</option>
-        </select>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <select class="select-input" id="insp_location" style="flex:1;">
+            ${locOptions}
+            <option value="__add__">＋ Add new location…</option>
+          </select>
+          <button class="btn btn-primary" id="btn_populate_from_global" style="padding:7px 12px; font-size:11px;" title="Populate background and music from the selected location's global settings">
+            <i class="fas fa-sync-alt"></i> Populate from Globals
+          </button>
+        </div>
         <div id="insp_new_loc_row" style="display:none; gap:6px; margin-top:4px;">
           <input type="text" class="input-text" id="insp_new_loc" placeholder="New location name — press Enter">
+        </div>
+      <div class="form-group">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="insp_show_char_img" ${p.showCharacterImages !== false ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;">
+          <label style="cursor:pointer;" for="insp_show_char_img">Show character PNG images during dialogues</label>
         </div>
       </div>
 
@@ -992,42 +1271,18 @@ const VNovelApp = {
       p.title = el.value;
       node.title = el.value || "Dialogue";
     });
-    this.bindLive($("insp_chapter"), node, el => {
-      p.isChapterStart = el.checked;
-      this.renderBookmarks();
+
+    this.bindLive($("insp_show_char_img"), node, el => {
+      p.showCharacterImages = el.checked;
     }, "change");
+
     this.bindLive($("insp_reward_item"), node, el => { p.rewardItems = el.value; }, "change");
     this.bindLive($("insp_reward_knowledge"), node, el => { p.rewardKnowledge = el.value; }, "change");
     this.bindLive($("insp_start_mission"), node, el => { p.startMission = el.value; }, "change");
     this.bindLive($("insp_complete_mission"), node, el => { p.completeMission = el.value; }, "change");
 
     // Location select with inline "add new"
-    const locSelect = $("insp_location");
-    const newLocRow = $("insp_new_loc_row");
-    const newLocInput = $("insp_new_loc");
-    locSelect.addEventListener("change", () => {
-      if (locSelect.value === "__add__") {
-        newLocRow.style.display = "flex";
-        newLocInput.focus();
-        return;
-      }
-      p.location = locSelect.value;
-      node.setDirtyCanvas(true, true);
-      this.schedulePersist();
-    });
-    newLocInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const val = newLocInput.value.trim();
-        if (val) {
-          this.addVariable("locations", val);
-          p.location = val;
-          this.openInspector(node); // re-render to refresh the select
-        }
-      } else if (e.key === "Escape") {
-        newLocRow.style.display = "none";
-        locSelect.value = p.location || "";
-      }
-    });
+    this.wireLocationField(node, form, p);
 
     // Dialogue text: live apply + highlight + auto-colon on blur + unknown speakers
     const textArea = $("insp_text");
@@ -1046,60 +1301,131 @@ const VNovelApp = {
     });
 
     // Background image
-    const bgInput = $("insp_bg");
-    const bgPreview = $("insp_bg_preview");
-    const refreshBgPreview = () => {
-      const v = (p.background || "").trim();
-      if (!v) {
-        bgPreview.style.backgroundImage = "";
-        bgPreview.textContent = "No background set";
-      } else if (v.includes("gradient(")) {
-        bgPreview.style.backgroundImage = v;
-        bgPreview.textContent = "";
-      } else {
-        bgPreview.style.backgroundImage = `url("${v.replace(/"/g, '%22')}")`;
-        bgPreview.textContent = "";
-      }
-    };
-    refreshBgPreview();
-    this.bindLive(bgInput, node, el => {
-      p.background = el.value;
-      p.backgroundName = "";
-      refreshBgPreview();
-    });
-    $("insp_bg_pick").onclick = () => {
-      this.pickFile("image/*", (value, file, embedded) => {
-        p.background = value;
-        p.backgroundName = file.name;
-        if (embedded) {
-          bgInput.value = ""; // data URLs are huge; keep the text field clean
-          bgInput.placeholder = `embedded: ${file.name}`;
-        } else {
-          bgInput.value = value; // visible, editable relative path
-          bgInput.placeholder = "URL, or pick a file →";
-        }
-        refreshBgPreview();
-        node.setDirtyCanvas(true, true);
-        this.schedulePersist();
-      });
-    };
-    $("insp_bg_clear").onclick = () => {
-      p.background = ""; p.backgroundName = "";
-      bgInput.value = ""; bgInput.placeholder = "URL, or pick a file →";
-      refreshBgPreview();
-      node.setDirtyCanvas(true, true);
-      this.schedulePersist();
-    };
-    if (p.background && p.background.startsWith("data:")) {
-      bgInput.value = "";
-      bgInput.placeholder = `embedded: ${p.backgroundName || "image file"}`;
-    }
+    this.wireBackgroundField(node, $("insp_bg"), $("insp_bg_preview"), $("insp_bg_pick"), $("insp_bg_clear"));
 
     // Audio fields (loop + one-shot), each with file pick and preview
     this.wireAudioField(node, $("insp_audio_loop"), $("insp_audio_loop_pick"), $("insp_audio_loop_play"), "audioLoop", "audioLoopName", true);
     this.wireAudioField(node, $("insp_audio_shot"), $("insp_audio_shot_pick"), $("insp_audio_shot_play"), "audioOneShot", "audioOneShotName", false);
 
     $("btn_llm_expand_node").onclick = () => this.triggerLLMExpansion(node);
+  },
+
+  wireLocationField(node, form, p) {
+    const $ = id => form.querySelector("#" + id);
+    const locSelect = $("insp_location");
+    const newLocRow = $("insp_new_loc_row");
+    const newLocInput = $("insp_new_loc");
+    
+    if (locSelect) {
+      locSelect.addEventListener("change", () => {
+        if (locSelect.value === "__add__") {
+          newLocRow.style.display = "flex";
+          newLocInput.focus();
+          return;
+        }
+        p.location = locSelect.value;
+        node.setDirtyCanvas(true, true);
+        this.schedulePersist();
+      });
+    }
+
+    if (newLocInput) {
+      newLocInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const val = newLocInput.value.trim();
+          if (val) {
+            this.addVariable("locations", val);
+            p.location = val;
+            this.openInspector(node); // re-render to refresh the select
+          }
+        } else if (e.key === "Escape") {
+          newLocRow.style.display = "none";
+          locSelect.value = p.location || "";
+        }
+      });
+    }
+
+    const popBtn = $("btn_populate_from_global");
+    if (popBtn) {
+      popBtn.onclick = () => {
+        const locName = locSelect.value;
+        if (!locName || locName === "__add__") {
+          this.toast("Select a valid location first", "warning");
+          return;
+        }
+        const meta = this.getMeta("locations", locName);
+        p.background = meta.background || "";
+        p.backgroundName = meta.backgroundName || "";
+        p.audioLoop = meta.audioLoop || "";
+        p.audioLoopName = meta.audioLoopName || "";
+        
+        // Refresh text inputs if present on screen
+        const bgInput = $("insp_bg");
+        if (bgInput) {
+          bgInput.value = p.background;
+          bgInput.dispatchEvent(new Event("input"));
+        }
+        const musicInput = $("insp_audio_loop");
+        if (musicInput) {
+          musicInput.value = p.audioLoop;
+          musicInput.dispatchEvent(new Event("input"));
+        }
+        
+        node.setDirtyCanvas(true, true);
+        this.schedulePersist();
+        this.toast(`Populated background and music from global location "${locName}"!`, "success");
+      };
+    }
+  },
+
+  wireBackgroundField(node, input, preview, pickBtn, clearBtn) {
+    const p = node.properties;
+    const refreshBgPreview = () => {
+      const v = (p.background || "").trim();
+      if (!v) {
+        preview.style.backgroundImage = "";
+        preview.textContent = "No background set";
+      } else if (v.includes("gradient(")) {
+        preview.style.backgroundImage = v;
+        preview.textContent = "";
+      } else {
+        preview.style.backgroundImage = `url("${v.replace(/"/g, '%22')}")`;
+        preview.textContent = "";
+      }
+    };
+    refreshBgPreview();
+    this.bindLive(input, node, el => {
+      p.background = el.value;
+      p.backgroundName = "";
+      refreshBgPreview();
+    });
+    pickBtn.onclick = () => {
+      this.pickFile("image/*", (value, file, embedded) => {
+        p.background = value;
+        p.backgroundName = file.name;
+        if (embedded) {
+          input.value = "";
+          input.placeholder = `embedded: ${file.name}`;
+        } else {
+          input.value = value;
+          input.placeholder = "URL, or pick a file →";
+        }
+        refreshBgPreview();
+        node.setDirtyCanvas(true, true);
+        this.schedulePersist();
+      });
+    };
+    clearBtn.onclick = () => {
+      p.background = ""; p.backgroundName = "";
+      input.value = ""; input.placeholder = "URL, or pick a file →";
+      refreshBgPreview();
+      node.setDirtyCanvas(true, true);
+      this.schedulePersist();
+    };
+    if (p.background && p.background.startsWith("data:")) {
+      input.value = "";
+      input.placeholder = `embedded: ${p.backgroundName || "image file"}`;
+    }
   },
 
   wireAudioField(node, input, pickBtn, playBtn, propKey, nameKey, loop) {
@@ -1204,10 +1530,58 @@ const VNovelApp = {
     const form = document.createElement("div");
     form.className = "inspector-scroll";
     form.style.padding = "0";
+
+    const locOptions = this.globalVars.locations.map(loc =>
+      `<option value="${this.escapeHtml(loc)}" ${p.location === loc ? "selected" : ""}>${this.escapeHtml(loc)}</option>`).join("");
+
     form.innerHTML = `
       <div class="form-group">
         <label>Prompt shown to the player</label>
         <input type="text" class="input-text serif-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
+      </div>
+
+      <div class="form-group">
+        <label>Location</label>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <select class="select-input" id="insp_location" style="flex:1;">
+            ${locOptions}
+            <option value="__add__">＋ Add new location…</option>
+          </select>
+          <button class="btn btn-primary" id="btn_populate_from_global" style="padding:7px 12px; font-size:11px;" title="Populate background and music from the selected location's global settings">
+            <i class="fas fa-sync-alt"></i> Populate from Globals
+          </button>
+        </div>
+        <div id="insp_new_loc_row" style="display:none; gap:6px; margin-top:4px;">
+          <input type="text" class="input-text" id="insp_new_loc" placeholder="New location name — press Enter">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Background Image</label>
+        <div class="bg-preview" id="insp_bg_preview">No background set</div>
+        <div class="file-pick-row">
+          <input type="text" class="input-text" id="insp_bg" value="${this.escapeHtml(p.background || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_bg_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn file-pick-btn" id="insp_bg_clear" title="Clear"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Music Loop <span style="color:var(--text-dark);">(crossfades between scenes)</span></label>
+        <div class="audio-row">
+          <input type="text" class="input-text" id="insp_audio_loop" value="${this.escapeHtml(p.audioLoop || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_audio_loop_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn audio-preview-btn" id="insp_audio_loop_play" title="Preview loop"><i class="fas fa-play"></i></button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>One-Shot Sound <span style="color:var(--text-dark);">(plays once on scene enter)</span></label>
+        <div class="audio-row">
+          <input type="text" class="input-text" id="insp_audio_shot" value="${this.escapeHtml(p.audioOneShot || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_audio_shot_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn audio-preview-btn" id="insp_audio_shot_play" title="Preview one-shot"><i class="fas fa-play"></i></button>
+        </div>
       </div>
 
       <div class="form-group">
@@ -1221,10 +1595,17 @@ const VNovelApp = {
     `;
     container.appendChild(form);
 
-    this.bindLive(form.querySelector("#insp_title"), node, el => {
+    const $ = id => form.querySelector("#" + id);
+
+    this.bindLive($("insp_title"), node, el => {
       p.title = el.value;
       node.title = el.value || "Path Selection";
     });
+
+    this.wireLocationField(node, form, p);
+    this.wireBackgroundField(node, $("insp_bg"), $("insp_bg_preview"), $("insp_bg_pick"), $("insp_bg_clear"));
+    this.wireAudioField(node, $("insp_audio_loop"), $("insp_audio_loop_pick"), $("insp_audio_loop_play"), "audioLoop", "audioLoopName", true);
+    this.wireAudioField(node, $("insp_audio_shot"), $("insp_audio_shot_pick"), $("insp_audio_shot_play"), "audioOneShot", "audioOneShotName", false);
 
     const rowsContainer = form.querySelector("#choices_rows_container");
 
@@ -1289,10 +1670,58 @@ const VNovelApp = {
     const form = document.createElement("div");
     form.className = "inspector-scroll";
     form.style.padding = "0";
+
+    const locOptions = this.globalVars.locations.map(loc =>
+      `<option value="${this.escapeHtml(loc)}" ${p.location === loc ? "selected" : ""}>${this.escapeHtml(loc)}</option>`).join("");
+
     form.innerHTML = `
       <div class="form-group">
         <label>Node Title</label>
         <input type="text" class="input-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
+      </div>
+
+      <div class="form-group">
+        <label>Location</label>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <select class="select-input" id="insp_location" style="flex:1;">
+            ${locOptions}
+            <option value="__add__">＋ Add new location…</option>
+          </select>
+          <button class="btn btn-primary" id="btn_populate_from_global" style="padding:7px 12px; font-size:11px;" title="Populate background and music from the selected location's global settings">
+            <i class="fas fa-sync-alt"></i> Populate from Globals
+          </button>
+        </div>
+        <div id="insp_new_loc_row" style="display:none; gap:6px; margin-top:4px;">
+          <input type="text" class="input-text" id="insp_new_loc" placeholder="New location name — press Enter">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Background Image</label>
+        <div class="bg-preview" id="insp_bg_preview">No background set</div>
+        <div class="file-pick-row">
+          <input type="text" class="input-text" id="insp_bg" value="${this.escapeHtml(p.background || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_bg_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn file-pick-btn" id="insp_bg_clear" title="Clear"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Music Loop <span style="color:var(--text-dark);">(crossfades between scenes)</span></label>
+        <div class="audio-row">
+          <input type="text" class="input-text" id="insp_audio_loop" value="${this.escapeHtml(p.audioLoop || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_audio_loop_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn audio-preview-btn" id="insp_audio_loop_play" title="Preview loop"><i class="fas fa-play"></i></button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>One-Shot Sound <span style="color:var(--text-dark);">(plays once on scene enter)</span></label>
+        <div class="audio-row">
+          <input type="text" class="input-text" id="insp_audio_shot" value="${this.escapeHtml(p.audioOneShot || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_audio_shot_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn audio-preview-btn" id="insp_audio_shot_play" title="Preview one-shot"><i class="fas fa-play"></i></button>
+        </div>
       </div>
 
       <div class="form-group">
@@ -1311,13 +1740,20 @@ const VNovelApp = {
     `;
     container.appendChild(form);
 
-    this.bindLive(form.querySelector("#insp_title"), node, el => {
+    const $ = id => form.querySelector("#" + id);
+
+    this.bindLive($("insp_title"), node, el => {
       p.title = el.value;
       node.title = el.value || "Dice Maze Challenge";
     });
-    this.bindLive(form.querySelector("#insp_target"), node, el => {
+    this.bindLive($("insp_target"), node, el => {
       p.targetAccumulation = parseInt(el.value) || 100;
     });
+
+    this.wireLocationField(node, form, p);
+    this.wireBackgroundField(node, $("insp_bg"), $("insp_bg_preview"), $("insp_bg_pick"), $("insp_bg_clear"));
+    this.wireAudioField(node, $("insp_audio_loop"), $("insp_audio_loop_pick"), $("insp_audio_loop_play"), "audioLoop", "audioLoopName", true);
+    this.wireAudioField(node, $("insp_audio_shot"), $("insp_audio_shot_pick"), $("insp_audio_shot_play"), "audioOneShot", "audioOneShotName", false);
 
     const rowsContainer = form.querySelector("#outcomes_rows_container");
 
@@ -1663,7 +2099,7 @@ const VNovelApp = {
     return null;
   },
 
-  startPlayback(customStartNode = null) {
+  startPlayback(customStartNode = null, customStartState = null) {
     const story = this.compileStory();
     if (!Object.keys(story.nodes).length) {
       this.toast("Add some nodes first — the story is empty!", "warning");
@@ -1679,7 +2115,7 @@ const VNovelApp = {
     document.getElementById("playback_overlay").classList.add("active");
     const root = document.getElementById("playback_root");
     this.player = new StoryPlayer(root, story, { onExit: () => this.stopPlayback() });
-    this.player.start(entry);
+    this.player.start(entry, customStartState);
   },
 
   stopPlayback() {
@@ -1773,6 +2209,7 @@ ${scriptClose}
         if (state.globalVars) this.globalVars = state.globalVars;
         if (state.varMeta) this.varMeta = state.varMeta;
         if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+        this.bookmarks = state.bookmarks || [];
         this.ensureVarShape();
         this.renderGlobalTags();
         this.renderBookmarks();
@@ -1794,6 +2231,7 @@ ${scriptClose}
     this.graph.clear();
     this.closeInspector();
     this.setProjectTitle("Untitled Story");
+    this.bookmarks = [];
   },
 
   newEmptyGraph() {
@@ -1819,25 +2257,651 @@ ${scriptClose}
   },
 
   exportProject() {
+    this.openModal("export_modal_overlay");
+  },
+
+  doExport() {
+    const formatSelect = document.getElementById("export_format_select");
+    const format = formatSelect ? formatSelect.value : "json";
     const state = this.currentState();
-    const str = JSON.stringify(state, null, 2);
     const slug = (this.projectTitle || "vnovel-project").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "vnovel-project";
-    this.downloadFile(`${slug}.json`, str, "application/json");
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(str).then(
-        () => this.toast("Project exported: file downloaded + JSON copied to clipboard", "success"),
-        () => this.toast("Project file downloaded", "success")
-      );
+
+    if (format === "markdown") {
+      const md = this.exportToMarkdown(state);
+      this.downloadFile(`${slug}.md`, md, "text/markdown");
+      this.closeModal("export_modal_overlay");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(md).then(
+          () => this.toast("Project exported: file downloaded + Markdown copied to clipboard", "success"),
+          () => this.toast("Project file downloaded", "success")
+        );
+      } else {
+        this.toast("Project file downloaded", "success");
+      }
     } else {
-      this.toast("Project file downloaded", "success");
+      // JSON format
+      const str = JSON.stringify(state, null, 2);
+      this.downloadFile(`${slug}.json`, str, "application/json");
+      this.closeModal("export_modal_overlay");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(str).then(
+          () => this.toast("Project exported: file downloaded + JSON copied to clipboard", "success"),
+          () => this.toast("Project file downloaded", "success")
+        );
+      } else {
+        this.toast("Project file downloaded", "success");
+      }
     }
   },
 
-  applyImportedState(state) {
-    if (state.graphSchema) this.graph.configure(state.graphSchema);
-    if (state.globalVars) this.globalVars = state.globalVars;
-    if (state.varMeta) this.varMeta = state.varMeta;
-    if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+  exportToMarkdown(state) {
+    let md = "";
+    
+    // Title
+    md += `# Project: ${state.projectTitle || "Untitled Story"}\n\n`;
+    
+    // Globals
+    md += "---\nGlobals:\n";
+    if (state.globalVars) {
+      const cats = {
+        characters: "Characters",
+        locations: "Locations",
+        collectibles: "Collectibles",
+        knowledge: "Knowledge",
+        missions: "Missions"
+      };
+      for (const key in cats) {
+        const list = state.globalVars[key] || [];
+        if (list.length) {
+          md += `- ${cats[key]}: ${list.join(", ")}\n`;
+        }
+      }
+    }
+    md += "---\n\n";
+    
+    // Build link lookup map
+    const linkToTarget = {};
+    const links = (state.graphSchema && state.graphSchema.links) || [];
+    links.forEach(l => {
+      // l: [link_id, origin_id, origin_slot, target_id, target_slot, type]
+      linkToTarget[l[0]] = l[3];
+    });
+
+    const getTargetId = (node, slotIdx) => {
+      const output = node.outputs && node.outputs[slotIdx];
+      const outLinks = output && output.links;
+      return outLinks && outLinks[0] ? linkToTarget[outLinks[0]] : null;
+    };
+
+    // Nodes
+    const typeMap = {
+      "vnovel/passthrough": "dialogue",
+      "vnovel/choice": "choice",
+      "vnovel/traversal": "traversal",
+      "vnovel/logic_gate": "logic"
+    };
+
+    const nodes = (state.graphSchema && state.graphSchema.nodes) || [];
+    nodes.forEach(node => {
+      const rawType = node.type;
+      const type = typeMap[rawType] || "dialogue";
+      const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+      
+      md += `## Node ${node.id} (${typeLabel})\n`;
+      const p = node.properties || {};
+      if (p.title) md += `Title: ${p.title}\n`;
+      if (p.location) md += `Location: ${p.location}\n`;
+      if (p.backgroundName) md += `Background: ${p.backgroundName}\n`;
+      if (p.audioLoopName) md += `AudioLoop: ${p.audioLoopName}\n`;
+      if (p.audioOneShotName) md += `AudioOneShot: ${p.audioOneShotName}\n`;
+      if (p.rewardItems) md += `RewardItems: ${p.rewardItems}\n`;
+      if (p.rewardKnowledge) md += `RewardKnowledge: ${p.rewardKnowledge}\n`;
+      if (p.startMission) md += `StartMission: ${p.startMission}\n`;
+      if (p.completeMission) md += `CompleteMission: ${p.completeMission}\n`;
+      if (p.isChapterStart) md += `IsChapterStart: true\n`;
+      
+      if (type === "dialogue") {
+        if (p.text) {
+          md += "Dialogue:\n" + p.text.split("\n").map(line => line).join("\n") + "\n";
+        }
+        const nextId = getTargetId(node, 0);
+        if (nextId != null) {
+          md += `Next: ${nextId}\n`;
+        }
+      } else if (type === "choice") {
+        md += "Choices:\n";
+        const choices = p.choices || [];
+        choices.forEach((c, idx) => {
+          const targetId = getTargetId(node, idx);
+          const targetStr = targetId != null ? ` -> Node ${targetId}` : "";
+          const condStr = c.condition ? ` (requires: ${c.condition})` : "";
+          const missionStr = c.mission ? ` (Starts: ${c.mission})` : "";
+          md += `- [${c.text}]${targetStr}${condStr}${missionStr}\n`;
+        });
+      } else if (type === "traversal") {
+        if (p.targetAccumulation) md += `Target: ${p.targetAccumulation}\n`;
+        md += "Outcomes:\n";
+        const outcomes = p.outcomes || [];
+        outcomes.forEach((o, idx) => {
+          const targetId = getTargetId(node, idx + 1);
+          const targetStr = targetId != null ? ` -> Node ${targetId}` : "";
+          md += `- [${o.label}] (${o.probability}%): ${o.description || ""}${targetStr}\n`;
+        });
+        const escapeId = getTargetId(node, 0);
+        if (escapeId != null) md += `Escape: Node ${escapeId}\n`;
+        const earlyExitId = getTargetId(node, outcomes.length + 1);
+        if (earlyExitId != null) md += `Early Exit: Node ${earlyExitId}\n`;
+      } else if (type === "logic") {
+        if (p.condition) md += `Check: ${p.condition}\n`;
+        const trueId = getTargetId(node, 0);
+        if (trueId != null) md += `True: Node ${trueId}\n`;
+        const falseId = getTargetId(node, 1);
+        if (falseId != null) md += `False: Node ${falseId}\n`;
+      }
+      
+      md += "\n";
+    });
+    
+    return md;
+  },
+
+  parseMarkdown(md) {
+    const lines = md.split(/\r?\n/);
+    const vars = {
+      characters: [],
+      locations: [],
+      collectibles: [],
+      knowledge: [],
+      missions: []
+    };
+    const varMeta = {};
+    const nodes = {};
+    let projectTitle = "Untitled Story";
+    
+    let currentMode = "GLOBAL";
+    let currentNodeId = null;
+    let currentNode = null;
+    let textLines = [];
+    let state = "HEADER";
+
+    const flushDialogue = () => {
+      if (currentNode && textLines.length > 0) {
+        currentNode.p.text = textLines.join("\n").trim();
+        textLines = [];
+      }
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      const nodeMatch = trimmed.match(/^##\s*(?:Node\s*)?(\d+)(?:\s*\(([^)]+)\))?/i);
+      if (nodeMatch) {
+        flushDialogue();
+        currentMode = "NODE";
+        state = "PROPERTIES";
+        currentNodeId = parseInt(nodeMatch[1], 10);
+        let nodeType = (nodeMatch[2] || "dialogue").toLowerCase().trim();
+        
+        if (nodeType === "passthrough" || nodeType === "scene") nodeType = "dialogue";
+        if (nodeType === "path" || nodeType === "branch") nodeType = "choice";
+        if (nodeType === "maze" || nodeType === "minigame") nodeType = "traversal";
+        if (nodeType === "logic_gate" || nodeType === "gate" || nodeType === "conditional") nodeType = "logic";
+
+        currentNode = {
+          type: nodeType,
+          p: {
+            title: `Node ${currentNodeId}`,
+            location: "",
+            text: ""
+          },
+          out: []
+        };
+        
+        if (nodeType === "choice") {
+          currentNode.p.choices = [];
+        } else if (nodeType === "traversal") {
+          currentNode.p.targetAccumulation = 100;
+          currentNode.p.outcomes = [];
+        } else if (nodeType === "logic") {
+          currentNode.p.condition = "";
+        }
+        
+        nodes[currentNodeId] = currentNode;
+        continue;
+      }
+
+      if (state === "HEADER") {
+        const titleMatch = trimmed.match(/^#\s*Project\s*:\s*(.*)/i) || trimmed.match(/^#\s*Title\s*:\s*(.*)/i) || trimmed.match(/^#\s*(?!\s*#)(.*)/);
+        if (titleMatch) {
+          projectTitle = titleMatch[1].trim();
+          continue;
+        }
+      }
+
+      if (currentMode === "GLOBAL") {
+        const varMatch = trimmed.match(/^-\s*([A-Za-z]+)\s*:\s*(.*)/);
+        if (varMatch) {
+          const rawCat = varMatch[1].toLowerCase().trim();
+          const items = varMatch[2].split(",").map(x => x.trim()).filter(Boolean);
+          
+          let cat = null;
+          if (rawCat.startsWith("char")) cat = "characters";
+          if (rawCat.startsWith("loc")) cat = "locations";
+          if (rawCat.startsWith("collect") || rawCat.startsWith("item") || rawCat.startsWith("prop")) cat = "collectibles";
+          if (rawCat.startsWith("know") || rawCat.startsWith("flag") || rawCat.startsWith("diary")) cat = "knowledge";
+          if (rawCat.startsWith("miss")) cat = "missions";
+          
+          if (cat) {
+            vars[cat] = Array.from(new Set([...(vars[cat] || []), ...items]));
+          }
+        }
+        continue;
+      }
+
+      if (currentMode === "NODE" && currentNode) {
+        if (trimmed.toLowerCase().startsWith("dialogue:") || trimmed.toLowerCase().startsWith("text:")) {
+          flushDialogue();
+          state = "DIALOGUE";
+          continue;
+        }
+        if (trimmed.toLowerCase().startsWith("choices:") || trimmed.toLowerCase().startsWith("options:")) {
+          flushDialogue();
+          state = "CHOICES";
+          continue;
+        }
+        if (trimmed.toLowerCase().startsWith("outcomes:") || trimmed.toLowerCase().startsWith("risks:")) {
+          flushDialogue();
+          state = "OUTCOMES";
+          continue;
+        }
+
+        if (state === "DIALOGUE") {
+          const propCheck = trimmed.match(/^([A-Za-z0-9_]+)\s*:\s*(.*)/);
+          if (propCheck && !propCheck[1].match(/^(mr\.|ms\.|esss|trout|narrator|char|joe|bill|frank)/i)) {
+            state = "PROPERTIES";
+          } else {
+            textLines.push(line);
+            continue;
+          }
+        }
+
+        const propMatch = trimmed.match(/^([A-Za-z0-9_ ]+)\s*:\s*(.*)/i);
+        if (propMatch) {
+          const key = propMatch[1].toLowerCase().replace(/\s+/g, "").trim();
+          const val = propMatch[2].trim();
+          
+          if (key === "title") currentNode.p.title = val;
+          else if (key === "location" || key === "loc") currentNode.p.location = val;
+          else if (key === "background" || key === "bg") {
+            currentNode.p.backgroundName = val.replace(/^assets\//, "");
+            currentNode.p.background = val.startsWith("assets/") ? val : "assets/" + val;
+          }
+          else if (key === "audioloop") {
+            currentNode.p.audioLoopName = val;
+            currentNode.p.audioLoop = val;
+          }
+          else if (key === "audiooneshot" || key === "audioshot") {
+            currentNode.p.audioOneShotName = val;
+            currentNode.p.audioOneShot = val;
+          }
+          else if (key === "rewarditems" || key === "rewarditem" || key === "item") currentNode.p.rewardItems = val;
+          else if (key === "rewardknowledge" || key === "rewardknow") currentNode.p.rewardKnowledge = val;
+          else if (key === "startmission") currentNode.p.startMission = val;
+          else if (key === "completemission") currentNode.p.completeMission = val;
+          else if (key === "ischapterstart" || key === "bookmark") currentNode.p.isChapterStart = (val.toLowerCase() === "true");
+          else if (key === "next") {
+            const nextId = parseInt(val.replace(/[^\d]/g, ""), 10);
+            if (!isNaN(nextId)) currentNode.out[0] = nextId;
+          }
+          else if (key === "escape" || key === "success") {
+            const escId = parseInt(val.replace(/[^\d]/g, ""), 10);
+            if (!isNaN(escId)) currentNode.out[0] = escId;
+          }
+          else if (key === "earlyexit" || key === "exit") {
+            const exitId = parseInt(val.replace(/[^\d]/g, ""), 10);
+            currentNode._earlyExitTarget = exitId;
+          }
+          else if (key === "true") {
+            const trueId = parseInt(val.replace(/[^\d]/g, ""), 10);
+            if (!isNaN(trueId)) currentNode.out[0] = trueId;
+          }
+          else if (key === "false") {
+            const falseId = parseInt(val.replace(/[^\d]/g, ""), 10);
+            if (!isNaN(falseId)) currentNode.out[1] = falseId;
+          }
+          else if (key === "check" || key === "condition" || key === "cond") {
+            currentNode.p.condition = val;
+          }
+          else if (key === "target" || key === "targetscore") {
+            currentNode.p.targetAccumulation = parseInt(val, 10) || 100;
+          }
+          continue;
+        }
+
+        if (state === "CHOICES" && trimmed.startsWith("-")) {
+          const choiceMatch = trimmed.match(/^-\s*\[([^\]]+)\](?:\s*->\s*(?:Node\s*)?(\d+))?(.*)/i);
+          if (choiceMatch) {
+            const cText = choiceMatch[1].trim();
+            const targetId = choiceMatch[2] ? parseInt(choiceMatch[2], 10) : null;
+            const extra = choiceMatch[3] || "";
+            
+            let condition = "";
+            let reqMatch = extra.match(/requires:\s*(.*?)(?=\)\s*(?:\(|$))/i);
+            if (reqMatch) {
+              condition = reqMatch[1].trim();
+            } else {
+              reqMatch = extra.match(/requires:\s*([^ ]+)/i);
+              if (reqMatch) condition = reqMatch[1].trim();
+            }
+            
+            let mission = "";
+            const startMatch = extra.match(/\(\s*Starts:\s*([^)]+)\)/i) || extra.match(/\(\s*mission:\s*([^)]+)\)/i) || extra.match(/Starts:\s*([^ ]+)/i) || extra.match(/mission:\s*([^ ]+)/i);
+            if (startMatch) {
+              mission = startMatch[1].trim();
+            }
+
+            const choiceObj = {
+              text: cText,
+              condition: condition,
+              mission: mission
+            };
+            currentNode.p.choices.push(choiceObj);
+            
+            if (targetId !== null) {
+              const idx = currentNode.p.choices.length - 1;
+              currentNode.out[idx] = targetId;
+            }
+          }
+          continue;
+        }
+
+        if (state === "OUTCOMES" && trimmed.startsWith("-")) {
+          const outcomeMatch = trimmed.match(/^-\s*\[([^\]]+)\](?:\s*\((\d+)\s*%\))?\s*:\s*([^->]*)(?:\s*->\s*(?:Node\s*)?(\d+))?/i);
+          if (outcomeMatch) {
+            const label = outcomeMatch[1].trim();
+            const prob = outcomeMatch[2] ? parseInt(outcomeMatch[2], 10) : 10;
+            const desc = outcomeMatch[3].trim();
+            const targetId = outcomeMatch[4] ? parseInt(outcomeMatch[4], 10) : null;
+            
+            currentNode.p.outcomes.push({
+              label,
+              probability: prob,
+              description: desc
+            });
+            
+            if (targetId !== null) {
+              const idx = currentNode.p.outcomes.length;
+              currentNode.out[idx] = targetId;
+            }
+          }
+          continue;
+        }
+      }
+    }
+    
+    flushDialogue();
+
+    // First, resolve traversal early exit targets
+    for (const nid in nodes) {
+      const node = nodes[nid];
+      if (node.type === "traversal" && node._earlyExitTarget !== undefined) {
+        const exitSlot = (node.p.outcomes || []).length + 1;
+        node.out[exitSlot] = node._earlyExitTarget;
+      }
+    }
+
+    // Scan for unresolved forward references and create placeholders
+    const placeholderIds = new Set();
+    for (const nid in nodes) {
+      const node = nodes[nid];
+      node.out.forEach(destId => {
+        if (destId != null && !nodes[destId]) {
+          placeholderIds.add(destId);
+        }
+      });
+    }
+
+    placeholderIds.forEach(pid => {
+      nodes[pid] = {
+        type: "dialogue",
+        p: {
+          title: `Placeholder ${pid}`,
+          location: "",
+          text: `Narrator: (Placeholder scene for Node ${pid}. Double click to edit.)`
+        },
+        out: []
+      };
+    });
+
+    const finalNodes = {};
+    const entryId = Object.keys(nodes).length > 0 ? parseInt(Object.keys(nodes)[0], 10) : null;
+
+    for (const nid in nodes) {
+      const node = nodes[nid];
+      const type = node.type;
+      
+      const maxSlots = type === "dialogue" ? 1 : 
+                       type === "choice" ? node.p.choices.length : 
+                       type === "traversal" ? (node.p.outcomes || []).length + 2 : 
+                       type === "logic" ? 2 : 1;
+      
+      const outList = [];
+      for (let s = 0; s < maxSlots; s++) {
+        outList[s] = node.out[s] !== undefined ? node.out[s] : null;
+      }
+
+      finalNodes[nid] = {
+        type,
+        p: node.p,
+        out: outList
+      };
+    }
+
+    const graphSchema = {
+      last_node_id: Math.max(0, ...Object.keys(nodes).map(x => parseInt(x, 10))),
+      last_link_id: 0,
+      nodes: [],
+      links: [],
+      groups: [],
+      config: {}
+    };
+
+    let linkIdCounter = 1;
+    const nodeInstanceList = [];
+    const linkInstanceList = [];
+
+    let gridX = 100;
+    let gridY = 150;
+
+    for (const nidStr in finalNodes) {
+      const nid = parseInt(nidStr, 10);
+      const fn = finalNodes[nid];
+      
+      const typeMap = {
+        "dialogue": "vnovel/passthrough",
+        "choice": "vnovel/choice",
+        "traversal": "vnovel/traversal",
+        "logic": "vnovel/logic_gate"
+      };
+
+      const lgNode = {
+        id: nid,
+        type: typeMap[fn.type] || "vnovel/passthrough",
+        pos: [gridX, gridY],
+        size: fn.type === "logic" ? [220, 80] : [240, 110],
+        flags: {},
+        order: nid,
+        mode: 0,
+        inputs: [{"name": "In", "type": -1, "link": null}],
+        outputs: [],
+        title: fn.p.title || `Node ${nid}`,
+        properties: fn.p
+      };
+
+      if (fn.type === "dialogue") {
+        lgNode.outputs.push({"name": "Out", "type": -1, "links": []});
+      } else if (fn.type === "choice") {
+        const choices = fn.p.choices || [];
+        choices.forEach((c) => {
+          lgNode.outputs.push({"name": c.text, "type": -1, "links": [], "label": c.text});
+        });
+      } else if (fn.type === "traversal") {
+        lgNode.outputs.push({"name": "🎉 Escape / Success", "type": -1, "links": [], "label": "🎉 Escape / Success"});
+        const outcomes = fn.p.outcomes || [];
+        outcomes.forEach((o) => {
+          lgNode.outputs.push({"name": o.label, "type": -1, "links": [], "label": o.label});
+        });
+        lgNode.outputs.push({"name": "🚪 Early Exit", "type": -1, "links": [], "label": "🚪 Early Exit"});
+      } else if (fn.type === "logic") {
+        lgNode.outputs.push({"name": "True Path", "type": -1, "links": []});
+        lgNode.outputs.push({"name": "False Path", "type": -1, "links": []});
+      }
+
+      nodeInstanceList.push(lgNode);
+
+      gridX += 300;
+      if (gridX > 1400) {
+        gridX = 100;
+        gridY += 240;
+      }
+    }
+
+    const nodeInstanceDict = {};
+    nodeInstanceList.forEach(n => { nodeInstanceDict[n.id] = n; });
+
+    for (const nidStr in finalNodes) {
+      const nid = parseInt(nidStr, 10);
+      const fn = finalNodes[nid];
+      const srcNode = nodeInstanceDict[nid];
+      
+      fn.out.forEach((destId, slotIdx) => {
+        if (destId != null && nodeInstanceDict[destId]) {
+          const destNode = nodeInstanceDict[destId];
+          const linkId = linkIdCounter++;
+          
+          if (srcNode.outputs[slotIdx]) {
+            if (!srcNode.outputs[slotIdx].links) srcNode.outputs[slotIdx].links = [];
+            srcNode.outputs[slotIdx].links.push(linkId);
+          }
+          destNode.inputs[0].link = linkId;
+
+          linkInstanceList.push([linkId, nid, slotIdx, destId, 0, -1]);
+        }
+      });
+    }
+
+    graphSchema.nodes = nodeInstanceList;
+    graphSchema.links = linkInstanceList;
+    graphSchema.last_link_id = linkIdCounter - 1;
+
+    return {
+      title: projectTitle,
+      entry: entryId,
+      vars,
+      varMeta,
+      graphSchema
+    };
+  },
+
+  applyImportedState(state, mode = "replace") {
+    if (mode === "append") {
+      // 1. Merge globalVars (avoiding duplicates)
+      if (state.globalVars) {
+        if (!this.globalVars) this.globalVars = {};
+        for (const category in state.globalVars) {
+          const existingArray = this.globalVars[category] || [];
+          const importedArray = state.globalVars[category] || [];
+          this.globalVars[category] = Array.from(new Set([...existingArray, ...importedArray]));
+        }
+      }
+
+      // 2. Merge varMeta
+      if (state.varMeta) {
+        if (!this.varMeta) this.varMeta = {};
+        for (const category in state.varMeta) {
+          if (!this.varMeta[category]) this.varMeta[category] = {};
+          Object.assign(this.varMeta[category], state.varMeta[category]);
+        }
+      }
+
+      // 3. Merge graphSchema
+      if (state.graphSchema) {
+        const existingSchema = this.graph.serialize();
+        const nOffset = existingSchema.last_node_id || 0;
+        const lOffset = existingSchema.last_link_id || 0;
+
+        const newNodes = (state.graphSchema.nodes || []).map(node => {
+          const cloned = JSON.parse(JSON.stringify(node));
+          cloned.id = cloned.id + nOffset;
+          if (cloned.inputs) {
+            cloned.inputs.forEach(input => {
+              if (input.link != null) input.link += lOffset;
+            });
+          }
+          if (cloned.outputs) {
+            cloned.outputs.forEach(output => {
+              if (output.links) {
+                output.links = output.links.map(lid => lid + lOffset);
+              }
+            });
+          }
+          if (cloned.pos) {
+            cloned.pos[0] += 50;
+            cloned.pos[1] += 50;
+          }
+          return cloned;
+        });
+
+        const newLinks = (state.graphSchema.links || []).map(link => {
+          const cloned = [...link];
+          cloned[0] += lOffset;
+          cloned[1] += nOffset;
+          cloned[3] += nOffset;
+          return cloned;
+        });
+
+        const mergedSchema = {
+          last_node_id: Math.max(nOffset, (state.graphSchema.last_node_id || 0) + nOffset),
+          last_link_id: Math.max(lOffset, (state.graphSchema.last_link_id || 0) + lOffset),
+          nodes: (existingSchema.nodes || []).concat(newNodes),
+          links: (existingSchema.links || []).concat(newLinks),
+          groups: (existingSchema.groups || []).concat(state.graphSchema.groups || []),
+          config: existingSchema.config || {}
+        };
+
+        this.graph.configure(mergedSchema);
+
+        // Select the newly appended nodes
+        this.canvas.selected_nodes = {};
+        newNodes.forEach(n => {
+          const nodeInstance = this.graph.getNodeById(n.id);
+          if (nodeInstance) {
+            this.canvas.selected_nodes[nodeInstance.id] = nodeInstance;
+          }
+        });
+        // 4. Merge bookmarks
+        if (state.bookmarks) {
+          if (!this.bookmarks) this.bookmarks = [];
+          const nOffset = existingSchema.last_node_id || 0;
+          state.bookmarks.forEach(bm => {
+            const cloned = JSON.parse(JSON.stringify(bm));
+            cloned.id = "bm_append_" + cloned.id + "_" + Date.now();
+            cloned.nodeId = cloned.nodeId + nOffset;
+            this.bookmarks.push(cloned);
+          });
+        }
+      }
+    } else {
+      // replace mode (original behavior)
+      if (state.graphSchema) this.graph.configure(state.graphSchema);
+      if (state.globalVars) this.globalVars = state.globalVars;
+      if (state.varMeta) this.varMeta = state.varMeta;
+      if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+      this.bookmarks = state.bookmarks || [];
+    }
+
     this.ensureVarShape();
     this.renderGlobalTags();
     this.renderBookmarks();
@@ -1849,16 +2913,25 @@ ${scriptClose}
   doImport() {
     const fileInput = document.getElementById("import_file_input");
     const textInput = document.getElementById("import_text_input");
+    const modeSelect = document.getElementById("import_mode_select");
+    const mode = modeSelect ? modeSelect.value : "replace";
 
     const finish = (raw) => {
       try {
-        const state = JSON.parse(raw);
-        this.applyImportedState(state);
+        let state;
+        const isJson = raw.trim().startsWith("{") || raw.trim().startsWith("[");
+        if (isJson) {
+          state = JSON.parse(raw);
+        } else {
+          state = this.parseMarkdown(raw);
+        }
+        this.applyImportedState(state, mode);
         this.closeModal("import_modal_overlay");
         textInput.value = "";
         fileInput.value = "";
-        this.toast("Project imported!", "success");
+        this.toast(mode === "append" ? "Project appended!" : "Project imported!", "success");
       } catch (err) {
+        console.error(err);
         this.toast("Import failed: " + err.message, "danger");
       }
     };
@@ -1871,7 +2944,7 @@ ${scriptClose}
     } else if (textInput.value.trim()) {
       finish(textInput.value);
     } else {
-      this.toast("Choose a file or paste JSON first.", "warning");
+      this.toast("Choose a file or paste JSON/Markdown first.", "warning");
     }
   },
 
@@ -2739,11 +3812,11 @@ ${content}`;
       if (el) el.onclick = fn;
     };
 
-    // Header buttons
+     // Header buttons
     on("btn_new_graph", () => this.newGraph());
     on("btn_versions", () => { this.renderVersionsList(); this.openModal("versions_modal_overlay"); });
     on("btn_import_project", () => this.openModal("import_modal_overlay"));
-    on("btn_export_project", () => this.exportProject());
+    on("btn_export_project", () => this.openModal("export_modal_overlay"));
     on("btn_publish", () => this.publishStory());
     on("btn_open_llm_copilot", () => this.openLLMModal());
     on("btn_toggle_theme", () => this.toggleTheme());
@@ -2758,6 +3831,7 @@ ${content}`;
     on("btn_llm_run_screenplay", () => this.runScreenplayImporter());
     on("btn_llm_run_debugger", () => this.runLogicDebugger());
     on("btn_do_import", () => this.doImport());
+    on("btn_do_export", () => this.doExport());
     on("btn_save_version", () => this.saveVersion());
     on("btn_save_item_info", () => this.saveItemModal());
 
