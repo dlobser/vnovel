@@ -804,7 +804,8 @@ const VNovelApp = {
         let count = 0;
         const nodesList = this.graph._nodes || [];
         nodesList.forEach(node => {
-          if (node.properties && node.properties.location === name) {
+          const nodeLoc = node.properties && node.properties.location;
+          if (nodeLoc && typeof nodeLoc === "string" && nodeLoc.trim().toLowerCase() === name.trim().toLowerCase()) {
             node.properties.background = meta.background;
             node.properties.backgroundName = meta.backgroundName || "";
             node.properties.audioLoop = meta.audioLoop;
