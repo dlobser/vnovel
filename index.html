@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VNovel - Visual Novel Narrative Node Graph & Player</title>
+  <meta name="description" content="A visual canvas narrative design editor and decoupled playback engine for storytelling and gameplay logic.">
+  
+  <!-- CDNs for LiteGraph, Styles, Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/litegraph.js/0.7.8/css/litegraph.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/litegraph.js/0.7.8/build/litegraph.min.js"></script>
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="logo-container">
+      <div class="logo-icon">VN</div>
+      <div>
+        <h1 class="logo-text">vnovel</h1>
+        <div style="font-size: 10px; color: var(--text-dark); margin-top: -2px;">Creative Narrative Node Engine</div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn" id="btn_import_project" title="Import JSON schema from Clipboard">
+        <i class="fas fa-file-import"></i> Import Graph
+      </button>
+      <button class="btn" id="btn_export_project" title="Export JSON schema to Clipboard">
+        <i class="fas fa-file-export"></i> Export Graph
+      </button>
+      <button class="btn" id="btn_open_llm_copilot" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
+        <i class="fas fa-robot"></i> LLM Copilot
+      </button>
+      <button class="btn btn-primary" id="btn_start_play" style="padding: 8px 20px;">
+        <i class="fas fa-play"></i> Play Story
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Shell -->
+  <main class="main-container">
+    
+    <!-- Left Sidebar: Bookmarks & Globals -->
+    <aside class="sidebar-left">
+      <div class="panel-header">
+        <span>Story Variables</span>
+        <i class="fas fa-sliders-h" style="font-size: 12px; color: var(--text-dark);"></i>
+      </div>
+      
+      <div class="sidebar-scroll">
+        <!-- Bookmark chapters -->
+        <div class="list-section">
+          <div class="section-title">
+            <span>Chapter Bookmarks</span>
+          </div>
+          <div id="bookmarks_list" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+        
+        <!-- Global parameters list -->
+        <div id="global_vars_list" style="display:flex; flex-direction:column; gap:16px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Node Canvas Area -->
+    <section class="canvas-container" id="canvas_container">
+      <canvas id="graph_canvas" class="graph-canvas"></canvas>
+    </section>
+
+    <!-- Right Sidebar: Context Inspector Drawer -->
+    <aside class="inspector-drawer collapsed" id="inspector_drawer">
+      <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding: 16px;">
+        <span>Inspector</span>
+        <button class="section-add-btn" style="font-size: 16px;" onclick="VNovelApp.closeInspector()">&times;</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:20px;" id="inspector_content">
+        <!-- Dynamic based on double-clicked node -->
+      </div>
+    </aside>
+
+    <!-- Decoupled Visual Novel Player Overlay -->
+    <div class="playback-overlay" id="playback_overlay">
+      <!-- Player Header HUD -->
+      <div class="playback-header">
+        <div class="playback-brand">
+          <i class="fas fa-book-open" style="color:var(--accent-primary); margin-right:6px;"></i> Playback Simulator Mode
+        </div>
+        
+        <!-- Top HUD states (Inventory, Diary toggle, Audio status) -->
+        <div class="playback-state-HUD">
+          <!-- Inventory status -->
+          <div class="hud-item">
+            <i class="fas fa-briefcase" style="color:var(--accent-info);"></i> Inventory:
+            <span id="playback_hud_inventory" style="display:flex; gap:4px; margin-left:4px;"></span>
+          </div>
+          
+          <!-- Audio track simulation status -->
+          <div class="hud-item">
+            <i class="fas fa-music" style="color:var(--accent-success);"></i> Audio State:
+            <div class="audio-visual-hud" id="playback_audio_visual" style="margin-left:6px;">
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+            </div>
+          </div>
+          
+          <button class="btn btn-success" id="btn_toggle_diary">
+            <i class="fas fa-journal-whills"></i> Show Diary
+          </button>
+          <button class="btn" id="btn_stop_play" style="background:rgba(239, 68, 68, 0.2); border-color:rgba(239, 68, 68, 0.4); color:#f87171;">
+            <i class="fas fa-times"></i> Close Viewer
+          </button>
+        </div>
+      </div>
+
+      <!-- Playback Diary Slide Panel -->
+      <div class="playback-diary-drawer" id="playback_diary_drawer">
+        <div class="panel-header">
+          <span>Journal Log (Unlocked Truths)</span>
+          <button class="section-add-btn" style="font-size:16px;" onclick="VNovelApp.toggleDiaryPanel()">&times;</button>
+        </div>
+        <div class="diary-list" id="playback_diary_list">
+          <!-- Rendered in game updates -->
+        </div>
+      </div>
+
+      <!-- Dialogue rendering area -->
+      <div id="playback_interactive_area" style="padding-bottom: 20px; z-index:2;">
+        <!-- Dialogue box, choices, or dice roll panel -->
+      </div>
+    </div>
+
+    <!-- LLM Copilot Configuration & Importer Modal -->
+    <div class="modal-overlay" id="llm_modal_overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-robot" style="color:var(--accent-secondary); margin-right:6px;"></i> LLM Copilot Studio</div>
+          <button class="section-add-btn" style="font-size:18px;" id="btn_close_llm_modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          
+          <!-- LLM API configuration -->
+          <div class="form-group">
+            <label><i class="fas fa-server"></i> LLM Provider</label>
+            <select class="select-input" id="llm_provider_select">
+              <option value="anthropic" selected>Anthropic (Claude)</option>
+              <option value="gemini">Google (Gemini)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-key"></i> API Key (Optional)</label>
+            <input type="password" class="input-text" id="llm_api_key_input" placeholder="Enter key for live LLM requests. Leave blank to run smart offline compiler simulation.">
+            <span style="font-size:10px; color:var(--text-dark);">Your key is used directly from your browser to call the selected provider and never sent elsewhere.</span>
+          </div>
+
+          <!-- Tabs of tools -->
+          <div style="border-top:1px solid var(--border-color); padding-top:12px;">
+            <h4 style="font-size:13px; font-weight:600; margin-bottom:8px; color:var(--text-main);">Narrative Utilities</h4>
+            <div style="display:flex; gap:10px; margin-bottom:12px;">
+              <button class="btn" style="flex:1; justify-content:center;" onclick="document.getElementById('tool_screenplay_section').style.display='flex'; document.getElementById('tool_debugger_section').style.display='none';">
+                <i class="fas fa-file-import"></i> Screenplay Importer
+              </button>
+              <button class="btn" style="flex:1; justify-content:center;" onclick="document.getElementById('tool_screenplay_section').style.display='none'; document.getElementById('tool_debugger_section').style.display='flex';">
+                <i class="fas fa-heartbeat"></i> Graph Logic Debugger
+              </button>
+            </div>
+          </div>
+
+          <!-- Tool: Screenplay importer -->
+          <div class="form-group" id="tool_screenplay_section" style="display:flex; flex-direction:column; gap:8px;">
+            <label>Paste Screenplay or Dialog Script Text</label>
+            <textarea class="textarea-input" id="llm_screenplay_input" style="min-height:140px; font-size:12px;" placeholder="Example screenplay:
+INT. DARK FOREST - NIGHT
+Hero and Goblin walk along paths.
+HERO
+Did you hear that?
+GOBLIN
+Run!"></textarea>
+            <button class="btn btn-primary" id="btn_llm_run_screenplay" style="align-self:flex-end;">Compile Script to Node Graph</button>
+          </div>
+
+          <!-- Tool: Logic Debugger -->
+          <div class="form-group" id="tool_debugger_section" style="display:none; flex-direction:column; gap:8px;">
+            <label>Auto-scan active node graph path logic</label>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Check for orphaned nodes, unachievable variables, dead locks, and execution flow gaps.</div>
+            <button class="btn btn-primary btn-success" id="btn_llm_run_debugger">Run Logic Scan</button>
+          </div>
+
+          <!-- Console log output -->
+          <div class="form-group" style="margin-top:10px;">
+            <label>Copilot Console Outputs</label>
+            <div id="llm_console_logs" style="background:#07080a; border:1px solid var(--border-color); border-radius:6px; min-height:80px; padding:12px; font-family:monospace; overflow-y:auto; max-height:120px;">
+              <span style="color:var(--text-dark);">No active operations executed. Compile scripts or debug nodes to see output logs.</span>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="btn_close_llm_modal_footer" onclick="VNovelApp.closeLLMModal()">Close Panel</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
