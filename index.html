@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VNovel - Visual Novel Narrative Node Graph & Player</title>
   <meta name="description" content="A visual canvas narrative design editor and decoupled playback engine for storytelling and gameplay logic.">
-  
+
   <!-- CDNs for LiteGraph, Styles, Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/litegraph.js/0.7.8/css/litegraph.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="index.css">
-  
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/litegraph.js/0.7.8/build/litegraph.min.js"></script>
 </head>
 <body>
@@ -23,17 +23,33 @@
         <h1 class="logo-text">vnovel</h1>
         <div style="font-size: 10px; color: var(--text-dark); margin-top: -2px;">Creative Narrative Node Engine</div>
       </div>
+      <input type="text" class="project-title-input" id="project_title_input" value="Untitled Story" title="Story title (used for Publish)" spellcheck="false">
     </div>
-    
+
     <div class="header-actions">
-      <button class="btn" id="btn_import_project" title="Import JSON schema from Clipboard">
-        <i class="fas fa-file-import"></i> Import Graph
+      <button class="btn" id="btn_new_graph" title="Start a fresh empty graph">
+        <i class="fas fa-file"></i> New
       </button>
-      <button class="btn" id="btn_export_project" title="Export JSON schema to Clipboard">
-        <i class="fas fa-file-export"></i> Export Graph
+      <button class="btn" id="btn_versions" title="Save / load named versions (local storage)">
+        <i class="fas fa-save"></i> Save / Load
+      </button>
+      <button class="btn" id="btn_import_project" title="Import a project JSON file or pasted text">
+        <i class="fas fa-file-import"></i> Import
+      </button>
+      <button class="btn" id="btn_export_project" title="Download project JSON (also copied to clipboard)">
+        <i class="fas fa-file-export"></i> Export
+      </button>
+      <button class="btn" id="btn_publish" title="Download a standalone playable HTML file" style="border-color: var(--accent-success); color: var(--accent-success);">
+        <i class="fas fa-globe"></i> Publish
       </button>
       <button class="btn" id="btn_open_llm_copilot" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
         <i class="fas fa-robot"></i> LLM Copilot
+      </button>
+      <button class="btn btn-icon" id="btn_toggle_theme" title="Toggle light / dark theme">
+        <i class="fas fa-sun"></i>
+      </button>
+      <button class="btn btn-icon" id="btn_help" title="Help: syntax & shortcuts">
+        <i class="fas fa-question"></i>
       </button>
       <button class="btn btn-primary" id="btn_start_play" style="padding: 8px 20px;">
         <i class="fas fa-play"></i> Play Story
@@ -43,14 +59,14 @@
 
   <!-- Workspace Shell -->
   <main class="main-container">
-    
+
     <!-- Left Sidebar: Bookmarks & Globals -->
     <aside class="sidebar-left">
       <div class="panel-header">
         <span>Story Variables</span>
         <i class="fas fa-sliders-h" style="font-size: 12px; color: var(--text-dark);"></i>
       </div>
-      
+
       <div class="sidebar-scroll">
         <!-- Bookmark chapters -->
         <div class="list-section">
@@ -61,10 +77,26 @@
             <!-- Rendered via JS -->
           </div>
         </div>
-        
+
         <!-- Global parameters list -->
         <div id="global_vars_list" style="display:flex; flex-direction:column; gap:16px; border-top: 1px solid var(--border-color); padding-top: 15px;">
           <!-- Rendered via JS -->
+        </div>
+        <div style="font-size:10.5px; color:var(--text-dark); line-height:1.5;">
+          <i class="fas fa-lightbulb"></i> Double-click any tag to add background info (great context for LLMs).
+        </div>
+
+        <!-- Asset handling preference -->
+        <div class="list-section" style="border-top: 1px solid var(--border-color); padding-top: 15px; padding-bottom:10px;">
+          <div class="section-title"><span>Picked Asset Files</span></div>
+          <select class="select-input" id="asset_mode_select" style="font-size:12px;">
+            <option value="embed">Embed into project (portable, bigger saves)</option>
+            <option value="reference">Reference by path (assets/ folder)</option>
+          </select>
+          <div style="font-size:10.5px; color:var(--text-dark); line-height:1.5;">
+            Embed: images/audio are stored inside the project & published HTML (single file, but base64 bloats saves).
+            Reference: stores <code style="font-size:10px;">assets/filename</code> — keep an <b>assets</b> folder next to the editor and next to any published HTML. Typing a full URL in any field always works too.
+          </div>
         </div>
       </div>
     </aside>
@@ -72,12 +104,24 @@
     <!-- Node Canvas Area -->
     <section class="canvas-container" id="canvas_container">
       <canvas id="graph_canvas" class="graph-canvas"></canvas>
+
+      <!-- Floating node palette -->
+      <div class="node-palette">
+        <span class="palette-label">Add:</span>
+        <button class="palette-btn" data-nodetype="vnovel/passthrough" title="A scene: dialogue, background, audio, rewards"><i class="fas fa-comment"></i> Dialogue</button>
+        <button class="palette-btn" data-nodetype="vnovel/choice" title="Branching player choices (can accept missions)"><i class="fas fa-code-branch"></i> Choice</button>
+        <button class="palette-btn" data-nodetype="vnovel/traversal" title="Dice-roll maze / risk room"><i class="fas fa-dice-d20"></i> Traversal</button>
+        <button class="palette-btn" data-nodetype="vnovel/logic_gate" title="Route based on items / knowledge / missions"><i class="fas fa-random"></i> Logic</button>
+        <span class="palette-sep"></span>
+        <button class="palette-btn" id="btn_undo" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+        <button class="palette-btn" id="btn_redo" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+      </div>
     </section>
 
     <!-- Right Sidebar: Context Inspector Drawer -->
     <aside class="inspector-drawer collapsed" id="inspector_drawer">
       <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding: 16px;">
-        <span>Inspector</span>
+        <span>Inspector <span class="autosave-hint">changes apply instantly</span></span>
         <button class="section-add-btn" style="font-size: 16px;" onclick="VNovelApp.closeInspector()">&times;</button>
       </div>
       <div style="flex:1; overflow-y:auto; padding:20px;" id="inspector_content">
@@ -85,56 +129,9 @@
       </div>
     </aside>
 
-    <!-- Decoupled Visual Novel Player Overlay -->
+    <!-- Decoupled Visual Novel Player Overlay (StoryPlayer mounts inside) -->
     <div class="playback-overlay" id="playback_overlay">
-      <!-- Player Header HUD -->
-      <div class="playback-header">
-        <div class="playback-brand">
-          <i class="fas fa-book-open" style="color:var(--accent-primary); margin-right:6px;"></i> Playback Simulator Mode
-        </div>
-        
-        <!-- Top HUD states (Inventory, Diary toggle, Audio status) -->
-        <div class="playback-state-HUD">
-          <!-- Inventory status -->
-          <div class="hud-item">
-            <i class="fas fa-briefcase" style="color:var(--accent-info);"></i> Inventory:
-            <span id="playback_hud_inventory" style="display:flex; gap:4px; margin-left:4px;"></span>
-          </div>
-          
-          <!-- Audio track simulation status -->
-          <div class="hud-item">
-            <i class="fas fa-music" style="color:var(--accent-success);"></i> Audio State:
-            <div class="audio-visual-hud" id="playback_audio_visual" style="margin-left:6px;">
-              <span class="audio-bar"></span>
-              <span class="audio-bar"></span>
-              <span class="audio-bar"></span>
-            </div>
-          </div>
-          
-          <button class="btn btn-success" id="btn_toggle_diary">
-            <i class="fas fa-journal-whills"></i> Show Diary
-          </button>
-          <button class="btn" id="btn_stop_play" style="background:rgba(239, 68, 68, 0.2); border-color:rgba(239, 68, 68, 0.4); color:#f87171;">
-            <i class="fas fa-times"></i> Close Viewer
-          </button>
-        </div>
-      </div>
-
-      <!-- Playback Diary Slide Panel -->
-      <div class="playback-diary-drawer" id="playback_diary_drawer">
-        <div class="panel-header">
-          <span>Journal Log (Unlocked Truths)</span>
-          <button class="section-add-btn" style="font-size:16px;" onclick="VNovelApp.toggleDiaryPanel()">&times;</button>
-        </div>
-        <div class="diary-list" id="playback_diary_list">
-          <!-- Rendered in game updates -->
-        </div>
-      </div>
-
-      <!-- Dialogue rendering area -->
-      <div id="playback_interactive_area" style="padding-bottom: 20px; z-index:2;">
-        <!-- Dialogue box, choices, or dice roll panel -->
-      </div>
+      <div id="playback_root" style="position:absolute; inset:0;"></div>
     </div>
 
     <!-- LLM Copilot Configuration & Importer Modal -->
@@ -145,7 +142,7 @@
           <button class="section-add-btn" style="font-size:18px;" id="btn_close_llm_modal">&times;</button>
         </div>
         <div class="modal-body">
-          
+
           <!-- LLM API configuration -->
           <div class="form-group">
             <label><i class="fas fa-server"></i> LLM Provider</label>
@@ -196,20 +193,158 @@ Run!"></textarea>
           <!-- Console log output -->
           <div class="form-group" style="margin-top:10px;">
             <label>Copilot Console Outputs</label>
-            <div id="llm_console_logs" style="background:#07080a; border:1px solid var(--border-color); border-radius:6px; min-height:80px; padding:12px; font-family:monospace; overflow-y:auto; max-height:120px;">
+            <div id="llm_console_logs" style="background:var(--console-bg); border:1px solid var(--border-color); border-radius:6px; min-height:80px; padding:12px; font-family:monospace; overflow-y:auto; max-height:120px;">
               <span style="color:var(--text-dark);">No active operations executed. Compile scripts or debug nodes to see output logs.</span>
             </div>
           </div>
 
         </div>
         <div class="modal-footer">
-          <button class="btn" id="btn_close_llm_modal_footer" onclick="VNovelApp.closeLLMModal()">Close Panel</button>
+          <button class="btn" onclick="VNovelApp.closeLLMModal()">Close Panel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Graph Modal -->
+    <div class="modal-overlay" id="new_modal_overlay">
+      <div class="modal-card" style="max-width:460px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-file" style="color:var(--accent-primary); margin-right:6px;"></i> New Graph</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('new_modal_overlay')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <button class="new-option-card" id="btn_new_empty">
+            <div class="new-option-title"><i class="fas fa-square" style="color:var(--text-dark);"></i> Empty Graph</div>
+            <div class="new-option-desc">A clean slate. Clears the canvas <em>and</em> all characters, locations, props, knowledge and missions.</div>
+          </button>
+          <button class="new-option-card" id="btn_new_template">
+            <div class="new-option-title"><i class="fas fa-magic" style="color:var(--accent-secondary);"></i> Starter Template</div>
+            <div class="new-option-desc">A small sample story using every node type — Dialogue, Choice (with a mission), Traversal (with early exit) and a Logic Gate — plus example characters &amp; props to riff on.</div>
+          </button>
+          <div style="font-size:11px; color:var(--text-dark);">Your current work stays in the undo history and in any saved versions.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Versions (Save / Load) Modal -->
+    <div class="modal-overlay" id="versions_modal_overlay">
+      <div class="modal-card" style="max-width:520px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-save" style="color:var(--accent-primary); margin-right:6px;"></i> Saved Versions</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('versions_modal_overlay')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Save the current graph as a new version</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" class="input-text" id="version_name_input" placeholder="e.g. 'act 1 draft 3'" style="flex:1;">
+              <button class="btn btn-primary" id="btn_save_version"><i class="fas fa-plus"></i> Save</button>
+            </div>
+            <span style="font-size:10.5px; color:var(--text-dark);">Versions live in this browser's local storage. Use Export for a real backup file.</span>
+          </div>
+          <div class="form-group">
+            <label>Existing versions</label>
+            <div id="versions_list" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="import_modal_overlay">
+      <div class="modal-card" style="max-width:520px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-file-import" style="color:var(--accent-info); margin-right:6px;"></i> Import Project</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('import_modal_overlay')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Choose an exported .json file</label>
+            <input type="file" class="input-text" id="import_file_input" accept=".json,application/json">
+          </div>
+          <div class="form-group">
+            <label>&hellip;or paste project JSON</label>
+            <textarea class="textarea-input" id="import_text_input" style="min-height:120px; font-size:11px; font-family:monospace;" placeholder='{"graphSchema": ...}'></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="VNovelApp.closeModal('import_modal_overlay')">Cancel</button>
+          <button class="btn btn-primary" id="btn_do_import">Import (replaces current graph)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item background info Modal (dblclick on a sidebar tag) -->
+    <div class="modal-overlay" id="item_modal_overlay">
+      <div class="modal-card" style="max-width:480px;">
+        <div class="modal-header">
+          <div class="modal-title" id="item_modal_title"><i class="fas fa-feather"></i> Item Details</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('item_modal_overlay')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" id="item_modal_required_group" style="display:none;">
+            <label>Mission type</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="checkbox" id="item_modal_required" style="width:16px; height:16px; cursor:pointer;">
+              <span style="font-size:12px; color:var(--text-muted);">Required mission (story cannot truly end without it)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Background info</label>
+            <textarea class="textarea-input serif-text" id="item_modal_info" style="min-height:160px;" placeholder="Lore, personality, secrets, purpose... This context is stored with the project and is useful for LLM tools."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="VNovelApp.closeModal('item_modal_overlay')">Cancel</button>
+          <button class="btn btn-primary" id="btn_save_item_info">Save Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="help_modal_overlay">
+      <div class="modal-card" style="max-width:560px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-question-circle" style="color:var(--accent-info); margin-right:6px;"></i> Writing & Shortcuts Guide</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('help_modal_overlay')">&times;</button>
+        </div>
+        <div class="modal-body help-body">
+          <h4>Dialogue syntax</h4>
+          <p>One line = one dialogue beat. Start a line with a character name and a colon to show the name above the text box:</p>
+          <pre>Hero: Did you hear that?
+Goblin: Run!
+The wind howls through the trees.   (no name = narration)</pre>
+          <p><code>{Hero}: text</code> also works, and the colon is now optional after <code>{braces}</code>. If a line starts with a known character's name, the colon is added for you automatically.</p>
+
+          <h4>Conditions</h4>
+          <pre>has_item('rusty_key')
+has_knowledge('heard_rustle')
+mission_active('Find the Rusty Key')
+mission_done('Find the Rusty Key')</pre>
+          <p>Combine several in one field — all must pass.</p>
+
+          <h4>Missions</h4>
+          <p>Create missions in the left sidebar. A Choice option can <em>accept</em> a mission; a Dialogue node can <em>start</em> or <em>complete</em> one. Active missions show in the player's HUD. Double-click a mission tag to mark it required.</p>
+
+          <h4>Wiring</h4>
+          <p>Outputs can fan out to many nodes, and <em>many outputs can converge on the same input</em> — choices or maze outcomes from different branches can all lead to one scene. Click a wire's midpoint to delete it.</p>
+
+          <h4>Shortcuts</h4>
+          <pre>Delete / Backspace   delete selected node(s)
+Ctrl+Z / Ctrl+Y      undo / redo
+Ctrl+D               duplicate selected node
+Double-click canvas  quick-add a Dialogue node
+Right-click          add nodes / node actions</pre>
         </div>
       </div>
     </div>
 
   </main>
 
+  <!-- Toast notifications -->
+  <div id="toast_container"></div>
+
+  <script src="player.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

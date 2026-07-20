@@ -7,41 +7,57 @@ const VNovelApp = {
   graph: null,
   canvas: null,
   activeNode: null,
-  
-  // Decoupled Game Engine State
-  gameState: {
-    currentChunkId: null,
-    inventory: new Set(),
-    diaryKnowledge: new Set(),
-    traversalScores: {}, // node_id -> score
-    currentLogHistory: [],
-    isPlaying: false
-  },
+  player: null,
+  gamePlaying: false,
+  projectTitle: "Untitled Story",
 
   // Globals Lists for Autocomplete and Variables Quick-Add
   globalVars: {
     characters: ["Hero", "Goblin", "Wizard", "Narrator"],
     locations: ["Dark Forest", "Castle Keep", "Secret Cave"],
     collectibles: ["rusty_key", "healing_potion", "ancient_coin"],
-    knowledge: ["heard_rustle", "met_wizard", "found_secret"]
+    knowledge: ["heard_rustle", "met_wizard", "found_secret"],
+    missions: ["Find the Rusty Key"]
+  },
+
+  // Per-item metadata: background info text, mission required flag, etc.
+  varMeta: {
+    missions: {
+      "Find the Rusty Key": { info: "An old iron key is said to be buried near the gate roots.", required: false }
+    }
   },
 
   // Bookmarks list
   bookmarks: [],
 
-  // Audio system state (simulation logs)
-  audioState: {
-    currentLoop: null,
-    crossfading: false
-  },
+  // Undo system
+  _states: [],
+  _statePtr: -1,
+  _restoring: false,
+  _persistTimer: null,
 
-  // Initialize Application
+  // Inspector audio preview
+  _previewAudio: null,
+  _previewBtn: null,
+
+  VAR_CATEGORIES: [
+    { key: 'characters', label: 'Characters', singular: 'character', cssClass: 'character' },
+    { key: 'locations', label: 'Locations', singular: 'location', cssClass: 'location' },
+    { key: 'collectibles', label: 'Collectibles', singular: 'item', cssClass: 'collectible' },
+    { key: 'knowledge', label: 'Knowledge (Diary)', singular: 'flag', cssClass: 'knowledge' },
+    { key: 'missions', label: 'Missions', singular: 'mission', cssClass: 'mission' }
+  ],
+
+  // ================= INIT =================
+
   init() {
+    this.initTheme();
     this.initGraph();
     this.initUI();
     this.registerEventHandlers();
     this.loadDemoProject();
-    
+    this.initUndo();
+
     // Auto-save to localStorage periodically
     setInterval(() => this.saveToLocalStorage(), 15000);
   },
@@ -55,31 +71,37 @@ const VNovelApp = {
 
     this.graph = new LGraph();
 
-    // Create LiteGraph Canvas
     const canvasEl = document.getElementById("graph_canvas");
     this.canvas = new LGraphCanvas(canvasEl, this.graph);
-
-    // Styling the canvas themes
-    this.canvas.background_color = "#0f1015";
-    this.canvas.grid_color = "#181a24";
     this.canvas.connections_width = 3;
     this.canvas.render_shadows = true;
     this.canvas.show_info = false;
+    this.canvas.allow_searchbox = false;
+    this.applyCanvasTheme();
 
     // Match the canvas backing store to its on-screen size (otherwise it stays
     // at the 300x150 default and CSS stretches it, making everything look huge)
     this.resizeCanvas();
     window.addEventListener("resize", () => this.resizeCanvas());
 
-    // Hook double-click to open Context Inspector
     const self = this;
-    this.canvas.onNodeDblClicked = function(node) {
-      self.openInspector(node);
+    // Double-click a node -> open Context Inspector (hook both callbacks;
+    // different LiteGraph builds fire different ones)
+    this.canvas.onNodeDblClicked = function(node) { self.openInspector(node); };
+    this.canvas.onShowNodePanel = function(node) { self.openInspector(node); };
+
+    // Double-click on EMPTY canvas -> quick-add a Dialogue node instead of
+    // LiteGraph's default node search box
+    this.canvas.showSearchBox = function() {
+      const pos = self.canvas.graph_mouse ? [...self.canvas.graph_mouse] : self.viewCenter();
+      self.addNodeAt("vnovel/passthrough", pos);
     };
 
     this.registerCustomNodes();
+    this.purgeDefaultNodeTypes();
+    this.installCustomMenus();
+    this.installMultiInputSupport();
 
-    // Run the graph rendering loop
     this.graph.start();
   },
 
@@ -90,50 +112,279 @@ const VNovelApp = {
     this.canvas.resize(container.clientWidth, container.clientHeight);
   },
 
+  applyCanvasTheme() {
+    if (!this.canvas) return;
+    const light = document.body.classList.contains("light");
+    const bg = light ? "#dde1e9" : "#0f1015";
+    this.canvas.background_color = bg;
+    this.canvas.clear_background_color = bg;
+    this.canvas.grid_color = light ? "#cdd2dc" : "#181a24";
+    this.canvas.draw(true, true);
+  },
+
+  viewCenter() {
+    const ds = this.canvas.ds;
+    return [
+      (this.canvas.canvas.width / 2) / ds.scale - ds.offset[0],
+      (this.canvas.canvas.height / 2) / ds.scale - ds.offset[1]
+    ];
+  },
+
+  // Remove every built-in LiteGraph node type so only vnovel story nodes are
+  // ever available in menus and searches.
+  purgeDefaultNodeTypes() {
+    const reg = LiteGraph.registered_node_types || {};
+    Object.keys(reg).forEach(t => {
+      if (!t.startsWith("vnovel/")) delete reg[t];
+    });
+    if (LiteGraph.Nodes) LiteGraph.Nodes = {};
+  },
+
+  // Replace LiteGraph's default context menus with story-focused ones
+  installCustomMenus() {
+    const self = this;
+
+    this.canvas.getCanvasMenuOptions = function() {
+      const pos = self.canvas.graph_mouse ? [...self.canvas.graph_mouse] : self.viewCenter();
+      const mk = (label, type) => ({ content: label, callback: () => self.addNodeAt(type, pos) });
+      return [
+        mk("\u{1F4AC} Add Dialogue", "vnovel/passthrough"),
+        mk("\u{1F500} Add Choice", "vnovel/choice"),
+        mk("\u{1F3B2} Add Traversal", "vnovel/traversal"),
+        mk("⚙️ Add Logic Gate", "vnovel/logic_gate")
+      ];
+    };
+
+    this.canvas.getNodeMenuOptions = function(node) {
+      return [
+        { content: "▶ Play from here", callback: () => self.startPlayback(node) },
+        { content: "✎ Open inspector", callback: () => self.openInspector(node) },
+        { content: "⧉ Duplicate (Ctrl+D)", callback: () => self.duplicateNode(node) },
+        null,
+        {
+          content: "\u{1F5D1} Remove (Del)",
+          callback: () => {
+            self.graph.remove(node);
+            if (self.activeNode === node) self.closeInspector();
+            self.renderBookmarks();
+            self.checkpoint();
+          }
+        }
+      ];
+    };
+  },
+
+  // LiteGraph normally allows only ONE connection per input — connecting a
+  // second wire silently disconnects the first. For a story graph we want
+  // many-to-one (choices/outcomes from different branches converging on the
+  // same scene), so:
+  //  1. connect() is patched to keep existing incoming links alive,
+  //  2. drawConnections() is replaced with a version that renders every link
+  //     in the graph (the stock one only draws input.link, i.e. one per input),
+  //  3. removing a node purges any extra links that pointed at it.
+  installMultiInputSupport() {
+    const self = this;
+
+    if (!LGraphNode.prototype._vnovelMultiInput) {
+      LGraphNode.prototype._vnovelMultiInput = true;
+      const origConnect = LGraphNode.prototype.connect;
+
+      LGraphNode.prototype.connect = function(slot, target_node, target_slot) {
+        target_slot = target_slot || 0;
+        const graph = this.graph;
+
+        // Resolve slots to numeric indexes the same way LiteGraph will
+        let inputIndex = target_slot;
+        if (typeof target_slot === "string" && target_node.findInputSlot) {
+          inputIndex = target_node.findInputSlot(target_slot);
+        }
+        let originSlot = slot;
+        if (typeof slot === "string" && this.findOutputSlot) {
+          originSlot = this.findOutputSlot(slot);
+        }
+
+        // Skip exact duplicates (same output slot -> same input slot)
+        if (graph && graph.links) {
+          for (const id in graph.links) {
+            const L = graph.links[id];
+            if (L && L.origin_id === this.id && L.origin_slot === originSlot &&
+                target_node && L.target_id === target_node.id && L.target_slot === inputIndex) {
+              return L;
+            }
+          }
+        }
+
+        // Temporarily hide an occupied input so the original connect()
+        // doesn't auto-disconnect it — both links then coexist.
+        const input = target_node && target_node.inputs ? target_node.inputs[inputIndex] : null;
+        let savedLinkId = null;
+        if (input && input.link != null) {
+          savedLinkId = input.link;
+          input.link = null;
+        }
+        let ret;
+        try {
+          ret = origConnect.call(this, slot, target_node, target_slot);
+        } finally {
+          // If the connect failed/was refused, restore the original link
+          if (savedLinkId != null && input && input.link == null) {
+            input.link = savedLinkId;
+          }
+        }
+        return ret;
+      };
+    }
+
+    // Render EVERY link in the registry, not just each input's single link
+    this.canvas.drawConnections = function(ctx) {
+      const graph = this.graph;
+      if (!graph || !graph.links) return;
+      if (this.visible_links) this.visible_links.length = 0;
+      ctx.lineWidth = this.connections_width;
+      ctx.fillStyle = "#AAA";
+      ctx.strokeStyle = "#AAA";
+      ctx.globalAlpha = this.editor_alpha;
+      for (const id in graph.links) {
+        const link = graph.links[id];
+        if (!link) continue;
+        const originNode = graph.getNodeById(link.origin_id);
+        const targetNode = graph.getNodeById(link.target_id);
+        if (!originNode || !targetNode) continue;
+        const start = originNode.getConnectionPos(false, link.origin_slot);
+        const end = targetNode.getConnectionPos(true, link.target_slot);
+        const color = link.color || this.default_link_color;
+        this.renderLink(ctx, start, end, link, false, 0, color, LiteGraph.RIGHT, LiteGraph.LEFT);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    // When a node is removed, LiteGraph only tears down the links its inputs
+    // still reference — with many-to-one there can be extras. Purge them.
+    this.graph.onNodeRemoved = function(node) {
+      const g = self.graph;
+      Object.keys(g.links || {}).forEach(id => {
+        const L = g.links[id];
+        if (L && (L.target_id === node.id || L.origin_id === node.id)) {
+          g.removeLink(Number(id));
+        }
+      });
+    };
+  },
+
+  addNodeAt(type, pos) {
+    const node = LiteGraph.createNode(type);
+    if (!node) return null;
+    node.pos = [pos[0], pos[1]];
+
+    // Auto-connect: if exactly one node is selected and it has a free output,
+    // wire it into the new node so writers can chain scenes rapidly.
+    const sel = Object.values(this.canvas.selected_nodes || {});
+    const prev = sel.length === 1 ? sel[0] : null;
+
+    this.graph.add(node);
+
+    if (prev && prev.outputs && node.inputs && node.inputs.length) {
+      const freeSlot = prev.outputs.findIndex(o => !o.links || o.links.length === 0);
+      if (freeSlot !== -1) prev.connect(freeSlot, node, 0);
+    }
+
+    this.canvas.selectNode(node);
+    this.openInspector(node);
+    this.checkpoint();
+    return node;
+  },
+
+  duplicateNode(node) {
+    if (!node) return;
+    const c = node.clone();
+    if (!c) return;
+    c.pos = [node.pos[0] + 40, node.pos[1] + 40];
+    this.graph.add(c);
+    this.canvas.selectNode(c);
+    this.checkpoint();
+  },
+
+  duplicateSelection() {
+    const sel = Object.values(this.canvas.selected_nodes || {});
+    sel.forEach(n => this.duplicateNode(n));
+  },
+
+  deleteSelection() {
+    const sel = Object.values(this.canvas.selected_nodes || {});
+    if (!sel.length) return;
+    const hadActive = sel.includes(this.activeNode);
+    sel.forEach(n => this.graph.remove(n));
+    this.canvas.selected_nodes = {};
+    if (hadActive) this.closeInspector();
+    this.renderBookmarks();
+    this.checkpoint();
+    this.toast(`Deleted ${sel.length} node${sel.length > 1 ? "s" : ""}`, "warning");
+  },
+
   // Register Custom VNovel Node Archetypes
   registerCustomNodes() {
     const self = this;
 
-    // A. PASSTHROUGH NARRATIVE NODE
+    // A. DIALOGUE (PASSTHROUGH) NODE
     function PassthroughNode() {
       this.addInput("In", LiteGraph.ACTION);
       this.addOutput("Out", LiteGraph.ACTION);
-      
+
       this.properties = {
         title: "Dialogue",
         location: "Dark Forest",
-        charactersPresent: "Hero, Goblin",
-        text: "{Hero}: Did you hear that?\n{Goblin}: Run!",
-        audioLoop: "ambient_wind.mp3",
+        charactersPresent: "", // legacy, kept for old saves
+        text: "Hero: Did you hear that?\nGoblin: Run!",
+        audioLoop: "",
+        audioLoopName: "",
         audioOneShot: "",
-        background: "forest_night.png",
+        audioOneShotName: "",
+        background: "",
+        backgroundName: "",
         rewardItems: "",
         rewardKnowledge: "",
+        startMission: "",
+        completeMission: "",
         isChapterStart: false
       };
-      
+
       this.size = [240, 110];
     }
-    
-    PassthroughNode.title = "Passthrough Node";
-    PassthroughNode.title_color = "#3b82f6"; // Blue Accent
-    
+
+    PassthroughNode.title = "Dialogue";
+    PassthroughNode.color = "#1e3a8a";
+    PassthroughNode.bgcolor = "#191d28";
+
     PassthroughNode.prototype.onDrawForeground = function(ctx) {
       if (this.flags.collapsed) return;
       ctx.font = "10px Inter, sans-serif";
       ctx.fillStyle = "#94a3b8";
-      ctx.fillText(`Loc: ${this.properties.location}`, 12, 45);
-      ctx.fillText(`Chars: ${this.properties.charactersPresent}`, 12, 60);
-      
-      let textSnippet = this.properties.text || "";
+      ctx.fillText(`Loc: ${this.properties.location || "—"}`, 12, 45);
+
+      let textSnippet = (this.properties.text || "").split("\n")[0] || "";
       if (textSnippet.length > 30) textSnippet = textSnippet.substring(0, 27) + "...";
       ctx.fillStyle = "#e2e8f0";
-      ctx.fillText(`"${textSnippet}"`, 12, 80);
-      
+      ctx.fillText(`"${textSnippet}"`, 12, 62);
+
+      let y = 79;
       if (this.properties.isChapterStart) {
         ctx.fillStyle = "#10b981";
-        ctx.fillText("★ Bookmark Entry", 12, 95);
+        ctx.fillText("★ Bookmark Entry", 12, y); y += 15;
       }
+      if (this.properties.startMission) {
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText(`⚑ Starts: ${this.properties.startMission}`, 12, y); y += 15;
+      }
+      if (this.properties.completeMission) {
+        ctx.fillStyle = "#34d399";
+        ctx.fillText(`✓ Completes: ${this.properties.completeMission}`, 12, y); y += 15;
+      }
+      if (this.properties.background) {
+        ctx.fillStyle = "#64748b";
+        ctx.fillText(`\u{1F5BC} ${this.properties.backgroundName || "background set"}`, 12, y); y += 15;
+      }
+      const needed = y + 8;
+      if (this.size[1] < needed) this.size[1] = needed;
     };
 
     LiteGraph.registerNodeType("vnovel/passthrough", PassthroughNode);
@@ -144,31 +395,26 @@ const VNovelApp = {
       this.properties = {
         title: "Path Selection",
         choices: [
-          { text: "Fight the Goblin", condition: "" },
-          { text: "Unlock the hidden gate", condition: "has_item('rusty_key')" }
+          { text: "Fight the Goblin", condition: "", mission: "" },
+          { text: "Unlock the hidden gate", condition: "has_item('rusty_key')", mission: "" }
         ]
       };
       this.size = [240, 120];
       this.updateChoiceOutputs();
     }
-    
-    ChoiceNode.title = "Choice Node";
-    ChoiceNode.title_color = "#8b5cf6"; // Purple Accent
-    
+
+    ChoiceNode.title = "Choice";
+    ChoiceNode.color = "#5b21b6";
+    ChoiceNode.bgcolor = "#191d28";
+
     ChoiceNode.prototype.updateChoiceOutputs = function() {
-      // Synchronize output slots with properties choices list
       const neededOutputs = this.properties.choices.length;
-      
-      // Clear existing outputs that might exceed
       while (this.outputs && this.outputs.length > neededOutputs) {
         this.removeOutput(this.outputs.length - 1);
       }
-      
-      // Add missing outputs
       for (let i = 0; i < neededOutputs; i++) {
-        const choiceText = this.properties.choices[i].text || `Choice ${i+1}`;
+        const choiceText = this.properties.choices[i].text || `Choice ${i + 1}`;
         const truncated = choiceText.length > 20 ? choiceText.substring(0, 17) + "..." : choiceText;
-        
         if (this.outputs && this.outputs[i]) {
           this.outputs[i].label = truncated;
         } else {
@@ -176,12 +422,19 @@ const VNovelApp = {
         }
       }
     };
-    
+
+    ChoiceNode.prototype.onConfigure = function() { this.updateChoiceOutputs(); };
+
     ChoiceNode.prototype.onDrawForeground = function(ctx) {
       if (this.flags.collapsed) return;
       ctx.font = "10px Inter, sans-serif";
       ctx.fillStyle = "#94a3b8";
-      ctx.fillText(`Options Count: ${this.properties.choices.length}`, 12, 45);
+      ctx.fillText(`Options: ${this.properties.choices.length}`, 12, 45);
+      const missionCount = this.properties.choices.filter(c => c.mission).length;
+      if (missionCount) {
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText(`⚑ ${missionCount} mission accept${missionCount > 1 ? "s" : ""}`, 12, 60);
+      }
     };
 
     LiteGraph.registerNodeType("vnovel/choice", ChoiceNode);
@@ -192,7 +445,6 @@ const VNovelApp = {
       this.properties = {
         title: "Dice Maze Challenge",
         targetAccumulation: 100,
-        currentAccumulation: 0,
         outcomes: [
           { label: "Become Monster", probability: 10, description: "You got bitten by a shadow creature and mutated!" },
           { label: "Spike Trap (Die)", probability: 5, description: "You stepped on a pressure plate and fell into spikes." }
@@ -201,53 +453,44 @@ const VNovelApp = {
       this.size = [260, 120];
       this.updateOutputs();
     }
-    
-    TraversalNode.title = "Traversal Node";
-    TraversalNode.title_color = "#f59e0b"; // Orange Accent
-    
+
+    TraversalNode.title = "Traversal";
+    TraversalNode.color = "#92400e";
+    TraversalNode.bgcolor = "#191d28";
+
+    // Slot layout: 0 = escape/success, 1..n = risk outcomes, n+1 = early exit
     TraversalNode.prototype.updateOutputs = function() {
-      const neededCount = this.properties.outcomes.length + 1; // outcomes + Escape slot
-      
-      while (this.outputs && this.outputs.length > neededCount) {
+      const outcomes = this.properties.outcomes || [];
+      const needed = outcomes.length + 2;
+      while (this.outputs && this.outputs.length > needed) {
         this.removeOutput(this.outputs.length - 1);
       }
-      
-      // Out 0: Escape
-      if (this.outputs && this.outputs[0]) {
-        this.outputs[0].label = "🎉 Escape / Success";
-      } else {
-        this.addOutput("🎉 Escape / Success", LiteGraph.ACTION);
-      }
-      
-      // Rest of slots match outcome paths
-      for (let i = 0; i < this.properties.outcomes.length; i++) {
-        const outName = this.properties.outcomes[i].label || `Outcome ${i+1}`;
-        const slotIdx = i + 1;
-        if (this.outputs && this.outputs[slotIdx]) {
-          this.outputs[slotIdx].label = outName;
-        } else {
-          this.addOutput(outName, LiteGraph.ACTION);
-        }
-      }
+      const ensure = (idx, label) => {
+        if (this.outputs && this.outputs[idx]) this.outputs[idx].label = label;
+        else this.addOutput(label, LiteGraph.ACTION);
+      };
+      ensure(0, "\u{1F389} Escape / Success");
+      outcomes.forEach((o, i) => ensure(i + 1, o.label || `Outcome ${i + 1}`));
+      ensure(outcomes.length + 1, "\u{1F6AA} Early Exit");
     };
+
+    TraversalNode.prototype.onConfigure = function() { this.updateOutputs(); };
 
     TraversalNode.prototype.onDrawForeground = function(ctx) {
       if (this.flags.collapsed) return;
       ctx.font = "10px Inter, sans-serif";
       ctx.fillStyle = "#94a3b8";
       ctx.fillText(`Target Score: ${this.properties.targetAccumulation}`, 12, 45);
-      
+
       let yOffset = 60;
-      this.properties.outcomes.forEach((out) => {
+      (this.properties.outcomes || []).forEach((out) => {
         const chance = out.probability !== undefined ? out.probability : 10;
         ctx.fillText(`• ${out.label}: ${chance}%`, 12, yOffset);
         yOffset += 15;
       });
-      
+
       const neededHeight = yOffset + 15;
-      if (this.size[1] < neededHeight) {
-        this.size[1] = neededHeight;
-      }
+      if (this.size[1] < neededHeight) this.size[1] = neededHeight;
     };
 
     LiteGraph.registerNodeType("vnovel/traversal", TraversalNode);
@@ -257,50 +500,138 @@ const VNovelApp = {
       this.addInput("In", LiteGraph.ACTION);
       this.addOutput("True Path", LiteGraph.ACTION);
       this.addOutput("False Path", LiteGraph.ACTION);
-      
+
       this.properties = {
         title: "Conditional Gate",
         condition: "has_knowledge('heard_rustle')"
       };
-      
+
       this.size = [220, 80];
     }
-    
+
     LogicGateNode.title = "Logic Gate";
-    LogicGateNode.title_color = "#10b981"; // Emerald green
-    
+    LogicGateNode.color = "#065f46";
+    LogicGateNode.bgcolor = "#191d28";
+
     LogicGateNode.prototype.onDrawForeground = function(ctx) {
       if (this.flags.collapsed) return;
       ctx.font = "10px Inter, sans-serif";
       ctx.fillStyle = "#94a3b8";
-      ctx.fillText("Evaluates variable conditions", 12, 45);
-      let condStr = this.properties.condition;
+      ctx.fillText("Routes by condition", 12, 45);
+      let condStr = this.properties.condition || "";
       if (condStr.length > 25) condStr = condStr.substring(0, 22) + "...";
       ctx.fillStyle = "#34d399";
       ctx.fillText(`Check: ${condStr}`, 12, 60);
     };
 
-    const getMenuOptionsHelper = function(canvas) {
-      const node = this;
-      return [
-        {
-          content: "Play from here",
-          callback: () => {
-            self.startPlayback(node);
-          }
-        }
-      ];
-    };
-
-    PassthroughNode.prototype.getMenuOptions = getMenuOptionsHelper;
-    ChoiceNode.prototype.getMenuOptions = getMenuOptionsHelper;
-    TraversalNode.prototype.getMenuOptions = getMenuOptionsHelper;
-    LogicGateNode.prototype.getMenuOptions = getMenuOptionsHelper;
-
     LiteGraph.registerNodeType("vnovel/logic_gate", LogicGateNode);
   },
 
-  // 2. UI Panels Rendering and Management
+  // ================= UNDO SYSTEM =================
+
+  currentState() {
+    return {
+      graphSchema: this.graph.serialize(),
+      globalVars: this.globalVars,
+      varMeta: this.varMeta,
+      projectTitle: this.projectTitle
+    };
+  },
+
+  snapshotStr() {
+    return JSON.stringify(this.currentState());
+  },
+
+  initUndo() {
+    this._states = [this.snapshotStr()];
+    this._statePtr = 0;
+
+    // Also catch canvas-native edits (node drags, link rewires) that don't go
+    // through our code — cheap JSON diff on an interval, skipped mid-drag.
+    setInterval(() => {
+      if (this.gamePlaying || this._restoring) return;
+      if (this.canvas && this.canvas.pointer_is_down) return;
+      this.checkpoint();
+    }, 1200);
+  },
+
+  checkpoint() {
+    if (this._restoring || !this.graph) return;
+    const cur = this.snapshotStr();
+    if (this._states[this._statePtr] === cur) return;
+    this._states.splice(this._statePtr + 1);
+    this._states.push(cur);
+    if (this._states.length > 60) this._states.shift();
+    this._statePtr = this._states.length - 1;
+  },
+
+  undo() {
+    this.checkpoint(); // capture any pending edits first
+    if (this._statePtr <= 0) { this.toast("Nothing to undo", "warning"); return; }
+    this._statePtr--;
+    this.restoreState(JSON.parse(this._states[this._statePtr]));
+    // Normalize: restoring can shift slot labels etc., keep stack aligned
+    this._states[this._statePtr] = this.snapshotStr();
+    this.toast("Undo");
+  },
+
+  redo() {
+    if (this._statePtr >= this._states.length - 1) { this.toast("Nothing to redo", "warning"); return; }
+    this._statePtr++;
+    this.restoreState(JSON.parse(this._states[this._statePtr]));
+    this._states[this._statePtr] = this.snapshotStr();
+    this.toast("Redo");
+  },
+
+  restoreState(state) {
+    this._restoring = true;
+    try {
+      this.closeInspector();
+      if (state.graphSchema) this.graph.configure(state.graphSchema);
+      if (state.globalVars) this.globalVars = state.globalVars;
+      if (state.varMeta) this.varMeta = state.varMeta;
+      if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+      this.ensureVarShape();
+      this.renderGlobalTags();
+      this.renderBookmarks();
+      this.canvas.draw(true, true);
+      this.saveToLocalStorage();
+    } finally {
+      this._restoring = false;
+    }
+  },
+
+  // Debounced persist used by live-apply inspector fields
+  schedulePersist() {
+    clearTimeout(this._persistTimer);
+    this._persistTimer = setTimeout(() => {
+      this.saveToLocalStorage();
+      this.checkpoint();
+      this.renderBookmarks();
+    }, 600);
+  },
+
+  ensureVarShape() {
+    ["characters", "locations", "collectibles", "knowledge", "missions"].forEach(k => {
+      if (!Array.isArray(this.globalVars[k])) this.globalVars[k] = [];
+    });
+    if (!this.varMeta || typeof this.varMeta !== "object") this.varMeta = {};
+  },
+
+  getMeta(category, name) {
+    if (!this.varMeta[category]) this.varMeta[category] = {};
+    if (!this.varMeta[category][name]) this.varMeta[category][name] = {};
+    return this.varMeta[category][name];
+  },
+
+  setProjectTitle(title) {
+    this.projectTitle = title || "Untitled Story";
+    const input = document.getElementById("project_title_input");
+    if (input && input.value !== this.projectTitle) input.value = this.projectTitle;
+  },
+
+  // ================= UI PANELS =================
+
   initUI() {
     this.renderGlobalTags();
     this.renderBookmarks();
@@ -312,45 +643,60 @@ const VNovelApp = {
     if (!listContainer) return;
     listContainer.innerHTML = "";
 
-    const categories = [
-      { key: 'characters', label: 'Characters', cssClass: 'character' },
-      { key: 'locations', label: 'Locations', cssClass: 'location' },
-      { key: 'collectibles', label: 'Collectibles', cssClass: 'collectible' },
-      { key: 'knowledge', label: 'Knowledge (Diary)', cssClass: 'knowledge' }
-    ];
-
-    categories.forEach(cat => {
+    this.VAR_CATEGORIES.forEach(cat => {
       const section = document.createElement("div");
       section.className = "list-section";
       section.innerHTML = `
         <div class="section-title">
           <span>${cat.label}</span>
-          <button class="section-add-btn" onclick="VNovelApp.promptAddVariable('${cat.key}')">
-            <i class="fas fa-plus"></i> +
-          </button>
+          <button class="section-add-btn" title="Add ${cat.singular}"><i class="fas fa-plus"></i></button>
         </div>
-        <div class="tag-list" id="tag_list_${cat.key}"></div>
+        <div class="inline-add-row">
+          <input type="text" placeholder="New ${cat.singular} name...">
+          <button class="btn" style="padding:4px 10px; font-size:11px;">Add</button>
+        </div>
+        <div class="tag-list"></div>
       `;
       listContainer.appendChild(section);
 
-      const tagContainer = section.querySelector(`#tag_list_${cat.key}`);
-      this.globalVars[cat.key].forEach(val => {
+      const addRow = section.querySelector(".inline-add-row");
+      const addInput = addRow.querySelector("input");
+      const commit = () => {
+        const val = addInput.value.trim();
+        if (val) this.addVariable(cat.key, val);
+        addInput.value = "";
+        addRow.classList.remove("open");
+      };
+      section.querySelector(".section-add-btn").onclick = () => {
+        addRow.classList.toggle("open");
+        if (addRow.classList.contains("open")) addInput.focus();
+      };
+      addRow.querySelector(".btn").onclick = commit;
+      addInput.onkeydown = (e) => {
+        if (e.key === "Enter") commit();
+        if (e.key === "Escape") addRow.classList.remove("open");
+      };
+
+      const tagContainer = section.querySelector(".tag-list");
+      (this.globalVars[cat.key] || []).forEach(val => {
+        const meta = (this.varMeta[cat.key] && this.varMeta[cat.key][val]) || {};
         const tag = document.createElement("span");
         tag.className = `variable-tag ${cat.cssClass}`;
+        tag.title = (meta.info ? meta.info + "\n\n" : "") + "Double-click to edit background info";
         tag.innerHTML = `
-          ${val}
-          <span class="remove-tag" onclick="VNovelApp.removeVariable('${cat.key}', '${val}')">&times;</span>
+          ${meta.info ? '<span class="has-info-dot"></span>' : ""}
+          ${cat.key === "missions" && meta.required ? '<i class="fas fa-exclamation-circle" style="font-size:9px;"></i>' : ""}
+          ${this.escapeHtml(val)}
+          <span class="remove-tag">&times;</span>
         `;
+        tag.querySelector(".remove-tag").onclick = (e) => {
+          e.stopPropagation();
+          this.removeVariable(cat.key, val);
+        };
+        tag.ondblclick = () => this.openItemModal(cat.key, val);
         tagContainer.appendChild(tag);
       });
     });
-  },
-
-  promptAddVariable(category) {
-    const input = prompt(`Enter new global item name for ${category}:`);
-    if (input && input.trim()) {
-      this.addVariable(category, input.trim());
-    }
   },
 
   addVariable(category, name) {
@@ -359,14 +705,48 @@ const VNovelApp = {
       this.renderGlobalTags();
       this.updateInspectorAutocompletes();
       this.saveToLocalStorage();
+      this.checkpoint();
+      this.toast(`Added "${name}" to ${category}`, "success");
     }
   },
 
   removeVariable(category, name) {
     this.globalVars[category] = this.globalVars[category].filter(v => v !== name);
+    if (this.varMeta[category]) delete this.varMeta[category][name];
     this.renderGlobalTags();
     this.updateInspectorAutocompletes();
     this.saveToLocalStorage();
+    this.checkpoint();
+  },
+
+  // Item background-info modal (double-click a sidebar tag)
+  openItemModal(category, name) {
+    this._itemModalTarget = { category, name };
+    const meta = this.getMeta(category, name);
+    const catDef = this.VAR_CATEGORIES.find(c => c.key === category);
+    document.getElementById("item_modal_title").innerHTML =
+      `<i class="fas fa-feather"></i> ${this.escapeHtml(name)} <span style="font-size:11px; color:var(--text-dark); font-weight:400;">(${catDef ? catDef.singular : category})</span>`;
+    document.getElementById("item_modal_info").value = meta.info || "";
+    const reqGroup = document.getElementById("item_modal_required_group");
+    reqGroup.style.display = category === "missions" ? "flex" : "none";
+    document.getElementById("item_modal_required").checked = !!meta.required;
+    this.openModal("item_modal_overlay");
+    document.getElementById("item_modal_info").focus();
+  },
+
+  saveItemModal() {
+    if (!this._itemModalTarget) return;
+    const { category, name } = this._itemModalTarget;
+    const meta = this.getMeta(category, name);
+    meta.info = document.getElementById("item_modal_info").value;
+    if (category === "missions") {
+      meta.required = document.getElementById("item_modal_required").checked;
+    }
+    this.closeModal("item_modal_overlay");
+    this.renderGlobalTags();
+    this.saveToLocalStorage();
+    this.checkpoint();
+    this.toast(`Details saved for "${name}"`, "success");
   },
 
   renderBookmarks() {
@@ -374,10 +754,9 @@ const VNovelApp = {
     if (!container) return;
     container.innerHTML = "";
 
-    // Sync bookmarks from nodes with properties.isChapterStart
     this.bookmarks = [];
     const nodesList = this.graph._nodes || [];
-    
+
     nodesList.forEach(node => {
       if (node.properties && node.properties.isChapterStart) {
         this.bookmarks.push({
@@ -389,7 +768,7 @@ const VNovelApp = {
     });
 
     if (this.bookmarks.length === 0) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No active chapters bookmarked. Double click a Passthrough node to bookmark it.</div>`;
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No chapters bookmarked. Check "Chapter Entry Point" on a Dialogue node.</div>`;
       return;
     }
 
@@ -398,8 +777,8 @@ const VNovelApp = {
       el.className = "bookmark-item";
       el.innerHTML = `
         <div>
-          <strong style="color:#fff;">${bm.title}</strong>
-          <div style="font-size:10px; color:var(--text-dark); margin-top:2px;">${bm.location}</div>
+          <strong>${this.escapeHtml(bm.title)}</strong>
+          <div style="font-size:10px; color:var(--text-dark); margin-top:2px;">${this.escapeHtml(bm.location)}</div>
         </div>
         <i class="fas fa-chevron-right" style="font-size:10px; color:var(--accent-primary);"></i>
       `;
@@ -415,23 +794,30 @@ const VNovelApp = {
     });
   },
 
-  // 3. Right Panel Inspector Drawer Logic
+  // ================= INSPECTOR (live-apply, no save buttons) =================
+
   openInspector(node) {
+    this.stopAudioPreview();
     this.activeNode = node;
     const drawer = document.getElementById("inspector_drawer");
     const container = document.getElementById("inspector_content");
     drawer.classList.remove("collapsed");
-
     container.innerHTML = "";
 
-    // Header Info
+    const typeNames = {
+      "vnovel/passthrough": "Dialogue Scene",
+      "vnovel/choice": "Choice Branch",
+      "vnovel/traversal": "Traversal Challenge",
+      "vnovel/logic_gate": "Logic Gate"
+    };
+
     const nodeHeader = document.createElement("div");
     nodeHeader.style.marginBottom = "15px";
     nodeHeader.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
         <div>
-          <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:4px;">Node Configuration</h3>
-          <span style="font-size:11px; color:var(--accent-primary); text-transform:uppercase; font-weight:600;">Type: ${node.type}</span>
+          <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:4px;">${typeNames[node.type] || "Node"}</h3>
+          <span style="font-size:11px; color:var(--accent-primary); text-transform:uppercase; font-weight:600;">#${node.id}</span>
         </div>
         <button class="btn btn-primary" id="btn_play_from_here" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));">
           <i class="fas fa-play" style="font-size: 10px;"></i> Play from Here
@@ -439,8 +825,8 @@ const VNovelApp = {
       </div>
     `;
     container.appendChild(nodeHeader);
+    nodeHeader.querySelector("#btn_play_from_here").onclick = () => this.startPlayback(node);
 
-    // Form inputs based on type
     if (node.type === "vnovel/passthrough") {
       this.renderPassthroughInspector(node, container);
     } else if (node.type === "vnovel/choice") {
@@ -450,212 +836,421 @@ const VNovelApp = {
     } else if (node.type === "vnovel/logic_gate") {
       this.renderLogicGateInspector(node, container);
     }
-
-    const playBtn = nodeHeader.querySelector("#btn_play_from_here");
-    if (playBtn) {
-      playBtn.onclick = () => {
-        // Auto-save currently active inputs
-        const saveBtn = container.querySelector("#btn_save_inspector, #btn_save_choices, #btn_save_traversal, #btn_save_logic_gate");
-        if (saveBtn) {
-          const oldAlert = window.alert;
-          window.alert = () => {}; // suppress success alert
-          try {
-            saveBtn.click();
-          } catch (e) {
-            console.error("Auto-save failed", e);
-          } finally {
-            window.alert = oldAlert;
-          }
-        }
-        this.startPlayback(node);
-      };
-    }
   },
 
   closeInspector() {
+    this.stopAudioPreview();
     this.activeNode = null;
     const drawer = document.getElementById("inspector_drawer");
-    if (drawer) {
-      drawer.classList.add("collapsed");
-    }
+    if (drawer) drawer.classList.add("collapsed");
   },
 
-  // PASSTHROUGH DRAWER PANEL
+  // Live-apply helper: writes to node property on every keystroke, then
+  // debounces persistence + undo checkpoint.
+  bindLive(el, node, apply, evt = "input") {
+    el.addEventListener(evt, () => {
+      apply(el);
+      node.setDirtyCanvas(true, true);
+      this.schedulePersist();
+    });
+  },
+
+  // DIALOGUE INSPECTOR
   renderPassthroughInspector(node, container) {
+    const p = node.properties;
     const form = document.createElement("div");
     form.className = "inspector-scroll";
     form.style.padding = "0";
+
+    const locOptions = this.globalVars.locations.map(loc =>
+      `<option value="${this.escapeHtml(loc)}" ${p.location === loc ? "selected" : ""}>${this.escapeHtml(loc)}</option>`).join("");
+    const missionOptions = (sel) => `<option value="">None</option>` + this.globalVars.missions.map(m =>
+      `<option value="${this.escapeHtml(m)}" ${sel === m ? "selected" : ""}>${this.escapeHtml(m)}</option>`).join("");
+
     form.innerHTML = `
       <div class="form-group">
         <label>Node Title</label>
-        <input type="text" class="input-text" id="node_prop_title" value="${node.properties.title || ''}">
+        <input type="text" class="input-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
       </div>
 
       <div class="form-group">
-        <label>Bookmark as Chapter Entry Point?</label>
-        <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
-          <input type="checkbox" id="node_prop_chapter" ${node.properties.isChapterStart ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
-          <span style="font-size:12px; color:var(--text-muted);">Show in quick-jump Bookmarks list</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="insp_chapter" ${p.isChapterStart ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;">
+          <label style="cursor:pointer;" for="insp_chapter">Chapter entry point (shows in Bookmarks)</label>
         </div>
       </div>
 
       <div class="form-group">
         <label>Location</label>
-        <select class="select-input" id="node_prop_location">
-          ${this.globalVars.locations.map(loc => `<option value="${loc}" ${node.properties.location === loc ? 'selected' : ''}>${loc}</option>`).join('')}
+        <select class="select-input" id="insp_location">
+          ${locOptions}
+          <option value="__add__">＋ Add new location…</option>
         </select>
-      </div>
-
-      <div class="form-group">
-        <label>Characters Present (comma separated)</label>
-        <input type="text" class="input-text" id="node_prop_characters" value="${node.properties.charactersPresent || ''}">
-        <div id="quick_add_char_bubble" class="quick-add-bubble"></div>
+        <div id="insp_new_loc_row" style="display:none; gap:6px; margin-top:4px;">
+          <input type="text" class="input-text" id="insp_new_loc" placeholder="New location name — press Enter">
+        </div>
       </div>
 
       <div class="form-group">
         <label>Dialogue / Action Text</label>
         <div class="editor-container">
-          <textarea class="textarea-input dialogue-textarea" id="node_prop_text" placeholder="Format: {CharacterName}: Speech dialog line...">${node.properties.text || ''}</textarea>
+          <textarea class="textarea-input dialogue-textarea" id="insp_text" placeholder="Hero: Did you hear that?&#10;The wind rustles. (no name = narration)">${this.escapeHtml(p.text || "")}</textarea>
           <div class="autocomplete-menu" id="autocomplete_menu"></div>
         </div>
-        <label style="margin-top:6px;">Syntax Highlight View:</label>
+        <div class="field-hint">
+          One line = one beat. Start a line with <code>Name:</code> to show the speaker above the box —
+          the colon is added automatically for known characters. Type <code>{</code> for autocomplete.
+        </div>
+        <div class="quick-add-bubble" id="speaker_bubble"></div>
+        <label style="margin-top:6px;">Preview:</label>
         <div class="highlight-helper" id="highlight_helper"></div>
       </div>
 
       <div class="form-group">
         <label>Background Image</label>
-        <input type="text" class="input-text" id="node_prop_bg" value="${node.properties.background || ''}">
+        <div class="bg-preview" id="insp_bg_preview">No background set</div>
+        <div class="file-pick-row">
+          <input type="text" class="input-text" id="insp_bg" value="${this.escapeHtml(p.background || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_bg_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn file-pick-btn" id="insp_bg_clear" title="Clear"><i class="fas fa-times"></i></button>
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Audio Loop Music</label>
-        <input type="text" class="input-text" id="node_prop_audio_loop" value="${node.properties.audioLoop || ''}">
+        <label>Music Loop <span style="color:var(--text-dark);">(crossfades between scenes)</span></label>
+        <div class="audio-row">
+          <input type="text" class="input-text" id="insp_audio_loop" value="${this.escapeHtml(p.audioLoop || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_audio_loop_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn audio-preview-btn" id="insp_audio_loop_play" title="Preview loop"><i class="fas fa-play"></i></button>
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Audio One-Shot Sound</label>
-        <input type="text" class="input-text" id="node_prop_audio_shot" value="${node.properties.audioOneShot || ''}">
+        <label>One-Shot Sound <span style="color:var(--text-dark);">(plays once on scene enter)</span></label>
+        <div class="audio-row">
+          <input type="text" class="input-text" id="insp_audio_shot" value="${this.escapeHtml(p.audioOneShot || "")}" placeholder="URL, or pick a file →">
+          <button class="btn file-pick-btn" id="insp_audio_shot_pick"><i class="fas fa-folder-open"></i></button>
+          <button class="btn audio-preview-btn" id="insp_audio_shot_play" title="Preview one-shot"><i class="fas fa-play"></i></button>
+        </div>
       </div>
 
       <div class="form-group" style="border-top:1px solid var(--border-color); padding-top:15px; margin-top:10px;">
-        <label style="font-weight:600; color:var(--accent-info);">Awards & Collectibles</label>
+        <label style="font-weight:600; color:var(--accent-info);">Rewards & Missions</label>
       </div>
 
       <div class="form-group">
         <label>Add Item to Inventory</label>
-        <select class="select-input" id="node_prop_reward_item">
+        <select class="select-input" id="insp_reward_item">
           <option value="">None</option>
-          ${this.globalVars.collectibles.map(item => `<option value="${item}" ${node.properties.rewardItems === item ? 'selected' : ''}>${item}</option>`).join('')}
+          ${this.globalVars.collectibles.map(item => `<option value="${this.escapeHtml(item)}" ${p.rewardItems === item ? "selected" : ""}>${this.escapeHtml(item)}</option>`).join("")}
         </select>
       </div>
 
       <div class="form-group">
         <label>Unlock Knowledge (Diary Page)</label>
-        <select class="select-input" id="node_prop_reward_knowledge">
+        <select class="select-input" id="insp_reward_knowledge">
           <option value="">None</option>
-          ${this.globalVars.knowledge.map(kw => `<option value="${kw}" ${node.properties.rewardKnowledge === kw ? 'selected' : ''}>${kw}</option>`).join('')}
+          ${this.globalVars.knowledge.map(kw => `<option value="${this.escapeHtml(kw)}" ${p.rewardKnowledge === kw ? "selected" : ""}>${this.escapeHtml(kw)}</option>`).join("")}
         </select>
       </div>
 
-      <div style="margin-top:20px; display:flex; gap:10px;">
-        <button class="btn btn-primary" style="flex:1;" id="btn_save_inspector">Save Changes</button>
-        <button class="btn btn-success" id="btn_llm_expand_node" title="Ask LLM to Expand dialogue content"><i class="fas fa-magic"></i> Expand Dialogue</button>
+      <div class="form-group">
+        <label>Start Mission on Enter</label>
+        <select class="select-input" id="insp_start_mission">${missionOptions(p.startMission)}</select>
+      </div>
+
+      <div class="form-group">
+        <label>Complete Mission on Enter</label>
+        <select class="select-input" id="insp_complete_mission">${missionOptions(p.completeMission)}</select>
+      </div>
+
+      <div style="margin-top:10px; display:flex; gap:10px;">
+        <button class="btn btn-success" style="flex:1; justify-content:center;" id="btn_llm_expand_node" title="Ask LLM to expand dialogue content"><i class="fas fa-magic"></i> Expand Dialogue with LLM</button>
       </div>
     `;
     container.appendChild(form);
 
-    this.setupAutocomplete("node_prop_text", "autocomplete_menu");
-    this.setupDialogueHighlight("node_prop_text", "highlight_helper");
-    this.setupQuickAddVariableListener("node_prop_characters", "quick_add_char_bubble", "characters");
+    const $ = id => form.querySelector("#" + id);
 
-    // Save Action
-    document.getElementById("btn_save_inspector").onclick = () => {
-      node.properties.title = document.getElementById("node_prop_title").value;
-      node.properties.isChapterStart = document.getElementById("node_prop_chapter").checked;
-      node.properties.location = document.getElementById("node_prop_location").value;
-      node.properties.charactersPresent = document.getElementById("node_prop_characters").value;
-      node.properties.text = document.getElementById("node_prop_text").value;
-      node.properties.background = document.getElementById("node_prop_bg").value;
-      node.properties.audioLoop = document.getElementById("node_prop_audio_loop").value;
-      node.properties.audioOneShot = document.getElementById("node_prop_audio_shot").value;
-      node.properties.rewardItems = document.getElementById("node_prop_reward_item").value;
-      node.properties.rewardKnowledge = document.getElementById("node_prop_reward_knowledge").value;
-
-      node.title = node.properties.title || "Dialogue";
+    // --- Live bindings ---
+    this.bindLive($("insp_title"), node, el => {
+      p.title = el.value;
+      node.title = el.value || "Dialogue";
+    });
+    this.bindLive($("insp_chapter"), node, el => {
+      p.isChapterStart = el.checked;
       this.renderBookmarks();
-      this.saveToLocalStorage();
-      node.setDirtyCanvas(true, true);
-      alert("Dialogue Node parameters updated!");
-    };
+    }, "change");
+    this.bindLive($("insp_reward_item"), node, el => { p.rewardItems = el.value; }, "change");
+    this.bindLive($("insp_reward_knowledge"), node, el => { p.rewardKnowledge = el.value; }, "change");
+    this.bindLive($("insp_start_mission"), node, el => { p.startMission = el.value; }, "change");
+    this.bindLive($("insp_complete_mission"), node, el => { p.completeMission = el.value; }, "change");
 
-    // LLM Expand Action
-    document.getElementById("btn_llm_expand_node").onclick = () => {
-      this.triggerLLMExpansion(node);
+    // Location select with inline "add new"
+    const locSelect = $("insp_location");
+    const newLocRow = $("insp_new_loc_row");
+    const newLocInput = $("insp_new_loc");
+    locSelect.addEventListener("change", () => {
+      if (locSelect.value === "__add__") {
+        newLocRow.style.display = "flex";
+        newLocInput.focus();
+        return;
+      }
+      p.location = locSelect.value;
+      node.setDirtyCanvas(true, true);
+      this.schedulePersist();
+    });
+    newLocInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const val = newLocInput.value.trim();
+        if (val) {
+          this.addVariable("locations", val);
+          p.location = val;
+          this.openInspector(node); // re-render to refresh the select
+        }
+      } else if (e.key === "Escape") {
+        newLocRow.style.display = "none";
+        locSelect.value = p.location || "";
+      }
+    });
+
+    // Dialogue text: live apply + highlight + auto-colon on blur + unknown speakers
+    const textArea = $("insp_text");
+    this.bindLive(textArea, node, el => { p.text = el.value; });
+    this.setupAutocomplete("insp_text", "autocomplete_menu");
+    this.setupDialogueHighlight("insp_text", "highlight_helper");
+    this.setupSpeakerQuickAdd(textArea, $("speaker_bubble"));
+    textArea.addEventListener("blur", () => {
+      const normalized = this.normalizeDialogueText(textArea.value);
+      if (normalized !== textArea.value) {
+        textArea.value = normalized;
+        p.text = normalized;
+        textArea.dispatchEvent(new Event("input"));
+        this.toast("Added missing colons after character names", "success");
+      }
+    });
+
+    // Background image
+    const bgInput = $("insp_bg");
+    const bgPreview = $("insp_bg_preview");
+    const refreshBgPreview = () => {
+      const v = (p.background || "").trim();
+      if (!v) {
+        bgPreview.style.backgroundImage = "";
+        bgPreview.textContent = "No background set";
+      } else if (v.includes("gradient(")) {
+        bgPreview.style.backgroundImage = v;
+        bgPreview.textContent = "";
+      } else {
+        bgPreview.style.backgroundImage = `url("${v.replace(/"/g, '%22')}")`;
+        bgPreview.textContent = "";
+      }
     };
+    refreshBgPreview();
+    this.bindLive(bgInput, node, el => {
+      p.background = el.value;
+      p.backgroundName = "";
+      refreshBgPreview();
+    });
+    $("insp_bg_pick").onclick = () => {
+      this.pickFile("image/*", (value, file, embedded) => {
+        p.background = value;
+        p.backgroundName = file.name;
+        if (embedded) {
+          bgInput.value = ""; // data URLs are huge; keep the text field clean
+          bgInput.placeholder = `embedded: ${file.name}`;
+        } else {
+          bgInput.value = value; // visible, editable relative path
+          bgInput.placeholder = "URL, or pick a file →";
+        }
+        refreshBgPreview();
+        node.setDirtyCanvas(true, true);
+        this.schedulePersist();
+      });
+    };
+    $("insp_bg_clear").onclick = () => {
+      p.background = ""; p.backgroundName = "";
+      bgInput.value = ""; bgInput.placeholder = "URL, or pick a file →";
+      refreshBgPreview();
+      node.setDirtyCanvas(true, true);
+      this.schedulePersist();
+    };
+    if (p.background && p.background.startsWith("data:")) {
+      bgInput.value = "";
+      bgInput.placeholder = `embedded: ${p.backgroundName || "image file"}`;
+    }
+
+    // Audio fields (loop + one-shot), each with file pick and preview
+    this.wireAudioField(node, $("insp_audio_loop"), $("insp_audio_loop_pick"), $("insp_audio_loop_play"), "audioLoop", "audioLoopName", true);
+    this.wireAudioField(node, $("insp_audio_shot"), $("insp_audio_shot_pick"), $("insp_audio_shot_play"), "audioOneShot", "audioOneShotName", false);
+
+    $("btn_llm_expand_node").onclick = () => this.triggerLLMExpansion(node);
   },
 
-  // CHOICE DRAWER PANEL
+  wireAudioField(node, input, pickBtn, playBtn, propKey, nameKey, loop) {
+    const p = node.properties;
+    if (p[propKey] && p[propKey].startsWith("data:")) {
+      input.value = "";
+      input.placeholder = `embedded: ${p[nameKey] || "audio file"}`;
+    }
+    this.bindLive(input, node, el => {
+      p[propKey] = el.value;
+      p[nameKey] = "";
+    });
+    pickBtn.onclick = () => {
+      this.pickFile("audio/*", (value, file, embedded) => {
+        p[propKey] = value;
+        p[nameKey] = file.name;
+        if (embedded) {
+          input.value = "";
+          input.placeholder = `embedded: ${file.name}`;
+        } else {
+          input.value = value;
+          input.placeholder = "URL, or pick a file →";
+        }
+        node.setDirtyCanvas(true, true);
+        this.schedulePersist();
+      });
+    };
+    playBtn.onclick = () => this.toggleAudioPreview(p[propKey], playBtn, loop);
+  },
+
+  toggleAudioPreview(src, btn, loop) {
+    // Toggle off if this button is currently playing
+    if (this._previewBtn === btn && this._previewAudio) {
+      this.stopAudioPreview();
+      return;
+    }
+    this.stopAudioPreview();
+    if (!src || !src.trim()) {
+      this.toast("No audio set on this field yet", "warning");
+      return;
+    }
+    const a = new Audio(src);
+    a.loop = !!loop;
+    const played = a.play();
+    if (played && played.catch) {
+      played.catch(() => this.toast("Couldn't play that audio source", "danger"));
+    }
+    a.onended = () => { if (this._previewAudio === a) this.stopAudioPreview(); };
+    this._previewAudio = a;
+    this._previewBtn = btn;
+    btn.classList.add("playing");
+    btn.innerHTML = '<i class="fas fa-stop"></i>';
+  },
+
+  stopAudioPreview() {
+    if (this._previewAudio) {
+      this._previewAudio.pause();
+      this._previewAudio.src = "";
+      this._previewAudio = null;
+    }
+    if (this._previewBtn) {
+      this._previewBtn.classList.remove("playing");
+      this._previewBtn.innerHTML = '<i class="fas fa-play"></i>';
+      this._previewBtn = null;
+    }
+  },
+
+  getAssetMode() {
+    return localStorage.getItem("vnovel_asset_mode") || "embed";
+  },
+
+  // cb(value, file, embedded) — value is either a base64 data URL (embed mode)
+  // or an "assets/<filename>" relative path (reference mode).
+  pickFile(accept, cb) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = accept;
+    input.onchange = () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+
+      if (this.getAssetMode() === "reference") {
+        const path = "assets/" + file.name;
+        this.toast(`Referenced as "${path}" — keep the file in an assets folder next to this editor and next to any published HTML.`, "success");
+        cb(path, file, false);
+        return;
+      }
+
+      if (file.size > 3 * 1024 * 1024) {
+        this.toast("Heads up: large embedded files can exceed browser save limits. Consider switching to 'Reference by path' in the sidebar, or use a URL.", "warning");
+      }
+      const reader = new FileReader();
+      reader.onload = () => cb(reader.result, file, true);
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  },
+
+  // CHOICE INSPECTOR
   renderChoiceInspector(node, container) {
+    const p = node.properties;
     const form = document.createElement("div");
     form.className = "inspector-scroll";
     form.style.padding = "0";
     form.innerHTML = `
       <div class="form-group">
-        <label>Node Title</label>
-        <input type="text" class="input-text" id="node_prop_title" value="${node.properties.title || ''}">
+        <label>Prompt shown to the player</label>
+        <input type="text" class="input-text serif-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
       </div>
 
       <div class="form-group">
         <label style="font-weight:600; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-          Choices branches
+          Choice branches
           <button class="btn btn-success" style="padding:2px 8px; font-size:11px;" id="btn_add_choice_item">+ Add Option</button>
         </label>
         <div id="choices_rows_container"></div>
-      </div>
-
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" style="width:100%;" id="btn_save_choices">Save Choices Path</button>
+        <div class="field-hint">Each option gets its own output on the node. Attach a mission to an option and choosing it accepts the mission (it appears in the player's HUD).</div>
       </div>
     `;
     container.appendChild(form);
 
-    const rowsContainer = document.getElementById("choices_rows_container");
+    this.bindLive(form.querySelector("#insp_title"), node, el => {
+      p.title = el.value;
+      node.title = el.value || "Path Selection";
+    });
 
-    // Pull current input values back into properties so re-rendering the
-    // rows (add/delete) never discards unsaved edits in other rows
-    const syncChoicesFromInputs = () => {
-      const labelInputs = rowsContainer.querySelectorAll(".choice-label-val");
-      const condInputs = rowsContainer.querySelectorAll(".choice-cond-val");
-      labelInputs.forEach((inp, i) => {
-        if (node.properties.choices[i]) {
-          node.properties.choices[i].text = inp.value;
-          node.properties.choices[i].condition = condInputs[i].value;
-        }
-      });
-    };
+    const rowsContainer = form.querySelector("#choices_rows_container");
 
     const renderChoicesRows = () => {
       rowsContainer.innerHTML = "";
-      node.properties.choices.forEach((choice, idx) => {
+      p.choices.forEach((choice, idx) => {
+        if (choice.mission === undefined) choice.mission = "";
         const row = document.createElement("div");
         row.className = "outcome-row";
         row.innerHTML = `
           <div class="outcome-row-header">
-            <span style="font-size:12px; font-weight:600; color:var(--accent-secondary);">Branch Option #${idx + 1}</span>
+            <span style="font-size:12px; font-weight:600; color:var(--accent-secondary);">Option #${idx + 1}</span>
             <button class="section-add-btn row-delete-btn" style="color:var(--accent-danger);">Delete</button>
           </div>
           <div class="form-group">
-            <label>Button Label Text</label>
-            <input type="text" class="input-text choice-label-val" data-idx="${idx}" value="${choice.text}" placeholder="Choice Description">
+            <label>Button Label</label>
+            <input type="text" class="input-text serif-text c-label" value="${this.escapeHtml(choice.text || "")}" placeholder="Choice description">
           </div>
           <div class="form-group">
-            <label>Required Condition (Optional)</label>
-            <input type="text" class="input-text choice-cond-val" data-idx="${idx}" value="${choice.condition || ''}" placeholder="e.g. has_item('rusty_key')">
+            <label>Required Condition (optional)</label>
+            <input type="text" class="input-text c-cond" value="${this.escapeHtml(choice.condition || "")}" placeholder="e.g. has_item('rusty_key')">
+          </div>
+          <div class="form-group">
+            <label>Accept Mission (optional)</label>
+            <select class="select-input c-mission">
+              <option value="">None</option>
+              ${this.globalVars.missions.map(m => `<option value="${this.escapeHtml(m)}" ${choice.mission === m ? "selected" : ""}>${this.escapeHtml(m)}</option>`).join("")}
+            </select>
           </div>
         `;
+        this.bindLive(row.querySelector(".c-label"), node, el => {
+          choice.text = el.value;
+          node.updateChoiceOutputs();
+        });
+        this.bindLive(row.querySelector(".c-cond"), node, el => { choice.condition = el.value; });
+        this.bindLive(row.querySelector(".c-mission"), node, el => { choice.mission = el.value; }, "change");
         row.querySelector(".row-delete-btn").onclick = () => {
-          syncChoicesFromInputs();
-          node.properties.choices.splice(idx, 1);
+          p.choices.splice(idx, 1);
+          node.updateChoiceOutputs();
+          node.setDirtyCanvas(true, true);
+          this.schedulePersist();
           renderChoicesRows();
         };
         rowsContainer.appendChild(row);
@@ -664,105 +1259,89 @@ const VNovelApp = {
 
     renderChoicesRows();
 
-    document.getElementById("btn_add_choice_item").onclick = () => {
-      syncChoicesFromInputs();
-      node.properties.choices.push({ text: "New Option", condition: "" });
-      renderChoicesRows();
-    };
-
-    document.getElementById("btn_save_choices").onclick = () => {
-      node.properties.title = document.getElementById("node_prop_title").value;
-      
-      const labelInputs = rowsContainer.querySelectorAll(".choice-label-val");
-      const condInputs = rowsContainer.querySelectorAll(".choice-cond-val");
-      
-      node.properties.choices = [];
-      labelInputs.forEach((inp, i) => {
-        node.properties.choices.push({
-          text: inp.value,
-          condition: condInputs[i].value
-        });
-      });
-
-      node.title = node.properties.title || "Path Selection";
+    form.querySelector("#btn_add_choice_item").onclick = () => {
+      p.choices.push({ text: "New Option", condition: "", mission: "" });
       node.updateChoiceOutputs();
-      this.saveToLocalStorage();
       node.setDirtyCanvas(true, true);
-      alert("Choices Node saved!");
+      this.schedulePersist();
+      renderChoicesRows();
     };
   },
 
-  // TRAVERSAL DRAWER PANEL
+  // TRAVERSAL INSPECTOR
   renderTraversalInspector(node, container) {
+    const p = node.properties;
     const form = document.createElement("div");
     form.className = "inspector-scroll";
     form.style.padding = "0";
     form.innerHTML = `
       <div class="form-group">
         <label>Node Title</label>
-        <input type="text" class="input-text" id="node_prop_title" value="${node.properties.title || ''}">
+        <input type="text" class="input-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
       </div>
 
       <div class="form-group">
-        <label>Escape Target Score Accumulation</label>
-        <input type="number" class="input-text" id="node_prop_target" value="${node.properties.targetAccumulation || 100}">
+        <label>Escape Target Score</label>
+        <input type="number" class="input-text" id="insp_target" value="${p.targetAccumulation || 100}">
+        <div class="field-hint">The player rolls a d20 repeatedly; reaching this total triggers the <strong>Escape / Success</strong> output. The <strong>Early Exit</strong> output lets them bail out safely between rolls — connect it to offer that path.</div>
       </div>
 
       <div class="form-group">
         <label style="font-weight:600; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-          Probability Events (Trigger on Roll)
+          Risk Events (chance per roll)
           <button class="btn btn-success" style="padding:2px 8px; font-size:11px;" id="btn_add_outcome_item">+ Add Event</button>
         </label>
         <div id="outcomes_rows_container"></div>
       </div>
-
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" style="width:100%;" id="btn_save_traversal">Save Traversal</button>
-      </div>
     `;
     container.appendChild(form);
 
-    const rowsContainer = document.getElementById("outcomes_rows_container");
+    this.bindLive(form.querySelector("#insp_title"), node, el => {
+      p.title = el.value;
+      node.title = el.value || "Dice Maze Challenge";
+    });
+    this.bindLive(form.querySelector("#insp_target"), node, el => {
+      p.targetAccumulation = parseInt(el.value) || 100;
+    });
 
-    const syncOutcomesFromInputs = () => {
-      const labelInputs = rowsContainer.querySelectorAll(".outcome-label-val");
-      const probInputs = rowsContainer.querySelectorAll(".outcome-prob-val");
-      const descInputs = rowsContainer.querySelectorAll(".outcome-desc-val");
-      labelInputs.forEach((inp, i) => {
-        const out = node.properties.outcomes[i];
-        if (!out) return;
-        out.label = inp.value;
-        out.probability = parseFloat(probInputs[i].value) || 0;
-        out.description = descInputs[i].value || "";
-      });
-    };
+    const rowsContainer = form.querySelector("#outcomes_rows_container");
 
     const renderOutcomes = () => {
       rowsContainer.innerHTML = "";
-      node.properties.outcomes.forEach((out, idx) => {
+      p.outcomes.forEach((out, idx) => {
         const row = document.createElement("div");
         row.className = "outcome-row";
         row.innerHTML = `
           <div class="outcome-row-header">
-            <span style="font-size:12px; font-weight:600; color:var(--accent-warning);">Event Path #${idx + 1}</span>
+            <span style="font-size:12px; font-weight:600; color:var(--accent-warning);">Event #${idx + 1}</span>
             <button class="section-add-btn row-delete-btn" style="color:var(--accent-danger);">Delete</button>
           </div>
           <div class="form-group">
-            <label>Event Name / Label</label>
-            <input type="text" class="input-text outcome-label-val" data-idx="${idx}" value="${out.label || ''}" placeholder="e.g. Become Monster">
+            <label>Event Name</label>
+            <input type="text" class="input-text o-label" value="${this.escapeHtml(out.label || "")}" placeholder="e.g. Become Monster">
           </div>
           <div class="form-group">
-            <label>Trigger Probability (0 - 100%)</label>
-            <input type="number" class="input-text outcome-prob-val" data-idx="${idx}" value="${out.probability !== undefined ? out.probability : 10}" min="0" max="100" step="0.5">
+            <label>Trigger Probability per roll (0–100%)</label>
+            <input type="number" class="input-text o-prob" value="${out.probability !== undefined ? out.probability : 10}" min="0" max="100" step="0.5">
           </div>
           <div class="form-group">
-            <label>Message when triggered (Optional)</label>
-            <input type="text" class="input-text outcome-desc-val" data-idx="${idx}" value="${out.description || ''}" placeholder="e.g. The corruption takes hold!">
+            <label>Message when triggered</label>
+            <input type="text" class="input-text serif-text o-desc" value="${this.escapeHtml(out.description || "")}" placeholder="e.g. The corruption takes hold!">
           </div>
         `;
+        this.bindLive(row.querySelector(".o-label"), node, el => {
+          out.label = el.value;
+          node.updateOutputs();
+        });
+        this.bindLive(row.querySelector(".o-prob"), node, el => {
+          out.probability = parseFloat(el.value) || 0;
+        });
+        this.bindLive(row.querySelector(".o-desc"), node, el => { out.description = el.value; });
         row.querySelector(".row-delete-btn").onclick = () => {
-          syncOutcomesFromInputs();
-          node.properties.outcomes.splice(idx, 1);
+          p.outcomes.splice(idx, 1);
+          node.updateOutputs();
+          node.setDirtyCanvas(true, true);
+          this.schedulePersist();
           renderOutcomes();
         };
         rowsContainer.appendChild(row);
@@ -771,75 +1350,79 @@ const VNovelApp = {
 
     renderOutcomes();
 
-    document.getElementById("btn_add_outcome_item").onclick = () => {
-      syncOutcomesFromInputs();
-      node.properties.outcomes.push({ label: "Become Monster", probability: 10, description: "" });
-      renderOutcomes();
-    };
-
-    document.getElementById("btn_save_traversal").onclick = () => {
-      node.properties.title = document.getElementById("node_prop_title").value;
-      node.properties.targetAccumulation = parseInt(document.getElementById("node_prop_target").value);
-      
-      const labelInputs = rowsContainer.querySelectorAll(".outcome-label-val");
-      const probInputs = rowsContainer.querySelectorAll(".outcome-prob-val");
-      const descInputs = rowsContainer.querySelectorAll(".outcome-desc-val");
-
-      node.properties.outcomes = [];
-      labelInputs.forEach((inp, i) => {
-        node.properties.outcomes.push({
-          label: inp.value,
-          probability: parseFloat(probInputs[i].value) || 0,
-          description: descInputs[i].value || ""
-        });
-      });
-
-      node.title = node.properties.title || "Dice Maze Challenge";
+    form.querySelector("#btn_add_outcome_item").onclick = () => {
+      p.outcomes.push({ label: "New Event", probability: 10, description: "" });
       node.updateOutputs();
-      this.saveToLocalStorage();
       node.setDirtyCanvas(true, true);
-      alert("Traversal Node saved successfully!");
+      this.schedulePersist();
+      renderOutcomes();
     };
   },
 
-  // LOGIC GATE DRAWER PANEL
+  // LOGIC GATE INSPECTOR
   renderLogicGateInspector(node, container) {
+    const p = node.properties;
     const form = document.createElement("div");
     form.className = "inspector-scroll";
     form.style.padding = "0";
     form.innerHTML = `
       <div class="form-group">
         <label>Node Title</label>
-        <input type="text" class="input-text" id="node_prop_title" value="${node.properties.title || ''}">
+        <input type="text" class="input-text" id="insp_title" value="${this.escapeHtml(p.title || "")}">
       </div>
 
       <div class="form-group">
         <label>Condition Expression</label>
-        <input type="text" class="input-text" id="node_prop_condition" value="${node.properties.condition || ''}" placeholder="e.g. has_knowledge('heard_rustle')">
-        <span style="font-size:11px; color:var(--text-dark); margin-top:2px;">
-          Available commands: <br>
-          - <code>has_item('item_id')</code><br>
-          - <code>has_knowledge('flag_name')</code>
-        </span>
-      </div>
-
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" style="width:100%;" id="btn_save_logic_gate">Save Logic Gate</button>
+        <input type="text" class="input-text" id="insp_condition" value="${this.escapeHtml(p.condition || "")}" placeholder="e.g. has_knowledge('heard_rustle')">
+        <div class="field-hint">
+          Available checks (combine several — all must pass):<br>
+          <code>has_item('item_id')</code><br>
+          <code>has_knowledge('flag_name')</code><br>
+          <code>mission_active('Mission Name')</code><br>
+          <code>mission_done('Mission Name')</code>
+        </div>
       </div>
     `;
     container.appendChild(form);
 
-    document.getElementById("btn_save_logic_gate").onclick = () => {
-      node.properties.title = document.getElementById("node_prop_title").value;
-      node.properties.condition = document.getElementById("node_prop_condition").value;
-      node.title = node.properties.title || "Conditional Gate";
-      this.saveToLocalStorage();
-      node.setDirtyCanvas(true, true);
-      alert("Logic Gate saved!");
-    };
+    this.bindLive(form.querySelector("#insp_title"), node, el => {
+      p.title = el.value;
+      node.title = el.value || "Conditional Gate";
+    });
+    this.bindLive(form.querySelector("#insp_condition"), node, el => { p.condition = el.value; });
   },
 
-  // 4. RICH DIALOGUE EDITOR AUTOCOMPLETE & HIGHLIGHT
+  // ================= DIALOGUE TEXT HELPERS =================
+
+  // Add the colon after a leading character name if the writer forgot it.
+  // Handles: "{Hero} some text" -> "{Hero}: some text"
+  //          "Hero some text"   -> "Hero: some text"  (known characters only)
+  normalizeDialogueText(text) {
+    const chars = this.globalVars.characters || [];
+    return String(text || "").split("\n").map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+
+      // {Name} without colon
+      let m = trimmed.match(/^\{([^}]+)\}(?!\s*:)\s*(.*)$/);
+      if (m) return `{${m[1]}}: ${m[2]}`.trim();
+
+      // Already "something:" — leave alone
+      if (/^[^:{}]{1,32}:/.test(trimmed)) return line;
+
+      // Starts with a known character name but no colon
+      for (const c of chars) {
+        const lower = trimmed.toLowerCase();
+        const cl = c.toLowerCase();
+        if (lower === cl) return c + ":";
+        if (lower.startsWith(cl + " ")) {
+          return c + ": " + trimmed.slice(c.length).trim();
+        }
+      }
+      return line;
+    }).join("\n");
+  },
+
   setupAutocomplete(textareaId, menuId) {
     const textarea = document.getElementById(textareaId);
     const menu = document.getElementById(menuId);
@@ -848,11 +1431,11 @@ const VNovelApp = {
     let showMenu = false;
     let queryStart = -1;
 
-    textarea.addEventListener("input", (e) => {
+    textarea.addEventListener("input", () => {
       const val = textarea.value;
       const caretPos = textarea.selectionStart;
       const textBeforeCaret = val.substring(0, caretPos);
-      
+
       const openBraceIdx = textBeforeCaret.lastIndexOf("{");
       const closeBraceIdx = textBeforeCaret.lastIndexOf("}");
 
@@ -868,51 +1451,45 @@ const VNovelApp = {
     });
 
     textarea.addEventListener("keydown", (e) => {
-      if (showMenu) {
-        const items = menu.querySelectorAll(".autocomplete-item");
-        let activeIdx = -1;
-        items.forEach((item, index) => {
-          if (item.classList.contains("active")) activeIdx = index;
-        });
+      if (!showMenu) return;
+      const items = menu.querySelectorAll(".autocomplete-item");
+      let activeIdx = -1;
+      items.forEach((item, index) => {
+        if (item.classList.contains("active")) activeIdx = index;
+      });
 
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          if (items.length > 0) {
-            const nextIdx = (activeIdx + 1) % items.length;
-            if (activeIdx !== -1) items[activeIdx].classList.remove("active");
-            items[nextIdx].classList.add("active");
-          }
-        } else if (e.key === "ArrowUp") {
-          e.preventDefault();
-          if (items.length > 0) {
-            const prevIdx = activeIdx <= 0 ? items.length - 1 : activeIdx - 1;
-            if (activeIdx !== -1) items[activeIdx].classList.remove("active");
-            items[prevIdx].classList.add("active");
-          }
-        } else if (e.key === "Enter") {
-          e.preventDefault();
-          const activeItem = menu.querySelector(".autocomplete-item.active");
-          if (activeItem) {
-            activeItem.click();
-          } else if (items.length > 0) {
-            items[0].click();
-          }
-        } else if (e.key === "Escape") {
-          showMenu = false;
-          menu.style.display = "none";
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (items.length > 0) {
+          const nextIdx = (activeIdx + 1) % items.length;
+          if (activeIdx !== -1) items[activeIdx].classList.remove("active");
+          items[nextIdx].classList.add("active");
         }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (items.length > 0) {
+          const prevIdx = activeIdx <= 0 ? items.length - 1 : activeIdx - 1;
+          if (activeIdx !== -1) items[activeIdx].classList.remove("active");
+          items[prevIdx].classList.add("active");
+        }
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const activeItem = menu.querySelector(".autocomplete-item.active");
+        if (activeItem) activeItem.click();
+        else if (items.length > 0) items[0].click();
+      } else if (e.key === "Escape") {
+        showMenu = false;
+        menu.style.display = "none";
       }
     });
   },
 
   showSuggestions(query, menu, textarea, queryStart) {
-    // Collect possible autocomplete variables
     const suggestions = [];
     this.globalVars.characters.forEach(c => suggestions.push({ name: c, type: 'char', color: '#fbbf24' }));
     this.globalVars.locations.forEach(l => suggestions.push({ name: l, type: 'loc', color: '#34d399' }));
 
     const filtered = suggestions.filter(s => s.name.toLowerCase().includes(query));
-
     if (filtered.length === 0) {
       menu.style.display = "none";
       return;
@@ -923,7 +1500,7 @@ const VNovelApp = {
       const el = document.createElement("div");
       el.className = "autocomplete-item" + (index === 0 ? " active" : "");
       el.innerHTML = `
-        <span>{${item.name}}</span>
+        <span>{${this.escapeHtml(item.name)}}</span>
         <span class="type-badge" style="background:${item.color}22; color:${item.color};">${item.type}</span>
       `;
       el.onclick = () => {
@@ -934,10 +1511,7 @@ const VNovelApp = {
         textarea.value = before + `{${item.name}}` + after;
         textarea.focus();
         textarea.setSelectionRange(queryStart + item.name.length + 2, queryStart + item.name.length + 2);
-        
-        // Trigger synthetic input to update highlights helper
         textarea.dispatchEvent(new Event("input"));
-        
         menu.style.display = "none";
       };
       menu.appendChild(el);
@@ -952,587 +1526,467 @@ const VNovelApp = {
     if (!textarea || !helper) return;
 
     const updateHighlight = () => {
-      let rawText = textarea.value;
-      
-      // Escape HTML
-      let html = rawText
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-      // Replace {Char} -> tag-highlight char
-      this.globalVars.characters.forEach(char => {
-        const regex = new RegExp(`{${char}}`, 'g');
-        html = html.replace(regex, `<span class="tag-highlight char">${char}</span>`);
-      });
-
-      // Replace {Loc} -> tag-highlight loc
-      this.globalVars.locations.forEach(loc => {
-        const regex = new RegExp(`{${loc}}`, 'g');
-        html = html.replace(regex, `<span class="tag-highlight loc">${loc}</span>`);
-      });
-
-      helper.innerHTML = html;
+      const lines = String(textarea.value || "").split("\n");
+      const html = lines.map(line => {
+        let out = this.escapeHtml(line);
+        // Speaker prefix: "Name:" or "{Name}:" or "{Name}"
+        const m = line.match(/^\s*\{?([^:{}]{1,32}?)\}?\s*:\s*(.*)$/);
+        if (m) {
+          out = `<span class="tag-highlight char">${this.escapeHtml(m[1].trim())}</span> ${this.escapeHtml(m[2])}`;
+        }
+        // Inline {tokens}
+        out = out.replace(/\{([^}]+)\}/g, (_, name) => {
+          const cls = this.globalVars.locations.includes(name) ? "loc" : "char";
+          return `<span class="tag-highlight ${cls}">${this.escapeHtml(name)}</span>`;
+        });
+        return out;
+      }).join("\n");
+      helper.innerHTML = html || '<span style="color:var(--text-dark);">Preview appears here…</span>';
     };
 
     textarea.addEventListener("input", updateHighlight);
     updateHighlight();
   },
 
-  setupQuickAddVariableListener(inputId, bubbleId, category) {
-    const input = document.getElementById(inputId);
-    const bubble = document.getElementById(bubbleId);
-    if (!input || !bubble) return;
+  // Offer to add unknown speaker names found in dialogue to the character list
+  setupSpeakerQuickAdd(textarea, bubble) {
+    const scan = () => {
+      const known = this.globalVars.characters.map(c => c.toLowerCase());
+      const unknowns = [];
+      String(textarea.value || "").split("\n").forEach(line => {
+        const m = line.trim().match(/^\{?([A-Za-z][A-Za-z0-9 .'\-]{0,28}?)\}?\s*:\s+/);
+        if (m) {
+          const name = m[1].trim();
+          if (!known.includes(name.toLowerCase()) && !unknowns.includes(name)) unknowns.push(name);
+        }
+      });
 
-    input.addEventListener("input", () => {
-      const items = input.value.split(',').map(s => s.trim()).filter(Boolean);
-      if (items.length === 0) {
+      if (unknowns.length === 0) {
         bubble.style.display = "none";
         return;
       }
-      
-      const newItems = items.filter(item => !this.globalVars[category].includes(item));
-      
-      if (newItems.length > 0) {
-        const nextItem = newItems[0];
-        bubble.style.display = "flex";
-        bubble.innerHTML = `
-          <span>Add <strong>"${nextItem}"</strong> to globals?</span>
-          <button class="btn btn-success" style="padding:2px 8px; font-size:11px;" onclick="VNovelApp.quickAddAndClearBubble('${category}', '${nextItem}', '${bubbleId}')">Add</button>
-        `;
-      } else {
-        bubble.style.display = "none";
-      }
-    });
-  },
-
-  quickAddAndClearBubble(category, name, bubbleId) {
-    this.addVariable(category, name);
-    document.getElementById(bubbleId).style.display = "none";
-    alert(`Added ${name} to global ${category}!`);
+      const next = unknowns[0];
+      bubble.style.display = "flex";
+      bubble.innerHTML = `
+        <span>"<strong>${this.escapeHtml(next)}</strong>" isn't a known character yet.</span>
+        <button class="btn btn-success" style="padding:2px 8px; font-size:11px;">Add to Characters</button>
+      `;
+      bubble.querySelector("button").onclick = () => {
+        this.addVariable("characters", next);
+        scan();
+        // refresh highlight colors
+        textarea.dispatchEvent(new Event("input"));
+      };
+    };
+    textarea.addEventListener("input", scan);
+    scan();
   },
 
   updateInspectorAutocompletes() {
-    if (this.activeNode && this.activeNode.type === "vnovel/passthrough") {
-      this.setupDialogueHighlight("node_prop_text", "highlight_helper");
-    }
+    // Re-run highlight on the open dialogue editor so new names get colored
+    const ta = document.getElementById("insp_text");
+    if (ta) ta.dispatchEvent(new Event("input"));
   },
 
-  // 5. PLAYBACK ENGINE PLAYER RUNTIME
+  // ================= STORY COMPILER & PLAYBACK =================
+
+  // Convert the live LiteGraph into the plain JSON the StoryPlayer runtime
+  // consumes (also what Publish embeds into the standalone HTML).
+  compileStory() {
+    const g = this.graph.serialize();
+    const typeMap = {
+      "vnovel/passthrough": "dialogue",
+      "vnovel/choice": "choice",
+      "vnovel/traversal": "traversal",
+      "vnovel/logic_gate": "logic"
+    };
+
+    const nodes = {};
+    const hasInput = new Set();
+
+    (g.nodes || []).forEach(n => {
+      nodes[n.id] = {
+        type: typeMap[n.type] || "dialogue",
+        p: n.properties || {},
+        out: []
+      };
+    });
+
+    (g.links || []).forEach(l => {
+      // Serialized link: [id, origin_id, origin_slot, target_id, target_slot, type]
+      if (!Array.isArray(l)) return;
+      const src = nodes[l[1]];
+      if (src && (src.out[l[2]] === undefined || src.out[l[2]] === null)) {
+        src.out[l[2]] = l[3];
+      }
+      hasInput.add(l[3]);
+    });
+
+    // Entry: bookmarked chapter > dialogue node with no incoming link > first node
+    let entry = null;
+    const list = g.nodes || [];
+    const chapter = list.find(n => n.properties && n.properties.isChapterStart);
+    if (chapter) entry = chapter.id;
+    if (entry === null) {
+      const orphan = list.find(n => n.type === "vnovel/passthrough" && !hasInput.has(n.id));
+      if (orphan) entry = orphan.id;
+    }
+    if (entry === null && list.length) entry = list[0].id;
+
+    return {
+      title: this.projectTitle,
+      entry,
+      vars: this.globalVars,
+      varMeta: this.varMeta,
+      nodes
+    };
+  },
+
+  getSelectedStoryNode() {
+    const sel = Object.values(this.canvas.selected_nodes || {});
+    if (sel.length === 1 && sel[0].type && sel[0].type.startsWith("vnovel/")) return sel[0];
+    return null;
+  },
+
   startPlayback(customStartNode = null) {
-    const startNode = customStartNode || this.findStartNode();
-    if (!startNode) {
-      alert("No entry point path found! Connect a Passthrough Node to begin writing narratives.");
+    const story = this.compileStory();
+    if (!Object.keys(story.nodes).length) {
+      this.toast("Add some nodes first — the story is empty!", "warning");
       return;
     }
+    const startNode = customStartNode || this.getSelectedStoryNode();
+    const entry = startNode ? startNode.id : story.entry;
 
-    // Reset Player states
-    this.gameState.inventory = new Set();
-    this.gameState.diaryKnowledge = new Set();
-    this.gameState.traversalScores = {};
-    this.gameState.currentLogHistory = [];
-    this.gameState.isPlaying = true;
-    
-    // Hide editor layout, show Playback overlay
-    document.getElementById("playback_overlay").style.display = "flex";
+    this.stopAudioPreview();
     this.closeInspector();
-    
-    this.renderDiaryPanel();
-    this.navigateToNode(startNode);
+    this.gamePlaying = true;
+
+    document.getElementById("playback_overlay").classList.add("active");
+    const root = document.getElementById("playback_root");
+    this.player = new StoryPlayer(root, story, { onExit: () => this.stopPlayback() });
+    this.player.start(entry);
   },
 
   stopPlayback() {
-    this.gameState.isPlaying = false;
-    document.getElementById("playback_overlay").style.display = "none";
-    this.audioState.currentLoop = null;
-    
-    // Refresh bookmarks in editor
+    if (this.player) {
+      this.player.destroy();
+      this.player = null;
+    }
+    this.gamePlaying = false;
+    document.getElementById("playback_overlay").classList.remove("active");
     this.renderBookmarks();
   },
 
-  findStartNode() {
-    // 1. Check if a node is currently selected
-    if (this.canvas && this.canvas.selected_nodes) {
-      const selectedIds = Object.keys(this.canvas.selected_nodes);
-      if (selectedIds.length > 0) {
-        const selNode = this.canvas.selected_nodes[selectedIds[0]];
-        if (selNode && ["vnovel/passthrough", "vnovel/choice", "vnovel/traversal", "vnovel/logic_gate"].includes(selNode.type)) {
-          return selNode;
-        }
-      }
-    }
+  // ================= PUBLISH (standalone playable HTML) =================
 
-    const nodes = this.graph._nodes || [];
-    // 2. If bookmarks exist, pick the first bookmarked Chapter start
-    const bookmarkedNode = nodes.find(n => n.properties && n.properties.isChapterStart);
-    if (bookmarkedNode) return bookmarkedNode;
-
-    // 3. Pick the Passthrough node with no inputs connected
-    const entryNode = nodes.find(n => {
-      return n.type === "vnovel/passthrough" && (!n.inputs[0].link);
-    });
-    if (entryNode) return entryNode;
-
-    // 4. Just pick the first available Passthrough node
-    return nodes.find(n => n.type === "vnovel/passthrough");
-  },
-
-  navigateToNode(node) {
-    if (!node) {
-      this.showEnding("The narrative reaches a quiet end. Thanks for playing!");
+  publishStory() {
+    const story = this.compileStory();
+    if (!Object.keys(story.nodes).length) {
+      this.toast("Nothing to publish yet — the story is empty.", "warning");
       return;
     }
-
-    this.gameState.currentChunkId = node.id;
-    
-    // Handle specific node types
-    if (node.type === "vnovel/passthrough") {
-      this.playPassthroughNode(node);
-    } else if (node.type === "vnovel/choice") {
-      this.playChoiceNode(node);
-    } else if (node.type === "vnovel/traversal") {
-      this.playTraversalNode(node);
-    } else if (node.type === "vnovel/logic_gate") {
-      this.evaluateLogicGateNode(node);
+    const html = this.buildStandaloneHTML(story);
+    const slug = (this.projectTitle || "story").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "story";
+    this.downloadFile(`${slug}.html`, html, "text/html");
+    if (JSON.stringify(story).includes('"assets/')) {
+      this.toast("This story references files by path — ship the assets folder alongside the downloaded HTML.", "warning");
     }
+    this.toast("Standalone story downloaded! Anyone can open the HTML file in a browser — no install, no server.", "success");
   },
 
-  // A. PLAY PASSTHROUGH
-  playPassthroughNode(node) {
-    const viewer = document.getElementById("playback_overlay");
-    const container = document.getElementById("playback_interactive_area");
-    
-    // Apply background image if defined
-    if (node.properties.background) {
-      // Mock images fallback to nice stylized gradients to prevent empty links
-      if (node.properties.background.includes(".png") || node.properties.background.includes(".jpg")) {
-        viewer.style.backgroundImage = `url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=1200')`; // Forest Mock
-      } else {
-        viewer.style.backgroundImage = node.properties.background;
-      }
-    } else {
-      viewer.style.backgroundImage = "linear-gradient(135deg, #1e1b4b, #0f172a)";
-    }
-
-    // Audio controller simulator logger
-    if (node.properties.audioLoop && this.audioState.currentLoop !== node.properties.audioLoop) {
-      this.logAudioCrossfade(this.audioState.currentLoop, node.properties.audioLoop);
-      this.audioState.currentLoop = node.properties.audioLoop;
-    }
-    if (node.properties.audioOneShot) {
-      console.log(`[Audio SFX] Playing OneShot: ${node.properties.audioOneShot}`);
-    }
-
-    // Apply collectibles and diary rewards
-    if (node.properties.rewardItems) {
-      this.gameState.inventory.add(node.properties.rewardItems);
-      this.triggerHUDNotification(`Acquired: ${node.properties.rewardItems}`);
-    }
-    if (node.properties.rewardKnowledge) {
-      if (!this.gameState.diaryKnowledge.has(node.properties.rewardKnowledge)) {
-        this.gameState.diaryKnowledge.add(node.properties.rewardKnowledge);
-        this.pushDiaryEntry(`Discovered: "${node.properties.rewardKnowledge}" - A clue was cataloged in your journals.`);
-        this.triggerHUDNotification(`Diary Updated!`);
-      }
-    }
-
-    // Queue up the node text as sequential dialogue beats (one per line)
-    const textPayload = node.properties.text || "...";
-    this.dialogueQueue = textPayload.split("\n").map(l => l.trim()).filter(Boolean);
-    if (this.dialogueQueue.length === 0) this.dialogueQueue = ["..."];
-    this.dialogueQueueIndex = 0;
-
-    this.renderCurrentDialogueLine(node);
-    this.updateHUD();
+  buildStandaloneHTML(story) {
+    // Guard against user text containing a closing script tag
+    const json = JSON.stringify(story).replace(/<\//g, "<\\/");
+    const playerSource = StoryPlayer.toString();
+    const scriptClose = "</" + "script>";
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${this.escapeHtml(story.title || "A Story")}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; height:100%; background:#05060a; overflow:hidden; }
+  #story_root { position:fixed; inset:0; }
+</style>
+</head>
+<body>
+<div id="story_root"></div>
+<script>
+var STORY = ${json};
+${playerSource}
+new StoryPlayer(document.getElementById("story_root"), STORY, { standalone: true }).start(STORY.entry);
+${scriptClose}
+</body>
+</html>`;
   },
 
-  renderCurrentDialogueLine(node) {
-    const container = document.getElementById("playback_interactive_area");
-    container.innerHTML = "";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "dialogue-gui-wrapper";
-
-    const line = this.dialogueQueue[this.dialogueQueueIndex];
-    const parsedLine = this.parseSpeakerLine(line);
-    const isLastLine = this.dialogueQueueIndex >= this.dialogueQueue.length - 1;
-
-    wrapper.innerHTML = `
-      <div class="dialogue-gui-box" onclick="VNovelApp.proceedFromPassthrough(${node.id})">
-        ${parsedLine.speaker ? `<div class="dialogue-speaker" style="color:${parsedLine.speakerColor}; border-bottom:2px solid ${parsedLine.speakerColor};">${parsedLine.speaker}</div>` : ''}
-        <div class="dialogue-text">${parsedLine.text}</div>
-        <div class="dialogue-next-prompt">${isLastLine ? 'Click dialogue card to continue' : `Click for next line (${this.dialogueQueueIndex + 1}/${this.dialogueQueue.length})`} <i class="fas fa-chevron-right"></i></div>
-      </div>
-    `;
-    container.appendChild(wrapper);
+  downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime || "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   },
 
-  proceedFromPassthrough(nodeId) {
-    const node = this.graph.getNodeById(nodeId);
-    if (!node) return;
+  // ================= SAVE / LOAD / IMPORT / EXPORT =================
 
-    // More dialogue lines left inside this node? Advance the beat first.
-    if (this.dialogueQueue && this.dialogueQueueIndex < this.dialogueQueue.length - 1) {
-      this.dialogueQueueIndex++;
-      this.renderCurrentDialogueLine(node);
-      return;
-    }
-
-    // Follow Out link
-    this.navigateToNode(this.getOutputTargetNode(node, 0));
-  },
-
-  // B. PLAY CHOICE BRANCHING
-  playChoiceNode(node) {
-    const container = document.getElementById("playback_interactive_area");
-    container.innerHTML = "";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "dialogue-gui-wrapper";
-    
-    const title = node.properties.title || "What will you do next?";
-    let html = `
-      <div class="dialogue-gui-box" style="min-height:auto; pointer-events:none; margin-bottom:10px;">
-        <div class="dialogue-speaker" style="color:var(--accent-secondary); border-bottom:2px solid var(--accent-secondary);">Narrator</div>
-        <div class="dialogue-text">${title}</div>
-      </div>
-      <div class="playback-choices-container">
-    `;
-
-    node.properties.choices.forEach((choice, index) => {
-      const allowed = this.evaluateCondition(choice.condition);
-      if (allowed) {
-        html += `<button class="choice-button" onclick="VNovelApp.selectChoiceBranch(${node.id}, ${index})">${choice.text}</button>`;
-      } else {
-        html += `<button class="choice-button disabled" disabled>${choice.text} (Requires: ${choice.condition})</button>`;
-      }
-    });
-
-    html += `</div>`;
-    wrapper.innerHTML = html;
-    container.appendChild(wrapper);
-    this.updateHUD();
-  },
-
-  selectChoiceBranch(nodeId, choiceIdx) {
-    const node = this.graph.getNodeById(nodeId);
-    if (!node) return;
-
-    this.navigateToNode(this.getOutputTargetNode(node, choiceIdx));
-  },
-
-  // C. PLAY TRAVERSAL DICE CHALLENGE
-  playTraversalNode(node) {
-    const container = document.getElementById("playback_interactive_area");
-    container.innerHTML = "";
-
-    const scoreKey = `node_${node.id}`;
-    if (this.gameState.traversalScores[scoreKey] === undefined) {
-      this.gameState.traversalScores[scoreKey] = 0;
-    }
-
-    const currentScore = this.gameState.traversalScores[scoreKey];
-    const target = node.properties.targetAccumulation || 100;
-
-    // Build outcomes list HTML
-    let outcomesHtml = "";
-    if (node.properties.outcomes && node.properties.outcomes.length > 0) {
-      outcomesHtml = `
-        <div style="margin-top:12px; padding:10px; background:rgba(0,0,0,0.2); border-radius:6px; font-size:11px; text-align:left; color:var(--text-muted);">
-          <div style="font-weight:600; color:var(--accent-warning); margin-bottom:4px; text-transform:uppercase; font-size:10px;">Dangerous Risk Events:</div>
-          ${node.properties.outcomes.map(out => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-              <span>• ${out.label}</span>
-              <span style="color:var(--accent-danger); font-weight:500;">${out.probability}% chance</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    const mainDiv = document.createElement("div");
-    mainDiv.className = "dice-roll-container";
-    mainDiv.innerHTML = `
-      <div class="dice-title">${node.properties.title || 'Maze Room Roll'}</div>
-      <div class="dice-stats">
-        <div>Progress Score: <span class="dice-stat-val" id="dice_progress_val">${currentScore}</span> / ${target}</div>
-      </div>
-      <div class="dice-cube" id="dice_visual_cube">?</div>
-      <button class="btn btn-primary btn-success" style="width:100%; border-radius:30px; font-weight:600;" id="btn_roll_dice_act">Roll d20 Dice</button>
-      <div style="font-size:12px; color:var(--text-muted); margin-top:5px;" id="dice_roll_desc">Each roll adds points towards escaping. Watch out for dangerous events!</div>
-      ${outcomesHtml}
-    `;
-
-    container.appendChild(mainDiv);
-
-    document.getElementById("btn_roll_dice_act").onclick = () => {
-      this.triggerDiceRoll(node, scoreKey);
-    };
-    this.updateHUD();
-  },
-
-  triggerDiceRoll(node, scoreKey) {
-    const cube = document.getElementById("dice_visual_cube");
-    const btn = document.getElementById("btn_roll_dice_act");
-    const desc = document.getElementById("dice_roll_desc");
-    
-    if (btn.disabled) return;
-    
-    btn.disabled = true;
-    cube.classList.add("rolling");
-    cube.innerHTML = "...";
-    
-    setTimeout(() => {
-      cube.classList.remove("rolling");
-      const roll = Math.floor(Math.random() * 20) + 1;
-      cube.innerHTML = roll;
-
-      // Check if any of the special probability-based outcomes trigger
-      let triggeredOutcome = null;
-      if (node.properties.outcomes && node.properties.outcomes.length > 0) {
-        for (let out of node.properties.outcomes) {
-          const chance = out.probability !== undefined ? out.probability : 10;
-          if (Math.random() * 100 < chance) {
-            triggeredOutcome = out;
-            break; // Trigger the first one that hits
-          }
-        }
-      }
-
-      if (triggeredOutcome) {
-        desc.innerHTML = `<span style="color:var(--accent-danger); font-weight:600;">Triggered Event: ${triggeredOutcome.label}!</span> ${triggeredOutcome.description || ''}`;
-        
-        setTimeout(() => {
-          const outcomeIdx = node.properties.outcomes.indexOf(triggeredOutcome);
-          const targetNode = this.getOutputTargetNode(node, outcomeIdx + 1);
-          if (targetNode) {
-            this.navigateToNode(targetNode);
-          } else {
-            // If nothing connected, reset/restart the room as fallback
-            alert(`Event triggered: ${triggeredOutcome.label}. No output path is connected to this slot!`);
-            this.gameState.traversalScores[scoreKey] = 0;
-            this.playTraversalNode(node);
-          }
-        }, 2000);
-        return;
-      }
-
-      // No special event triggered -> Add to accumulation score
-      this.gameState.traversalScores[scoreKey] += roll;
-      const newScore = this.gameState.traversalScores[scoreKey];
-      document.getElementById("dice_progress_val").innerHTML = newScore;
-      
-      const targetTarget = node.properties.targetAccumulation || 100;
-      desc.innerHTML = `Rolled a ${roll}. Progress added! (+${roll} points)`;
-
-      this.updateHUD();
-
-      setTimeout(() => {
-        if (newScore >= targetTarget) {
-          desc.innerHTML = `<span style="color:var(--accent-success); font-weight:600;">Success! Reached the target of ${targetTarget}!</span>`;
-          setTimeout(() => {
-            // Out 0 represents the Escape slot!
-            this.navigateToNode(this.getOutputTargetNode(node, 0));
-          }, 1500);
-        } else {
-          // Keep rolling
-          btn.disabled = false;
-          desc.innerHTML += ` (Keep rolling to reach ${targetTarget}!)`;
-        }
-      }, 1200);
-
-    }, 800);
-  },
-
-  // D. LOGIC GATE AUTOMATIC BRANCHE EVALUATION
-  evaluateLogicGateNode(node) {
-    const cond = node.properties.condition;
-    const isTrue = this.evaluateCondition(cond);
-    
-    console.log(`[Logic Gate Evaluator] "${cond}" evaluated to: ${isTrue}`);
-
-    const slotIdx = isTrue ? 0 : 1; // Out 0 is True path, Out 1 is False path
-    this.navigateToNode(this.getOutputTargetNode(node, slotIdx));
-  },
-
-  // E. GENERAL PLAYBACK HELPERS
-  getTargetNodeFromLink(linkId) {
-    const linkInfo = this.graph.links[linkId];
-    if (!linkInfo) return null;
-    return this.graph.getNodeById(linkInfo.target_id);
-  },
-
-  // LiteGraph output slots store connections in a "links" ARRAY (inputs use
-  // the singular "link"). Follow the first connection out of a given slot.
-  getOutputTargetNode(node, slotIdx) {
-    const output = node.outputs && node.outputs[slotIdx];
-    if (!output || !output.links || output.links.length === 0) return null;
-    return this.getTargetNodeFromLink(output.links[0]);
-  },
-
-  parseSpeakerLine(line) {
-    // Regex looking for {Char}: dialog
-    const match = line.match(/^{([^}]+)}:\s*(.*)/s);
-    if (match) {
-      const speaker = match[1];
-      const speech = match[2];
-      
-      // Select custom color for key characters
-      let color = "var(--accent-primary)";
-      if (speaker.toLowerCase() === "wizard") color = "var(--accent-secondary)";
-      if (speaker.toLowerCase() === "goblin") color = "var(--accent-warning)";
-      if (speaker.toLowerCase() === "narrator") color = "var(--text-muted)";
-
-      return { speaker, text: speech, speakerColor: color };
-    }
-    return { speaker: null, text: line, speakerColor: "#fff" };
-  },
-
-  evaluateCondition(conditionStr) {
-    if (!conditionStr || !conditionStr.trim()) return true;
-
+  saveToLocalStorage() {
+    if (!this.graph) return;
     try {
-      // Safe sandbox regex parsing for:
-      // has_item('item_name')
-      // has_knowledge('knowledge_name')
-      
-      let res = true;
-      
-      const itemMatch = conditionStr.match(/has_item\(['"](.+?)['"]\)/);
-      if (itemMatch) {
-        const reqItem = itemMatch[1];
-        res = res && this.gameState.inventory.has(reqItem);
+      localStorage.setItem("vnovel_active_save_v2", JSON.stringify(this.currentState()));
+    } catch (err) {
+      if (!this._quotaWarned) {
+        this._quotaWarned = true;
+        this.toast("Autosave failed — project too large for browser storage (embedded files?). Use Export to keep a backup!", "danger");
       }
+    }
+  },
 
-      const kwMatch = conditionStr.match(/has_knowledge\(['"](.+?)['"]\)/);
-      if (kwMatch) {
-        const reqKw = kwMatch[1];
-        res = res && this.gameState.diaryKnowledge.has(reqKw);
+  loadFromLocalStorage() {
+    const saved = localStorage.getItem("vnovel_active_save_v2");
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state.graphSchema) this.graph.configure(state.graphSchema);
+        if (state.globalVars) this.globalVars = state.globalVars;
+        if (state.varMeta) this.varMeta = state.varMeta;
+        if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+        this.ensureVarShape();
+        this.renderGlobalTags();
+        this.renderBookmarks();
+        this.canvas.draw(true, true);
+        return true;
+      } catch (err) {
+        console.error("Local load failed. Loading default demo instead.", err);
       }
+    }
+    return false;
+  },
 
-      return res;
-    } catch(err) {
-      console.error("Condition parsing failed for expression: " + conditionStr, err);
+  newGraph() {
+    this.openModal("new_modal_overlay");
+  },
+
+  _resetProject() {
+    this.checkpoint(); // make sure current work is undoable
+    this.graph.clear();
+    this.closeInspector();
+    this.setProjectTitle("Untitled Story");
+  },
+
+  newEmptyGraph() {
+    this._resetProject();
+    this.globalVars = { characters: [], locations: [], collectibles: [], knowledge: [], missions: [] };
+    this.varMeta = {};
+    this.renderGlobalTags();
+    this.renderBookmarks();
+    this.canvas.draw(true, true);
+    this.saveToLocalStorage();
+    this.checkpoint();
+    this.closeModal("new_modal_overlay");
+    this.toast("Empty graph created. Double-click the canvas to add your first Dialogue node.", "success");
+  },
+
+  newTemplateGraph() {
+    this._resetProject();
+    this.buildTemplateProject();
+    this.saveToLocalStorage();
+    this.checkpoint();
+    this.closeModal("new_modal_overlay");
+    this.toast("Starter template loaded — every node type is on the canvas. Play it, then make it yours!", "success");
+  },
+
+  exportProject() {
+    const state = this.currentState();
+    const str = JSON.stringify(state, null, 2);
+    const slug = (this.projectTitle || "vnovel-project").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "vnovel-project";
+    this.downloadFile(`${slug}.json`, str, "application/json");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(str).then(
+        () => this.toast("Project exported: file downloaded + JSON copied to clipboard", "success"),
+        () => this.toast("Project file downloaded", "success")
+      );
+    } else {
+      this.toast("Project file downloaded", "success");
+    }
+  },
+
+  applyImportedState(state) {
+    if (state.graphSchema) this.graph.configure(state.graphSchema);
+    if (state.globalVars) this.globalVars = state.globalVars;
+    if (state.varMeta) this.varMeta = state.varMeta;
+    if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+    this.ensureVarShape();
+    this.renderGlobalTags();
+    this.renderBookmarks();
+    this.canvas.draw(true, true);
+    this.saveToLocalStorage();
+    this.checkpoint();
+  },
+
+  doImport() {
+    const fileInput = document.getElementById("import_file_input");
+    const textInput = document.getElementById("import_text_input");
+
+    const finish = (raw) => {
+      try {
+        const state = JSON.parse(raw);
+        this.applyImportedState(state);
+        this.closeModal("import_modal_overlay");
+        textInput.value = "";
+        fileInput.value = "";
+        this.toast("Project imported!", "success");
+      } catch (err) {
+        this.toast("Import failed: " + err.message, "danger");
+      }
+    };
+
+    const file = fileInput.files && fileInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => finish(reader.result);
+      reader.readAsText(file);
+    } else if (textInput.value.trim()) {
+      finish(textInput.value);
+    } else {
+      this.toast("Choose a file or paste JSON first.", "warning");
+    }
+  },
+
+  // ---- Named versions (localStorage) ----
+
+  getVersions() {
+    try {
+      return JSON.parse(localStorage.getItem("vnovel_versions") || "[]");
+    } catch (e) { return []; }
+  },
+
+  setVersions(list) {
+    try {
+      localStorage.setItem("vnovel_versions", JSON.stringify(list));
+      return true;
+    } catch (err) {
+      this.toast("Couldn't save version — browser storage is full. Export instead, or delete old versions.", "danger");
       return false;
     }
   },
 
-  showEnding(message) {
-    const container = document.getElementById("playback_interactive_area");
-    container.innerHTML = "";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "dialogue-gui-wrapper";
-    wrapper.innerHTML = `
-      <div class="dialogue-gui-box" style="text-align:center;">
-        <div class="dialogue-speaker" style="color:var(--accent-success); border-bottom:2px solid var(--accent-success);">Chapter Completed</div>
-        <div class="dialogue-text">${message}</div>
-        <button class="btn btn-primary" style="margin-top:15px; margin-left:auto; margin-right:auto; display:block;" onclick="VNovelApp.stopPlayback()">Return to Editor</button>
-      </div>
-    `;
-    container.appendChild(wrapper);
-  },
-
-  // 6. HUD & DIARY PANEL MANAGEMENT IN PLAYBACK OVERLAY
-  updateHUD() {
-    const invEl = document.getElementById("playback_hud_inventory");
-    if (!invEl) return;
-    
-    if (this.gameState.inventory.size === 0) {
-      invEl.innerHTML = `<span style="color:var(--text-dark);">Empty</span>`;
-    } else {
-      invEl.innerHTML = Array.from(this.gameState.inventory).map(item => `
-        <span class="variable-tag collectible">${item}</span>
-      `).join('');
+  saveVersion() {
+    const input = document.getElementById("version_name_input");
+    const name = input.value.trim() || `Version ${new Date().toLocaleString()}`;
+    const list = this.getVersions();
+    list.unshift({ name, date: new Date().toISOString(), state: this.currentState() });
+    if (list.length > 25) list.length = 25;
+    if (this.setVersions(list)) {
+      input.value = "";
+      this.renderVersionsList();
+      this.toast(`Version "${name}" saved`, "success");
     }
   },
 
-  triggerHUDNotification(message) {
-    const banner = document.createElement("div");
-    banner.style.position = "absolute";
-    banner.style.top = "75px";
-    banner.style.left = "50%";
-    banner.style.transform = "translateX(-50%)";
-    banner.style.background = "rgba(16, 185, 129, 0.9)";
-    banner.style.color = "#fff";
-    banner.style.padding = "8px 16px";
-    banner.style.borderRadius = "20px";
-    banner.style.fontSize = "12px";
-    banner.style.fontWeight = "600";
-    banner.style.zIndex = "100";
-    banner.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
-    banner.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
-    
-    document.getElementById("playback_overlay").appendChild(banner);
-    setTimeout(() => banner.remove(), 2500);
-  },
-
-  toggleDiaryPanel() {
-    const el = document.getElementById("playback_diary_drawer");
-    el.classList.toggle("open");
-    this.renderDiaryPanel();
-  },
-
-  renderDiaryPanel() {
-    const list = document.getElementById("playback_diary_list");
-    if (!list) return;
-    list.innerHTML = "";
-
-    if (this.gameState.diaryKnowledge.size === 0) {
-      list.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic; padding:10px;">No entries logged in diary yet. Discover more locations or encounter events.</div>`;
+  renderVersionsList() {
+    const container = document.getElementById("versions_list");
+    const list = this.getVersions();
+    if (!list.length) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No saved versions yet.</div>`;
       return;
     }
-
-    this.gameState.currentLogHistory.forEach(entry => {
-      const el = document.createElement("div");
-      el.className = "diary-entry";
-      el.innerText = entry;
-      list.appendChild(el);
+    container.innerHTML = "";
+    list.forEach((v, i) => {
+      const row = document.createElement("div");
+      row.className = "version-row";
+      const d = new Date(v.date);
+      row.innerHTML = `
+        <div>
+          <div class="v-name">${this.escapeHtml(v.name)}</div>
+          <div class="v-date">${d.toLocaleString()}</div>
+        </div>
+        <div class="v-actions">
+          <button class="btn" style="padding:4px 10px; font-size:11px;" data-act="load"><i class="fas fa-folder-open"></i> Load</button>
+          <button class="btn" style="padding:4px 10px; font-size:11px; color:var(--accent-danger);" data-act="del"><i class="fas fa-trash"></i></button>
+        </div>
+      `;
+      row.querySelector('[data-act="load"]').onclick = () => {
+        this.applyImportedState(v.state);
+        this.closeModal("versions_modal_overlay");
+        this.toast(`Loaded version "${v.name}" (undo restores your previous state)`, "success");
+      };
+      row.querySelector('[data-act="del"]').onclick = () => {
+        const l = this.getVersions();
+        l.splice(i, 1);
+        this.setVersions(l);
+        this.renderVersionsList();
+      };
+      container.appendChild(row);
     });
   },
 
-  pushDiaryEntry(str) {
-    this.gameState.currentLogHistory.push(str);
-    this.renderDiaryPanel();
+  // ================= THEME & TOASTS & MODALS =================
+
+  initTheme() {
+    const saved = localStorage.getItem("vnovel_theme") || "dark";
+    if (saved === "light") document.body.classList.add("light");
+    this.updateThemeButton();
   },
 
-  logAudioCrossfade(oldAudio, newAudio) {
-    console.log(`[Audio Crossfade Simulation] Fading out loops: ${oldAudio || 'none'} -> Fading in loop: ${newAudio}`);
-    // Simulate updating HUD visualizer state
-    const hud = document.getElementById("playback_audio_visual");
-    if (hud) {
-      hud.innerHTML = `
-        <span class="audio-bar anim"></span>
-        <span class="audio-bar anim"></span>
-        <span class="audio-bar anim"></span>
-      `;
-    }
+  toggleTheme() {
+    document.body.classList.toggle("light");
+    localStorage.setItem("vnovel_theme", document.body.classList.contains("light") ? "light" : "dark");
+    this.updateThemeButton();
+    this.applyCanvasTheme();
   },
 
-  // 7. LLM COPILOT API CORE & MOCKS
-  openLLMModal() {
-    document.getElementById("llm_modal_overlay").style.display = "flex";
+  updateThemeButton() {
+    const btn = document.getElementById("btn_toggle_theme");
+    if (!btn) return;
+    const light = document.body.classList.contains("light");
+    btn.innerHTML = light ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+    btn.title = light ? "Switch to dark theme" : "Switch to light theme";
   },
 
-  closeLLMModal() {
-    document.getElementById("llm_modal_overlay").style.display = "none";
+  toast(msg, type = "") {
+    const container = document.getElementById("toast_container");
+    if (!container) return;
+    const t = document.createElement("div");
+    t.className = "toast " + type;
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3200);
   },
+
+  openModal(id) { document.getElementById(id).style.display = "flex"; },
+  closeModal(id) { document.getElementById(id).style.display = "none"; },
+  openLLMModal() { this.openModal("llm_modal_overlay"); },
+  closeLLMModal() { this.closeModal("llm_modal_overlay"); },
+
+  escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  },
+
+  // ================= LLM COPILOT =================
 
   async runScreenplayImporter() {
     const text = document.getElementById("llm_screenplay_input").value;
     const logs = document.getElementById("llm_console_logs");
-    
+
     if (!text || !text.trim()) {
-      alert("Please paste screenplay script content first.");
+      this.toast("Paste screenplay text first.", "warning");
       return;
     }
 
     logs.innerHTML = `<div class="log-message warning">Processing screenplay... Running script-to-JSON compiler.</div>`;
 
     const apiKey = document.getElementById("llm_api_key_input").value.trim();
-    
+
     if (apiKey) {
-      // Direct integration call using API
       try {
         const parsedJSON = await this.callLLMApi(apiKey, "screenplay", text);
         const created = this.applyParsedNarrativeGraph(parsedJSON);
@@ -1545,7 +1999,6 @@ const VNovelApp = {
         this.runSimulatedScreenplayParser(text, logs);
       }
     } else {
-      // Simulated screenplay text splits compiler
       setTimeout(() => {
         this.runSimulatedScreenplayParser(text, logs);
       }, 1500);
@@ -1560,7 +2013,7 @@ const VNovelApp = {
       let lastNodeId = null;
       let activeLocation = "Mysterious glade";
       let activeCharacters = new Set();
-      
+
       let nodeDialogueAccumulator = [];
 
       const flushNode = () => {
@@ -1571,10 +2024,10 @@ const VNovelApp = {
             location: activeLocation,
             charactersPresent: Array.from(activeCharacters),
             text: nodeDialogueAccumulator.join("\n"),
-            background: "mysterious_woods.jpg",
+            background: "",
             next: null
           };
-          
+
           if (lastNodeId) {
             nodes[lastNodeId].next = nodeId;
           }
@@ -1585,21 +2038,17 @@ const VNovelApp = {
       };
 
       lines.forEach(line => {
-        // Look for scene headers
         if (line.startsWith("INT.") || line.startsWith("EXT.")) {
           flushNode();
           activeLocation = line.replace(/^(INT\.|EXT\.)/, "").trim();
           this.addVariable("locations", activeLocation);
         } else if (line.match(/^[A-Z\s]+$/)) {
-          // Character name block (Screenplay formatting)
           const char = line.trim();
           activeCharacters.add(char);
           this.addVariable("characters", char);
           nodeDialogueAccumulator.push(`{${char}}`);
         } else {
-          // Dialog lines
           if (nodeDialogueAccumulator.length > 0) {
-            // Append dialogue next to character
             const lastIdx = nodeDialogueAccumulator.length - 1;
             if (nodeDialogueAccumulator[lastIdx].startsWith("{") && nodeDialogueAccumulator[lastIdx].endsWith("}")) {
               nodeDialogueAccumulator[lastIdx] = nodeDialogueAccumulator[lastIdx] + ": " + line;
@@ -1611,13 +2060,12 @@ const VNovelApp = {
           }
         }
       });
-      
+
       flushNode();
 
-      // Insert generated nodes into the existing graph at the current view
       const created = this.insertNarrativeNodes(nodes);
       logs.innerHTML = `<div class="log-message success"><strong>Simulation Success!</strong> Inserted ${created.length} new narrative nodes at your current canvas view — existing nodes untouched. The batch is selected, so you can drag it into place, then wire it to your story.</div>`;
-    } catch(err) {
+    } catch (err) {
       logs.innerHTML = `<div class="log-message danger">Screenplay Import compilation failed: ${err.message}</div>`;
     }
   },
@@ -1625,7 +2073,7 @@ const VNovelApp = {
   async triggerLLMExpansion(node) {
     const apiKey = document.getElementById("llm_api_key_input").value.trim();
     const currentText = node.properties.text || "";
-    
+
     node.properties.text = "Expanding dialogue using LLM Copilot...";
     node.setDirtyCanvas(true, true);
 
@@ -1633,9 +2081,11 @@ const VNovelApp = {
       try {
         const result = await this.callLLMApi(apiKey, "expand", currentText);
         node.properties.text = result;
-        alert("Dialogue expanded via live LLM!");
+        this.openInspector(node);
+        this.checkpoint();
+        this.toast("Dialogue expanded via live LLM!", "success");
       } catch (err) {
-        alert("API error: " + err.message + ". Fallback simulation triggered.");
+        this.toast("API error: " + err.message + ". Fallback simulation triggered.", "danger");
         this.runSimulatedExpansion(node, currentText);
       }
     } else {
@@ -1650,11 +2100,11 @@ const VNovelApp = {
     let expandedLines = [];
 
     lines.forEach(line => {
-      const match = line.match(/^{(\w+)}:\s*(.*)/s);
+      const match = line.match(/^\{?(\w+)\}?:\s*(.*)/s);
       if (match) {
         const char = match[1];
         const speech = match[2];
-        expandedLines.push(`{${char}}: *takes a deep breath, looking around the rustling woods* "${speech} It feels like we aren't alone here..."`);
+        expandedLines.push(`${char}: *takes a deep breath, looking around the rustling woods* "${speech} It feels like we aren't alone here..."`);
       } else {
         expandedLines.push(line + " *The shadows align closer in the dark.*");
       }
@@ -1662,7 +2112,8 @@ const VNovelApp = {
 
     node.properties.text = expandedLines.join("\n");
     this.openInspector(node);
-    alert("Narrative expanded successfully (Simulated creative expansion mode)!");
+    this.checkpoint();
+    this.toast("Narrative expanded (simulated creative mode)", "success");
   },
 
   runLogicDebugger() {
@@ -1679,14 +2130,12 @@ const VNovelApp = {
       }
 
       nodes.forEach(node => {
-        // Check for unconnected output slots
         if (node.outputs && node.outputs.length > 0) {
           let hasConnection = false;
           node.outputs.forEach(out => {
             if (out.links && out.links.length > 0) hasConnection = true;
           });
 
-          // End nodes can be disconnected
           if (!hasConnection && node.type !== "vnovel/choice" && node.type !== "vnovel/traversal") {
             issues.push({
               level: 'warning',
@@ -1695,13 +2144,11 @@ const VNovelApp = {
           }
         }
 
-        // Check logic expressions variables
-        if (node.type === "vnovel/logic_gate") {
-          const cond = node.properties.condition;
+        const checkCondition = (cond, where) => {
+          if (!cond) return;
           const matchItem = cond.match(/has_item\(['"](.+?)['"]\)/);
           if (matchItem) {
             const reqItem = matchItem[1];
-            // Check if any node rewards this item
             let itemFound = false;
             nodes.forEach(n => {
               if (n.properties && n.properties.rewardItems === reqItem) itemFound = true;
@@ -1709,11 +2156,10 @@ const VNovelApp = {
             if (!itemFound) {
               issues.push({
                 level: 'danger',
-                msg: `Unresolvable condition in Logic Node #${node.id}: Checking for inventory item "${reqItem}" which is never awarded by any dialogue node.`
+                msg: `Unresolvable condition in ${where}: item "${reqItem}" is never awarded by any dialogue node.`
               });
             }
           }
-
           const matchKw = cond.match(/has_knowledge\(['"](.+?)['"]\)/);
           if (matchKw) {
             const reqKw = matchKw[1];
@@ -1724,10 +2170,27 @@ const VNovelApp = {
             if (!kwFound) {
               issues.push({
                 level: 'danger',
-                msg: `Dead lock warning in Logic Node #${node.id}: Diary flag "${reqKw}" is checked but never granted by nodes.`
+                msg: `Dead lock warning in ${where}: diary flag "${reqKw}" is checked but never granted.`
               });
             }
           }
+          const matchMission = cond.match(/mission_(?:active|done)\(['"](.+?)['"]\)/);
+          if (matchMission) {
+            const m = matchMission[1];
+            if (!this.globalVars.missions.includes(m)) {
+              issues.push({
+                level: 'warning',
+                msg: `${where} references mission "${m}" which doesn't exist in the Missions list.`
+              });
+            }
+          }
+        };
+
+        if (node.type === "vnovel/logic_gate") {
+          checkCondition(node.properties.condition, `Logic Node #${node.id}`);
+        }
+        if (node.type === "vnovel/choice") {
+          (node.properties.choices || []).forEach((c, i) => checkCondition(c.condition, `Choice Node #${node.id} option ${i + 1}`));
         }
       });
 
@@ -1752,25 +2215,44 @@ const VNovelApp = {
   async callLLMApi(key, action, content) {
     let prompt = "";
     if (action === "screenplay") {
-      prompt = `You are a visual novel game engine script compiler. Convert the following screenplay into a valid JSON object matching our node graph structure.
-Return ONLY the raw JSON object — no markdown fences, no commentary, no "chapters" wrapper. The top-level key must be "nodes". Every line of dialogue from the screenplay must appear in some node's "text" field. Chain sequential nodes with "next".
-Format the output strictly as a JSON object matching this structure:
+      prompt = `You are a story compiler for a visual-novel node engine used to prototype a game. Convert the screenplay / premise below into ONE JSON object. Return ONLY raw JSON — no markdown fences, no commentary.
+
+Schema:
 {
+  "vars": {
+    "characters":   [{"name": "Hero", "info": "one-sentence background"}],
+    "locations":    [{"name": "Dark Forest", "info": "..."}],
+    "collectibles": [{"name": "rusty_key", "info": "..."}],
+    "knowledge":    [{"name": "heard_rustle", "info": "..."}],
+    "missions":     [{"name": "Find the Rusty Key", "info": "...", "required": true}]
+  },
   "nodes": {
-    "node_1": {
-      "type": "passthrough",
-      "location": "Dark Forest",
-      "charactersPresent": ["Hero"],
-      "text": "{Hero}: Hello there",
-      "background": "forest.png",
-      "next": "node_2"
-    }
+    "n1": {"type": "dialogue", "title": "Scene title", "location": "Dark Forest",
+           "text": "Hero: A line of dialogue\\nNarrator: Narration line",
+           "rewardItems": "", "rewardKnowledge": "", "startMission": "", "completeMission": "",
+           "next": "n2"},
+    "n2": {"type": "choice", "title": "Prompt shown to the player",
+           "choices": [{"text": "Option label", "condition": "", "mission": "", "target": "n3"}]},
+    "n3": {"type": "traversal", "title": "Maze name", "targetAccumulation": 50,
+           "outcomes": [{"label": "Trap", "probability": 10, "description": "What happens", "target": "n5"}],
+           "escape": "n4", "earlyExit": "n6"},
+    "n4": {"type": "logic", "title": "Gate name", "condition": "has_item('rusty_key')",
+           "truePath": "n7", "falsePath": "n8"}
   }
 }
-Screenplay text:
+
+Rules:
+- Define EVERY character, location, collectible, knowledge flag and mission you use in "vars", each with a short "info". Missions must set "required" true/false.
+- Dialogue "text": one beat per line, "Name: line" format; lines without a name are narration. Every line of source dialogue must survive into some node.
+- Conditions may only use: has_item('id'), has_knowledge('id'), mission_active('Name'), mission_done('Name') — with ids/names defined in "vars". Multiple checks in one string are ANDed.
+- Missions: a choice option's "mission" field makes choosing it ACCEPT that mission; a dialogue node's "completeMission" completes it. Use these — wire at least one mission if the material supports it.
+- Wire everything up: every node except endings should lead somewhere via next/target/escape/truePath/falsePath. Branches may converge on the same target node.
+- Use collectible rewards (rewardItems) and knowledge (rewardKnowledge) to make conditions satisfiable.
+
+Source material:
 ${content}`;
     } else {
-      prompt = `Flesh out this visual novel dialogue to make it engaging and descriptive. Keep the character tokens intact like {Hero}:
+      prompt = `Flesh out this visual novel dialogue to make it engaging and descriptive. Keep the "Name: line" format intact for each spoken line:
 ${content}`;
     }
 
@@ -1780,7 +2262,6 @@ ${content}`;
       : await this.callGeminiApi(key, prompt);
 
     if (action === "screenplay") {
-      // Find JSON block
       const jsonMatch = resultText.match(/{[\s\S]*}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
@@ -1847,8 +2328,42 @@ ${content}`;
   },
 
   applyParsedNarrativeGraph(parsed) {
+    const varCount = this.applyParsedVars(parsed && parsed.vars);
     const nodes = this.extractNarrativeNodes(parsed);
-    return this.insertNarrativeNodes(nodes);
+    const created = this.insertNarrativeNodes(nodes);
+    if (varCount > 0) {
+      this.toast(`LLM defined ${varCount} new characters/props/missions — see the sidebar`, "success");
+    }
+    return created;
+  },
+
+  // Ingest LLM-defined vars: entries can be plain strings or
+  // {name, info, required} objects. Info lands in varMeta (double-click a tag).
+  applyParsedVars(vars) {
+    if (!vars || typeof vars !== "object") return 0;
+    let count = 0;
+    ["characters", "locations", "collectibles", "knowledge", "missions"].forEach(cat => {
+      const list = vars[cat];
+      if (!Array.isArray(list)) return;
+      list.forEach(item => {
+        const name = typeof item === "string" ? item : (item && item.name);
+        if (!name || typeof name !== "string") return;
+        if (!this.globalVars[cat].includes(name)) {
+          this.globalVars[cat].push(name);
+          count++;
+        }
+        if (item && typeof item === "object") {
+          const meta = this.getMeta(cat, name);
+          if (item.info) meta.info = String(item.info);
+          if (cat === "missions" && item.required !== undefined) meta.required = !!item.required;
+        }
+      });
+    });
+    if (count > 0) {
+      this.renderGlobalTags();
+      this.updateInspectorAutocompletes();
+    }
+    return count;
   },
 
   // Accept both {nodes: {...}} and the chapters-wrapped schema
@@ -1873,7 +2388,6 @@ ${content}`;
     const keys = Object.keys(narrativeNodes || {});
     if (keys.length === 0) return [];
 
-    // Drop the batch at the center of what the user is currently looking at
     const ds = this.canvas.ds;
     const originX = (this.canvas.canvas.width / 2) / ds.scale - ds.offset[0] - 300;
     const originY = (this.canvas.canvas.height / 2) / ds.scale - ds.offset[1] - 100;
@@ -1884,30 +2398,54 @@ ${content}`;
     let yOffset = originY;
     let col = 0;
 
+    const normType = (t) => {
+      t = String(t || "").toLowerCase();
+      if (t === "choice") return "choice";
+      if (t === "traversal") return "traversal";
+      if (t === "logic" || t === "logic_gate" || t === "gate") return "logic";
+      // passthrough, dialogue, AND anything unrecognized becomes dialogue so
+      // no imported content is silently dropped
+      return "dialogue";
+    };
+
     // First pass: create all LiteGraph node instances (IDs are assigned by
     // the graph — never forced from key names, which can collide with
     // existing nodes and corrupt links)
     keys.forEach(nodeKey => {
       const data = narrativeNodes[nodeKey] || {};
+      const t = normType(data.type);
       let lgNode = null;
 
-      if (data.type === "choice") {
+      if (t === "choice") {
         lgNode = LiteGraph.createNode("vnovel/choice");
         lgNode.properties.choices = (data.choices || []).map(c => ({
           text: c.text || "Option",
-          condition: c.condition || ""
+          condition: c.condition || "",
+          mission: c.mission || ""
         }));
         lgNode.updateChoiceOutputs();
+      } else if (t === "traversal") {
+        lgNode = LiteGraph.createNode("vnovel/traversal");
+        lgNode.properties.targetAccumulation = parseInt(data.targetAccumulation) || 50;
+        lgNode.properties.outcomes = (data.outcomes || []).map(o => ({
+          label: o.label || "Event",
+          probability: o.probability !== undefined ? parseFloat(o.probability) : 10,
+          description: o.description || ""
+        }));
+        lgNode.updateOutputs();
+      } else if (t === "logic") {
+        lgNode = LiteGraph.createNode("vnovel/logic_gate");
+        lgNode.properties.condition = data.condition || "";
       } else {
-        // Treat passthrough AND any unrecognized type as dialogue so no
-        // imported content is silently dropped
         lgNode = LiteGraph.createNode("vnovel/passthrough");
         lgNode.properties.location = data.location || "Unknown";
-        lgNode.properties.charactersPresent = Array.isArray(data.charactersPresent)
-          ? data.charactersPresent.join(", ")
-          : (data.charactersPresent || "");
         lgNode.properties.text = data.text || "";
         lgNode.properties.background = data.background || "";
+        lgNode.properties.rewardItems = data.rewardItems || "";
+        lgNode.properties.rewardKnowledge = data.rewardKnowledge || "";
+        lgNode.properties.startMission = data.startMission || "";
+        lgNode.properties.completeMission = data.completeMission || "";
+        if (data.isChapterStart) lgNode.properties.isChapterStart = true;
       }
 
       if (data.title) {
@@ -1923,28 +2461,37 @@ ${content}`;
       xOffset += 280;
       if (++col % 4 === 0) {
         xOffset = originX;
-        yOffset += 200;
+        yOffset += 220;
       }
     });
 
-    // Second pass: wire connections between the newly created nodes
+    // Second pass: wire connections between the newly created nodes.
+    // Slot layouts must match the runtime: choice = one slot per option;
+    // traversal = escape(0), outcomes(1..n), earlyExit(n+1); logic = true(0)/false(1).
     keys.forEach(nodeKey => {
       const data = narrativeNodes[nodeKey] || {};
       const sourceNode = createdNodes[nodeKey];
       if (!sourceNode) return;
+      const t = normType(data.type);
+      const link = (slot, targetKey) => {
+        const targetNode = targetKey && createdNodes[targetKey];
+        if (targetNode) sourceNode.connect(slot, targetNode, 0);
+      };
 
-      if (data.type === "choice" && data.choices) {
-        data.choices.forEach((choice, choiceIdx) => {
-          const targetNode = choice.target && createdNodes[choice.target];
-          if (targetNode) sourceNode.connect(choiceIdx, targetNode, 0);
-        });
-      } else if (data.next) {
-        const targetNode = createdNodes[data.next];
-        if (targetNode) sourceNode.connect(0, targetNode, 0);
+      if (t === "choice") {
+        (data.choices || []).forEach((choice, choiceIdx) => link(choiceIdx, choice.target));
+      } else if (t === "traversal") {
+        link(0, data.escape || data.next);
+        (data.outcomes || []).forEach((o, i) => link(i + 1, o.target));
+        link((data.outcomes || []).length + 1, data.earlyExit);
+      } else if (t === "logic") {
+        link(0, data.truePath || data.trueTarget);
+        link(1, data.falsePath || data.falseTarget);
+      } else {
+        link(0, data.next);
       }
     });
 
-    // Select the batch so it can be dragged as a group, and bring it into view
     if (this.canvas.selectNodes) {
       this.canvas.selectNodes(createdList);
     }
@@ -1954,122 +2501,78 @@ ${content}`;
 
     this.renderBookmarks();
     this.saveToLocalStorage();
+    this.checkpoint();
     this.canvas.draw(true, true);
     return createdList;
   },
 
-  // 8. PROJECT IMPORT / EXPORT & DEMO PROJECT LOADING
-  exportProject() {
-    const state = {
-      graphSchema: this.graph.serialize(),
-      globalVars: this.globalVars
-    };
+  // ================= DEMO PROJECT =================
 
-    const str = JSON.stringify(state, null, 2);
-    navigator.clipboard.writeText(str).then(() => {
-      alert("Project Schema copied to clipboard successfully! Use this block to share or import your projects.");
-    }).catch(err => {
-      alert("Failed to auto copy: " + err.message + "\nHere is the raw schema: \n\n" + str);
-    });
-  },
-
-  importProject() {
-    const schema = prompt("Paste your narrative project JSON state block here:");
-    if (!schema) return;
-
-    try {
-      const state = JSON.parse(schema);
-      if (state.graphSchema) this.graph.configure(state.graphSchema);
-      if (state.globalVars) this.globalVars = state.globalVars;
-
-      this.renderGlobalTags();
-      this.renderBookmarks();
-      this.canvas.draw(true, true);
-      this.saveToLocalStorage();
-      alert("Narrative graph project loaded successfully!");
-    } catch (err) {
-      alert("Failed to parse project JSON: " + err.message);
-    }
-  },
-
-  saveToLocalStorage() {
-    const state = {
-      graphSchema: this.graph.serialize(),
-      globalVars: this.globalVars
-    };
-    localStorage.setItem("vnovel_active_save_v2", JSON.stringify(state));
-  },
-
-  loadFromLocalStorage() {
-    const saved = localStorage.getItem("vnovel_active_save_v2");
-    if (saved) {
-      try {
-        const state = JSON.parse(saved);
-        if (state.graphSchema) this.graph.configure(state.graphSchema);
-        if (state.globalVars) this.globalVars = state.globalVars;
-        this.renderGlobalTags();
-        this.renderBookmarks();
-        this.canvas.draw(true, true);
-        return true;
-      } catch (err) {
-        console.error("Local load failed. Loading default demo instead.", err);
-      }
-    }
-    return false;
-  },
-
-  // PRE-CONFIGURED DEMO
   loadDemoProject() {
     if (this.loadFromLocalStorage()) return;
+    this.buildTemplateProject();
+  },
 
-    // Re-create a beautiful forest scene
+  // Starter template: a tiny complete story that uses every node type.
+  // Used on first run and by "New > Starter Template".
+  buildTemplateProject() {
     this.graph.clear();
-    
-    // Node 1: Intro Passthrough
+
+    this.globalVars = {
+      characters: ["Hero", "Goblin", "Wizard", "Narrator"],
+      locations: ["Dark Forest", "Castle Keep", "Secret Cave"],
+      collectibles: ["rusty_key", "healing_potion", "ancient_coin"],
+      knowledge: ["heard_rustle", "met_wizard", "found_secret"],
+      missions: ["Find the Rusty Key"]
+    };
+    this.varMeta = {
+      missions: {
+        "Find the Rusty Key": { info: "An old iron key is said to be buried near the gate roots.", required: false }
+      }
+    };
+
+    // Node 1: Intro Dialogue
     const n1 = LiteGraph.createNode("vnovel/passthrough");
     n1.id = 101;
     n1.properties.title = "Act I: Whispers in the Woods";
     n1.properties.location = "Dark Forest";
-    n1.properties.charactersPresent = "Hero, Goblin";
-    n1.properties.text = "{Hero}: Did you hear that?\n{Goblin}: *cringes in the shadow* Run! Run before they notice us!";
+    n1.properties.text = "Hero: Did you hear that?\nGoblin: *cringes in the shadow* Run! Run before they notice us!";
     n1.properties.rewardKnowledge = "heard_rustle";
     n1.properties.isChapterStart = true;
-    n1.properties.background = "forest_night.png";
     n1.pos = [80, 150];
     this.graph.add(n1);
 
-    // Node 2: Choices Branch
+    // Node 2: Choices Branch (option 2 accepts a mission)
     const n2 = LiteGraph.createNode("vnovel/choice");
     n2.id = 102;
     n2.properties.title = "Fateful Encounter";
     n2.properties.choices = [
-      { text: "Fight the Goblin companion", condition: "" },
-      { text: "Examine the mysterious locked gate", condition: "has_knowledge('heard_rustle')" }
+      { text: "Fight the Goblin companion", condition: "", mission: "" },
+      { text: "Search for the gate key", condition: "has_knowledge('heard_rustle')", mission: "Find the Rusty Key" }
     ];
     n2.updateChoiceOutputs();
-    n2.pos = [380, 150];
+    n2.pos = [420, 150];
     this.graph.add(n2);
 
-    // Node 3: Combat (Passthrough Node)
+    // Node 3: Combat
     const n3 = LiteGraph.createNode("vnovel/passthrough");
     n3.id = 103;
     n3.properties.title = "Sudden Skirmish";
     n3.properties.location = "Dark Forest";
-    n3.properties.charactersPresent = "Goblin";
-    n3.properties.text = "{Goblin}: Why do you draw your sword? Help! *The fight starts*";
+    n3.properties.text = "Goblin: Why do you draw your sword? Help! *The fight starts*";
     n3.properties.rewardItems = "ancient_coin";
-    n3.pos = [680, 50];
+    n3.pos = [760, 50];
     this.graph.add(n3);
 
-    // Node 4: The gate (Passthrough Node awarding Key)
+    // Node 4: The gate (completes the mission)
     const n4 = LiteGraph.createNode("vnovel/passthrough");
     n4.id = 104;
     n4.properties.title = "Undergrowth Gate";
     n4.properties.location = "Dark Forest";
-    n4.properties.charactersPresent = "Hero";
-    n4.properties.text = "{Narrator}: A mossy iron gate blocks the pass. Buried in the root, you spot a rusty iron key.\n{Hero}: Let's grab this.";
+    n4.properties.text = "Narrator: A mossy iron gate blocks the pass. Buried in the roots, you spot a rusty iron key.\nHero: Let's grab this.";
     n4.properties.rewardItems = "rusty_key";
-    n4.pos = [680, 250];
+    n4.properties.completeMission = "Find the Rusty Key";
+    n4.pos = [760, 280];
     this.graph.add(n4);
 
     // Node 5: Traversal Maze
@@ -2082,7 +2585,7 @@ ${content}`;
       { label: "Spike Trap (Die)", probability: 5, description: "You stepped on a pressure plate and fell into spikes." }
     ];
     n5.updateOutputs();
-    n5.pos = [980, 250];
+    n5.pos = [1080, 280];
     this.graph.add(n5);
 
     // Node 6: Escape End Node
@@ -2090,9 +2593,8 @@ ${content}`;
     n6.id = 106;
     n6.properties.title = "Glade of Lights";
     n6.properties.location = "Secret Cave";
-    n6.properties.charactersPresent = "Wizard";
-    n6.properties.text = "{Wizard}: Ah, travelers, you managed to bypass the traps! Welcome to the sacred ruins.";
-    n6.pos = [1300, 250];
+    n6.properties.text = "Wizard: Ah, travelers, you managed to bypass the traps! Welcome to the sacred ruins.";
+    n6.pos = [1420, 230];
     this.graph.add(n6);
 
     // Node 7: Mutation End Node
@@ -2100,51 +2602,150 @@ ${content}`;
     n7.id = 107;
     n7.properties.title = "Mutated Ending";
     n7.properties.location = "Secret Cave";
-    n7.properties.charactersPresent = "Hero";
-    n7.properties.text = "{Hero}: Argh! The dark corruption... it's taking over! I've become a monster of the forest...";
-    n7.pos = [1300, 450];
+    n7.properties.text = "Hero: Argh! The dark corruption... it's taking over! I've become a monster of the forest...";
+    n7.pos = [1420, 450];
     this.graph.add(n7);
 
     // Node 8: Death End Node
     const n8 = LiteGraph.createNode("vnovel/passthrough");
     n8.id = 108;
     n8.properties.title = "Death Ending";
-    n8.properties.location = "Forgotten Maze Loop";
-    n8.properties.charactersPresent = "Narrator";
-    n8.properties.text = "{Narrator}: The spikes pierced deep. Your journey ends here in the dark.";
-    n8.pos = [1300, 50];
+    n8.properties.location = "Dark Forest";
+    n8.properties.text = "Narrator: The spikes pierced deep. Your journey ends here in the dark.";
+    n8.pos = [1420, 40];
     this.graph.add(n8);
 
+    // Node 9: Early exit path
+    const n9 = LiteGraph.createNode("vnovel/passthrough");
+    n9.id = 109;
+    n9.properties.title = "The Long Way Around";
+    n9.properties.location = "Dark Forest";
+    n9.properties.text = "Narrator: You back away from the maze. Slower, but alive. The forest path stretches ahead.";
+    n9.pos = [1080, 520];
+    this.graph.add(n9);
+
+    // Node 10: Logic gate — did you pick up the coin in the fight?
+    const n10 = LiteGraph.createNode("vnovel/logic_gate");
+    n10.id = 110;
+    n10.properties.title = "Carrying the coin?";
+    n10.properties.condition = "has_item('ancient_coin')";
+    n10.pos = [1080, 40];
+    this.graph.add(n10);
+
     // Connections
-    n1.connect(0, n2, 0); // Intro -> Choice
-    n2.connect(0, n3, 0); // Option 1 -> Combat
-    n2.connect(1, n4, 0); // Option 2 -> Gate
-    n4.connect(0, n5, 0); // Gate -> Maze
-    n5.connect(0, n6, 0); // Maze Success (Escaped Out 0) -> Exit Node
-    n5.connect(1, n7, 0); // Become Monster -> Mutation Ending
-    n5.connect(2, n8, 0); // Spike Trap -> Death Ending
+    n1.connect(0, n2, 0);  // Intro -> Choice
+    n2.connect(0, n3, 0);  // Option 1 -> Combat
+    n2.connect(1, n4, 0);  // Option 2 (mission) -> Gate
+    n3.connect(0, n10, 0); // Combat -> Logic gate
+    n10.connect(0, n6, 0); // Gate TRUE -> Glade (converges with maze success!)
+    n10.connect(1, n8, 0); // Gate FALSE -> Death ending (converges with spike trap!)
+    n4.connect(0, n5, 0);  // Gate -> Maze
+    n5.connect(0, n6, 0);  // Maze Success -> Glade (many-to-one input)
+    n5.connect(1, n7, 0);  // Become Monster -> Mutation Ending
+    n5.connect(2, n8, 0);  // Spike Trap -> Death Ending (many-to-one input)
+    n5.connect(3, n9, 0);  // Early Exit -> Long way around
 
     this.renderGlobalTags();
     this.renderBookmarks();
     this.canvas.draw(true, true);
   },
 
+  // ================= EVENT HANDLERS =================
+
   registerEventHandlers() {
-    // LLM Modal Button Triggers
-    document.getElementById("btn_open_llm_copilot").onclick = () => this.openLLMModal();
-    document.getElementById("btn_close_llm_modal").onclick = () => this.closeLLMModal();
-    document.getElementById("btn_llm_run_screenplay").onclick = () => this.runScreenplayImporter();
-    document.getElementById("btn_llm_run_debugger").onclick = () => this.runLogicDebugger();
-    
-    // Editor Playback Buttons
-    document.getElementById("btn_start_play").onclick = () => this.startPlayback();
-    document.getElementById("btn_stop_play").onclick = () => this.stopPlayback();
-    document.getElementById("btn_toggle_diary").onclick = () => this.toggleDiaryPanel();
-    
-    // Project imports/exports
-    document.getElementById("btn_export_project").onclick = () => this.exportProject();
-    document.getElementById("btn_import_project").onclick = () => this.importProject();
-    
+    const on = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) el.onclick = fn;
+    };
+
+    // Header buttons
+    on("btn_new_graph", () => this.newGraph());
+    on("btn_versions", () => { this.renderVersionsList(); this.openModal("versions_modal_overlay"); });
+    on("btn_import_project", () => this.openModal("import_modal_overlay"));
+    on("btn_export_project", () => this.exportProject());
+    on("btn_publish", () => this.publishStory());
+    on("btn_open_llm_copilot", () => this.openLLMModal());
+    on("btn_toggle_theme", () => this.toggleTheme());
+    on("btn_help", () => this.openModal("help_modal_overlay"));
+    on("btn_start_play", () => this.startPlayback());
+
+    // Modal actions
+    on("btn_new_empty", () => this.newEmptyGraph());
+    on("btn_new_template", () => this.newTemplateGraph());
+    on("btn_close_llm_modal", () => this.closeLLMModal());
+    on("btn_llm_run_screenplay", () => this.runScreenplayImporter());
+    on("btn_llm_run_debugger", () => this.runLogicDebugger());
+    on("btn_do_import", () => this.doImport());
+    on("btn_save_version", () => this.saveVersion());
+    on("btn_save_item_info", () => this.saveItemModal());
+
+    // Undo / redo buttons on the palette
+    on("btn_undo", () => this.undo());
+    on("btn_redo", () => this.redo());
+
+    // Asset handling mode (embed vs reference by path)
+    const assetSelect = document.getElementById("asset_mode_select");
+    if (assetSelect) {
+      assetSelect.value = this.getAssetMode();
+      assetSelect.addEventListener("change", () => {
+        localStorage.setItem("vnovel_asset_mode", assetSelect.value);
+        this.toast(assetSelect.value === "embed"
+          ? "Picked files will be embedded into the project (fully portable)."
+          : "Picked files will be referenced as assets/<name> — keep an assets folder next to the editor and published HTML.");
+      });
+    }
+
+    // Project title
+    const titleInput = document.getElementById("project_title_input");
+    titleInput.addEventListener("input", () => {
+      this.projectTitle = titleInput.value || "Untitled Story";
+      this.schedulePersist();
+    });
+
+    // Node palette buttons
+    document.querySelectorAll(".palette-btn[data-nodetype]").forEach(btn => {
+      btn.onclick = () => {
+        const c = this.viewCenter();
+        // Slight jitter so repeated adds don't stack perfectly
+        this.addNodeAt(btn.dataset.nodetype, [c[0] - 120 + Math.random() * 60, c[1] - 60 + Math.random() * 60]);
+      };
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+      const t = e.target;
+      const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
+
+      if (e.key === "Escape") {
+        // Close any open modal first
+        const openModals = document.querySelectorAll(".modal-overlay");
+        for (const m of openModals) {
+          if (m.style.display === "flex") { m.style.display = "none"; return; }
+        }
+        if (!this.gamePlaying && !typing) this.closeInspector();
+        return;
+      }
+
+      if (this.gamePlaying || typing) return;
+
+      const ctrl = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        this.deleteSelection();
+      } else if (ctrl && key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        this.undo();
+      } else if (ctrl && (key === "y" || (key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        this.redo();
+      } else if (ctrl && key === "d") {
+        e.preventDefault();
+        this.duplicateSelection();
+      }
+    });
+
     // Close Drawer when clicking EMPTY canvas space. A double-click on a node
     // also fires plain click events, so hit-test the graph first — otherwise
     // the click would instantly close the inspector the dblclick just opened.
@@ -2158,5 +2759,12 @@ ${content}`;
         self.closeInspector();
       }
     };
+
+    // Click outside a modal card closes it
+    document.querySelectorAll(".modal-overlay").forEach(overlay => {
+      overlay.addEventListener("mousedown", (e) => {
+        if (e.target === overlay) overlay.style.display = "none";
+      });
+    });
   }
 };
