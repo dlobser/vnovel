@@ -30,7 +30,7 @@
       <button class="btn" id="btn_new_graph" title="Start a fresh empty graph">
         <i class="fas fa-file"></i> New
       </button>
-      <button class="btn" id="btn_versions" title="Save / load named versions (local storage)">
+      <button class="btn" id="btn_versions" title="Save / load graphs in your project folder (Ctrl+S to save)">
         <i class="fas fa-save"></i> Save / Load
       </button>
       <button class="btn" id="btn_import_project" title="Import a project JSON file or pasted text">
@@ -90,12 +90,12 @@
         <div class="list-section" style="border-top: 1px solid var(--border-color); padding-top: 15px; padding-bottom:10px;">
           <div class="section-title"><span>Picked Asset Files</span></div>
           <select class="select-input" id="asset_mode_select" style="font-size:12px;">
-            <option value="embed">Embed into project (portable, bigger saves)</option>
-            <option value="reference">Reference by path (assets/ folder)</option>
+            <option value="copy">Copy into project folder (recommended)</option>
+            <option value="reference">Reference by path (I'll file it myself)</option>
           </select>
           <div style="font-size:10.5px; color:var(--text-dark); line-height:1.5;">
-            Embed: images/audio are stored inside the project & published HTML (single file, but base64 bloats saves).
-            Reference: stores <code style="font-size:10px;">assets/filename</code> — keep an <b>assets</b> folder next to the editor and next to any published HTML. Typing a full URL in any field always works too.
+            <b>Copy:</b> the file is copied into your project folder under <code style="font-size:10px;">assets/</code> and stored as a relative path. Needs a project folder (Save / Load &rarr; Choose&hellip;).
+            <b>Reference:</b> just records the path; you put the file there. Typing a full URL in any field always works too.
           </div>
         </div>
       </div>
@@ -143,24 +143,32 @@
         </div>
         <div class="modal-body">
 
-          <!-- LLM API configuration -->
-          <div class="form-group">
-            <label><i class="fas fa-server"></i> LLM Provider</label>
-            <select class="select-input" id="llm_provider_select">
-              <option value="anthropic" selected>Anthropic (Claude)</option>
-              <option value="gemini">Google (Gemini)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-microchip"></i> Model</label>
-            <select class="select-input" id="llm_model_select">
-            </select>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-key"></i> API Key (Optional)</label>
-            <input type="password" class="input-text" id="llm_api_key_input" placeholder="Enter key for live LLM requests. Leave blank to run smart offline compiler simulation.">
-            <span style="font-size:10px; color:var(--text-dark);">Your key is used directly from your browser to call the selected provider and never sent elsewhere.</span>
-          </div>
+          <!-- LLM API configuration (collapsed by default — set once, rarely changed) -->
+          <details class="config-disclosure" id="llm_config_disclosure">
+            <summary>
+              <span><i class="fas fa-sliders-h"></i> Provider, Model &amp; API Key</span>
+              <span class="config-summary-status" id="llm_config_status"></span>
+            </summary>
+            <div class="config-disclosure-body">
+              <div class="form-group">
+                <label><i class="fas fa-server"></i> LLM Provider</label>
+                <select class="select-input" id="llm_provider_select">
+                  <option value="anthropic" selected>Anthropic (Claude)</option>
+                  <option value="gemini">Google (Gemini)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-microchip"></i> Model</label>
+                <select class="select-input" id="llm_model_select">
+                </select>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-key"></i> API Key (Optional)</label>
+                <input type="password" class="input-text" id="llm_api_key_input" placeholder="Enter key for live LLM requests. Leave blank to run smart offline compiler simulation.">
+                <span style="font-size:10px; color:var(--text-dark);">Your key is used directly from your browser to call the selected provider and never sent elsewhere.</span>
+              </div>
+            </div>
+          </details>
 
           <!-- Tabs of tools -->
           <div style="border-top:1px solid var(--border-color); padding-top:12px;">
@@ -186,7 +194,8 @@ Did you hear that?
 GOBLIN
 Run!"></textarea>
             <div style="display:flex; gap:8px; justify-content:flex-end; align-self:flex-end;">
-              <button class="btn" id="btn_llm_copy_prompt" title="Copy the system instructions and screenplay prompt to clipboard"><i class="fas fa-copy"></i> Copy LLM Prompt</button>
+              <button class="btn" id="btn_llm_copy_json_prompt" title="Copies a prompt that asks an LLM for the raw project JSON (vars + nodes). Paste its reply into Import &rarr; the graph is built exactly as specified. Best for precise wiring. If the box above has text it is appended as source material."><i class="fas fa-copy"></i> Copy JSON Prompt</button>
+              <button class="btn" id="btn_llm_copy_md_prompt" title="Copies a prompt that asks an LLM for the human-readable Markdown script format. Easier to read and hand-edit before importing, and it round-trips with Export &rarr; Markdown. If the box above has text it is appended as source material."><i class="fas fa-copy"></i> Copy Markdown Prompt</button>
               <button class="btn btn-primary" id="btn_llm_run_screenplay">Compile Script to Node Graph</button>
             </div>
           </div>
@@ -238,22 +247,50 @@ Run!"></textarea>
     <div class="modal-overlay" id="versions_modal_overlay">
       <div class="modal-card" style="max-width:520px;">
         <div class="modal-header">
-          <div class="modal-title"><i class="fas fa-save" style="color:var(--accent-primary); margin-right:6px;"></i> Saved Versions</div>
+          <div class="modal-title"><i class="fas fa-save" style="color:var(--accent-primary); margin-right:6px;"></i> Save / Load</div>
           <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('versions_modal_overlay')">&times;</button>
         </div>
         <div class="modal-body">
+
+          <!-- Project folder -->
           <div class="form-group">
-            <label>Save the current graph as a new version</label>
-            <div style="display:flex; gap:8px;">
-              <input type="text" class="input-text" id="version_name_input" placeholder="e.g. 'act 1 draft 3'" style="flex:1;">
-              <button class="btn btn-primary" id="btn_save_version"><i class="fas fa-plus"></i> Save</button>
+            <label><i class="fas fa-folder-open"></i> Project folder</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <div id="project_folder_label" style="flex:1; font-size:12px; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--console-bg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Not set</div>
+              <button class="btn" id="btn_choose_folder"><i class="fas fa-folder"></i> Choose&hellip;</button>
             </div>
-            <span style="font-size:10.5px; color:var(--text-dark);">Versions live in this browser's local storage. Use Export for a real backup file.</span>
+            <span id="project_folder_hint" style="font-size:10.5px; color:var(--text-dark);"></span>
           </div>
+
+          <!-- Current file + save actions -->
           <div class="form-group">
-            <label>Existing versions</label>
-            <div id="versions_list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            <label>Current graph</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <div id="current_file_label" style="flex:1; font-size:13px; font-weight:600; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--console-bg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Unsaved graph</div>
+              <button class="btn btn-primary" id="btn_save_graph"><i class="fas fa-save"></i> Save</button>
+              <button class="btn" id="btn_save_graph_as">Save As&hellip;</button>
+            </div>
+            <label style="display:flex; align-items:center; gap:7px; font-size:11px; margin-top:8px; cursor:pointer; font-weight:400;">
+              <input type="checkbox" id="keep_versions_toggle" style="margin:0;">
+              Keep versions (each save also stores a numbered backup)
+            </label>
           </div>
+
+          <!-- Version history for the current graph -->
+          <div class="form-group" id="version_history_group">
+            <label>Version history</label>
+            <div style="display:flex; gap:8px;">
+              <select class="select-input" id="version_select" style="flex:1;"></select>
+              <button class="btn" id="btn_restore_version"><i class="fas fa-clock-rotate-left"></i> Restore</button>
+            </div>
+          </div>
+
+          <!-- Graphs in this folder -->
+          <div class="form-group">
+            <label>Graphs in this folder</label>
+            <div id="graph_list" style="display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto;"></div>
+          </div>
+
         </div>
       </div>
     </div>

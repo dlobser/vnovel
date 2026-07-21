@@ -62,6 +62,8 @@ class StoryPlayer {
 .sp-panel-empty { color:#64748b; font-size:12px; font-style:italic; padding:6px 0; }
 
 .sp-diary-entry { background:rgba(255,255,255,.03); border-left:3px solid #a855f7; padding:10px 12px; border-radius:0 8px 8px 0; font-size:13.5px; line-height:1.55; font-family:'EB Garamond',Georgia,serif; }
+.sp-diary-label { color:#e2e8f0; }
+.sp-diary-info { color:#94a3b8; font-size:13px; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,.07); white-space:pre-wrap; }
 
 .sp-stage { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:36px; }
 
@@ -156,7 +158,10 @@ class StoryPlayer {
         this.state.diary.push("Started with items: " + startState.inventory.join(", "));
       }
       if (startState.knowledge && startState.knowledge.length) {
-        this.state.diary.push("Started with knowledge: " + startState.knowledge.join(", "));
+        // One entry each, so every preset flag can show its own description
+        startState.knowledge.forEach(k => {
+          this.state.diary.push({ label: "Started knowing: " + k, key: k });
+        });
       }
       if (startState.missions) {
         Object.entries(startState.missions).forEach(([name, status]) => {
@@ -291,7 +296,9 @@ class StoryPlayer {
     }
     if (p.rewardKnowledge && !this.state.knowledge.has(p.rewardKnowledge)) {
       this.state.knowledge.add(p.rewardKnowledge);
-      this.state.diary.push('Discovered: "' + p.rewardKnowledge + '"');
+      // Keep the key alongside the label so the diary can show what the author
+      // wrote about this flag, not just that it was found
+      this.state.diary.push({ label: 'Discovered: "' + p.rewardKnowledge + '"', key: p.rewardKnowledge });
       this._toast("Diary updated", "info");
     }
     if (p.startMission) this._acceptMission(p.startMission);
@@ -514,6 +521,11 @@ class StoryPlayer {
     return (vm.missions && vm.missions[name]) || {};
   }
 
+  _knowledgeMeta(name) {
+    const vm = this.story.varMeta || {};
+    return (vm.knowledge && vm.knowledge[name]) || {};
+  }
+
   _pulseMissions() {
     this._updateHUD();
     if (!this.el) return;
@@ -585,7 +597,15 @@ class StoryPlayer {
     // Diary panel
     const dBody = this.el.diaryPanel.querySelector(".sp-panel-body");
     dBody.innerHTML = this.state.diary.length
-      ? this.state.diary.map(e => `<div class="sp-diary-entry">${this._esc(e)}</div>`).join("")
+      ? this.state.diary.map(e => {
+          // Entries are {label, key}; bare strings are still accepted
+          const entry = (typeof e === "string") ? { label: e } : (e || {});
+          const info = entry.key ? this._knowledgeMeta(entry.key).info : "";
+          return `<div class="sp-diary-entry">
+            <div class="sp-diary-label">${this._esc(entry.label || "")}</div>
+            ${info ? `<div class="sp-diary-info">${this._esc(info)}</div>` : ""}
+          </div>`;
+        }).join("")
       : '<div class="sp-panel-empty">Nothing discovered yet.</div>';
   }
 

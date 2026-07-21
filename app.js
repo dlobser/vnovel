@@ -72,7 +72,13 @@ const VNovelApp = {
     this.loadDemoProject();
     this.initUndo();
 
-    // Auto-save to localStorage periodically
+    // Reattach to the project folder picked in an earlier session (no prompt here —
+    // that needs a user gesture, so the modal offers a Reconnect link instead)
+    this.currentGraphName = localStorage.getItem("vnovel_current_graph") || null;
+    this.restoreProjectFolder().then(() => this.updateCurrentFileLabel());
+
+    // Auto-save to localStorage periodically (crash recovery, separate from
+    // saving to the project folder, which is always explicit)
     setInterval(() => this.saveToLocalStorage(), 15000);
   },
 
@@ -170,10 +176,24 @@ const VNovelApp = {
     };
 
     this.canvas.getNodeMenuOptions = function(node) {
+      const pinOptions = [
+        {
+          content: "➕ Add input pin",
+          callback: () => node.addConvergenceInput && node.addConvergenceInput()
+        }
+      ];
+      if (node.inputs && node.inputs.length > 1) {
+        pinOptions.push({
+          content: `➖ Remove input pin (In ${node.inputs.length})`,
+          callback: () => node.removeConvergenceInput && node.removeConvergenceInput()
+        });
+      }
       return [
         { content: "▶ Play from here", callback: () => self.startPlayback(node) },
         { content: "✎ Open inspector", callback: () => self.openInspector(node) },
         { content: "⧉ Duplicate (Ctrl+D)", callback: () => self.duplicateNode(node) },
+        null,
+        ...pinOptions,
         null,
         {
           content: "\u{1F5D1} Remove (Del)",
@@ -228,8 +248,12 @@ const VNovelApp = {
           }
         }
 
-        // Temporarily hide an occupied input so the original connect()
-        // doesn't auto-disconnect it — both links then coexist.
+        // NOTE: this does not currently achieve many-to-one on a single pin.
+        // Suppressing disconnectInput isn't enough — LiteGraph's connect() also
+        // mutates graph.links and the origin's output.links directly, so the
+        // previous wire is purged regardless. Verified: three sources connected
+        // to one pin leaves exactly one edge. Use the per-node "Add input pin"
+        // context-menu action for convergence instead.
         const input = target_node && target_node.inputs ? target_node.inputs[inputIndex] : null;
         let savedLinkId = null;
         if (input && input.link != null) {
@@ -554,6 +578,45 @@ const VNovelApp = {
     };
 
     LiteGraph.registerNodeType("vnovel/logic_gate", LogicGateNode);
+
+    // Extra input pins, so several branches can converge on one node.
+    // A LiteGraph input holds a single link — connecting a second source to the
+    // same pin silently destroys the first — so converging paths need a pin each.
+    // Nothing downstream cares: compileStory() reads targets from OUTPUT slots
+    // and ignores which input a link lands on, so these are purely for wiring.
+    [PassthroughNode, ChoiceNode, TraversalNode, LogicGateNode].forEach(NodeClass => {
+      NodeClass.prototype.relabelInputs = function() {
+        (this.inputs || []).forEach((inp, i) => {
+          inp.name = i === 0 ? "In" : "In " + (i + 1);
+          inp.label = inp.name;
+        });
+      };
+
+      NodeClass.prototype.addConvergenceInput = function() {
+        this.addInput("In", LiteGraph.ACTION);
+        this.relabelInputs();
+        // Grow the node so stacked pins stay legible
+        const needed = 30 + this.inputs.length * LiteGraph.NODE_SLOT_HEIGHT;
+        if (this.size[1] < needed) this.size[1] = needed;
+        this.setDirtyCanvas(true, true);
+        self.checkpoint();
+      };
+
+      NodeClass.prototype.removeConvergenceInput = function(index) {
+        if (!this.inputs || this.inputs.length <= 1) return;
+        const i = (typeof index === "number") ? index : this.inputs.length - 1;
+        if (i <= 0) return; // the original "In" always stays
+        this.disconnectInput(i);
+        this.removeInput(i);
+        this.relabelInputs();
+        this.setDirtyCanvas(true, true);
+        self.checkpoint();
+      };
+
+    });
+    // The menu entries themselves live in canvas.getNodeMenuOptions — this app
+    // overrides that wholesale, so LiteGraph's getExtraMenuOptions hook is never
+    // consulted.
   },
 
   // ================= UNDO SYSTEM =================
@@ -741,6 +804,109 @@ const VNovelApp = {
     }
   },
 
+  // Renames a global item and rewrites every reference to it: dialogue tokens and
+  // speaker prefixes, node property fields, choice missions, and the string
+  // conditions like has_item('x') / mission_done('Name'). Without this a rename
+  // would silently break locks and mission wiring that reference the old name.
+  renameVariable(category, oldName, rawNew) {
+    const newName = String(rawNew == null ? "" : rawNew).trim();
+    if (!newName || newName === oldName) return null;
+
+    const list = this.globalVars[category] || [];
+    if (!list.includes(oldName)) return null;
+    if (list.some(v => v !== oldName && v.toLowerCase() === newName.toLowerCase())) {
+      this.toast(`"${newName}" already exists in ${category}.`, "warning");
+      return null;
+    }
+
+    this.globalVars[category] = list.map(v => (v === oldName ? newName : v));
+
+    if (this.varMeta[category] && this.varMeta[category][oldName]) {
+      this.varMeta[category][newName] = this.varMeta[category][oldName];
+      delete this.varMeta[category][oldName];
+    }
+
+    const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const oldEsc = esc(oldName);
+
+    const CONDITION_FNS = {
+      collectibles: ["has_item"],
+      knowledge: ["has_knowledge"],
+      missions: ["mission_active", "mission_done"]
+    }[category] || [];
+
+    const rewriteCondition = (cond) => {
+      if (!cond) return cond;
+      let out = cond;
+      CONDITION_FNS.forEach(fn => {
+        out = out.replace(
+          new RegExp(`(${fn}\\s*\\(\\s*)(['"])${oldEsc}\\2(\\s*\\))`, "g"),
+          `$1$2${newName}$2$3`
+        );
+      });
+      return out;
+    };
+
+    // {Token} anywhere, plus a "Name:" speaker prefix at the start of a line
+    const rewriteText = (text) => {
+      if (!text) return text;
+      let out = text.replace(new RegExp(`\\{\\s*${oldEsc}\\s*\\}`, "g"), `{${newName}}`);
+      out = out.replace(new RegExp(`^([ \\t]*)${oldEsc}(\\s*:)`, "gm"), `$1${newName}$2`);
+      return out;
+    };
+
+    let touched = 0;
+    (this.graph._nodes || []).forEach(node => {
+      const p = node.properties;
+      if (!p) return;
+      let changed = false;
+
+      if (category === "locations" && p.location === oldName) { p.location = newName; changed = true; }
+      if (category === "collectibles" && p.rewardItems === oldName) { p.rewardItems = newName; changed = true; }
+      if (category === "knowledge" && p.rewardKnowledge === oldName) { p.rewardKnowledge = newName; changed = true; }
+      if (category === "missions") {
+        if (p.startMission === oldName) { p.startMission = newName; changed = true; }
+        if (p.completeMission === oldName) { p.completeMission = newName; changed = true; }
+      }
+
+      // Characters and locations both appear as {tokens} in dialogue
+      if ((category === "characters" || category === "locations") && p.text) {
+        const t = rewriteText(p.text);
+        if (t !== p.text) { p.text = t; changed = true; }
+      }
+
+      if (p.condition) {
+        const c = rewriteCondition(p.condition);
+        if (c !== p.condition) { p.condition = c; changed = true; }
+      }
+
+      (p.choices || []).forEach(ch => {
+        if (category === "missions" && ch.mission === oldName) { ch.mission = newName; changed = true; }
+        if (ch.condition) {
+          const c = rewriteCondition(ch.condition);
+          if (c !== ch.condition) { ch.condition = c; changed = true; }
+        }
+      });
+
+      (p.outcomes || []).forEach(o => {
+        if (o.description) {
+          const d = rewriteText(o.description);
+          if (d !== o.description) { o.description = d; changed = true; }
+        }
+      });
+
+      if (changed) { touched++; node.setDirtyCanvas(true, true); }
+    });
+
+    this.renderGlobalTags();
+    this.updateInspectorAutocompletes();
+    if (this.canvas) this.canvas.draw(true, true);
+    this.saveToLocalStorage();
+    this.checkpoint();
+
+    return { touched };
+  },
+
   removeVariable(category, name) {
     this.globalVars[category] = this.globalVars[category].filter(v => v !== name);
     if (this.varMeta[category]) delete this.varMeta[category][name];
@@ -750,14 +916,68 @@ const VNovelApp = {
     this.checkpoint();
   },
 
+  // Title of the item modal, with the name as a click-to-rename field
+  renderItemModalTitle() {
+    if (!this._itemModalTarget) return;
+    const { category, name } = this._itemModalTarget;
+    const catDef = this.VAR_CATEGORIES.find(c => c.key === category);
+    const el = document.getElementById("item_modal_title");
+    el.innerHTML =
+      `<i class="fas fa-feather"></i> ` +
+      `<span id="item_modal_name" class="editable-title" title="Click to rename">${this.escapeHtml(name)}</span> ` +
+      `<span style="font-size:11px; color:var(--text-dark); font-weight:400;">(${catDef ? catDef.singular : category})</span>`;
+    document.getElementById("item_modal_name").onclick = () => this.startItemRename();
+  },
+
+  startItemRename() {
+    if (!this._itemModalTarget) return;
+    const { category, name } = this._itemModalTarget;
+    const span = document.getElementById("item_modal_name");
+    if (!span) return;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "input-text";
+    input.value = name;
+    input.style.cssText = "font-size:16px; font-family:var(--font-display); font-weight:600; padding:2px 6px; width:auto; max-width:260px;";
+    span.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let done = false;
+    const finish = (commit) => {
+      if (done) return;
+      done = true;
+      const next = input.value.trim();
+      if (commit && next && next !== name) {
+        const result = this.renameVariable(category, name, next);
+        if (result) {
+          this._itemModalTarget.name = next;
+          this.toast(
+            result.touched
+              ? `Renamed to "${next}" — updated ${result.touched} node${result.touched === 1 ? "" : "s"}.`
+              : `Renamed to "${next}".`,
+            "success"
+          );
+        }
+      }
+      this.renderItemModalTitle();
+    };
+
+    input.addEventListener("keydown", (e) => {
+      e.stopPropagation(); // don't let the global shortcut handler see this
+      if (e.key === "Enter") { e.preventDefault(); finish(true); }
+      else if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    });
+    input.addEventListener("blur", () => finish(true));
+  },
+
   // Item background-info modal (double-click a sidebar tag)
   openItemModal(category, name) {
     this.stopAudioPreview();
     this._itemModalTarget = { category, name };
     const meta = this.getMeta(category, name);
-    const catDef = this.VAR_CATEGORIES.find(c => c.key === category);
-    document.getElementById("item_modal_title").innerHTML =
-      `<i class="fas fa-feather"></i> ${this.escapeHtml(name)} <span style="font-size:11px; color:var(--text-dark); font-weight:400;">(${catDef ? catDef.singular : category})</span>`;
+    this.renderItemModalTitle();
     document.getElementById("item_modal_info").value = meta.info || "";
     
     const reqGroup = document.getElementById("item_modal_required_group");
@@ -779,7 +999,7 @@ const VNovelApp = {
           document.getElementById("item_modal_loc_bg").value = val;
           meta.background = val;
           meta.backgroundName = file.name;
-        });
+        }, "backgrounds");
       };
       document.getElementById("item_modal_loc_bg_clear").onclick = () => {
         document.getElementById("item_modal_loc_bg").value = "";
@@ -792,7 +1012,7 @@ const VNovelApp = {
           document.getElementById("item_modal_loc_music").value = val;
           meta.audioLoop = val;
           meta.audioLoopName = file.name;
-        });
+        }, "audio");
       };
       document.getElementById("item_modal_loc_music_play").onclick = () => {
         this.toggleAudioPreview(document.getElementById("item_modal_loc_music").value, document.getElementById("item_modal_loc_music_play"), true);
@@ -822,11 +1042,12 @@ const VNovelApp = {
 
     if (category === "characters") {
       document.getElementById("item_modal_char_img").value = meta.image || "";
-      const updateCharPreview = () => {
+      const updateCharPreview = async () => {
         const img = document.getElementById("item_modal_char_img").value.trim();
         const preview = document.getElementById("item_modal_char_img_preview");
         if (img) {
-          preview.style.backgroundImage = `url("${img}")`;
+          const url = await this.resolveAssetURL(img);
+          preview.style.backgroundImage = `url("${url}")`;
           preview.textContent = "";
         } else {
           preview.style.backgroundImage = "";
@@ -841,7 +1062,7 @@ const VNovelApp = {
           meta.image = val;
           meta.imageName = file.name;
           updateCharPreview();
-        });
+        }, "characters");
       };
       document.getElementById("item_modal_char_img_clear").onclick = () => {
         document.getElementById("item_modal_char_img").value = "";
@@ -1381,7 +1602,7 @@ const VNovelApp = {
 
   wireBackgroundField(node, input, preview, pickBtn, clearBtn) {
     const p = node.properties;
-    const refreshBgPreview = () => {
+    const refreshBgPreview = async () => {
       const v = (p.background || "").trim();
       if (!v) {
         preview.style.backgroundImage = "";
@@ -1390,7 +1611,8 @@ const VNovelApp = {
         preview.style.backgroundImage = v;
         preview.textContent = "";
       } else {
-        preview.style.backgroundImage = `url("${v.replace(/"/g, '%22')}")`;
+        const url = await this.resolveAssetURL(v);
+        preview.style.backgroundImage = `url("${url.replace(/"/g, '%22')}")`;
         preview.textContent = "";
       }
     };
@@ -1414,7 +1636,7 @@ const VNovelApp = {
         refreshBgPreview();
         node.setDirtyCanvas(true, true);
         this.schedulePersist();
-      });
+      }, "backgrounds");
     };
     clearBtn.onclick = () => {
       p.background = ""; p.backgroundName = "";
@@ -1452,7 +1674,7 @@ const VNovelApp = {
         }
         node.setDirtyCanvas(true, true);
         this.schedulePersist();
-      });
+      }, "audio");
     };
     playBtn.onclick = () => this.toggleAudioPreview(p[propKey], playBtn, loop);
   },
@@ -1494,29 +1716,136 @@ const VNovelApp = {
     }
   },
 
+  ASSETS_DIR: "assets",
+
   getAssetMode() {
-    return localStorage.getItem("vnovel_asset_mode") || "embed";
+    const stored = localStorage.getItem("vnovel_asset_mode");
+    // "embed" was retired as a user-facing choice: inlining base64 made every
+    // undo checkpoint serialize megabytes and stuttered the editor. The code path
+    // survives only as the fallback below when no project folder is set.
+    if (!stored || stored === "embed") return "copy";
+    return stored;
   },
 
-  // cb(value, file, embedded) — value is either a base64 data URL (embed mode)
-  // or an "assets/<filename>" relative path (reference mode).
-  pickFile(accept, cb) {
+  // Copies a picked file into <projectFolder>/assets/<subfolder>/ and returns the
+  // relative path to store in the project. Relative so the project stays portable —
+  // nothing absolute is ever written into a save file.
+  async copyFileIntoProject(file, subfolder) {
+    const assetsDir = await this.projectDir.getDirectoryHandle(this.ASSETS_DIR, { create: true });
+    const targetDir = subfolder
+      ? await assetsDir.getDirectoryHandle(subfolder, { create: true })
+      : assetsDir;
+
+    // Keep the name unless it's taken by a file with different contents, then
+    // suffix it. Contents are compared byte-for-byte: timestamps can't be used
+    // because a copy's lastModified is its write time, not the original's, so
+    // re-picking the same image would pile up duplicates.
+    const dot = file.name.lastIndexOf(".");
+    const stem = (dot > 0 ? file.name.slice(0, dot) : file.name).replace(/[^a-zA-Z0-9 _-]/g, "");
+    const ext = dot > 0 ? file.name.slice(dot) : "";
+    const incoming = new Uint8Array(await file.arrayBuffer());
+
+    const sameBytes = async (handle) => {
+      const f = await handle.getFile();
+      if (f.size !== incoming.length) return false;
+      const existing = new Uint8Array(await f.arrayBuffer());
+      for (let i = 0; i < existing.length; i++) {
+        if (existing[i] !== incoming[i]) return false;
+      }
+      return true;
+    };
+
+    let name = stem + ext;
+    let n = 1;
+    while (true) {
+      let existing = null;
+      try {
+        existing = await targetDir.getFileHandle(name);
+      } catch (err) {
+        break; // name is free
+      }
+      if (await sameBytes(existing)) {
+        return [this.ASSETS_DIR, subfolder, name].filter(Boolean).join("/"); // already there
+      }
+      n++;
+      name = `${stem}-${n}${ext}`;
+    }
+
+    const fh = await targetDir.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(file);
+    await w.close();
+
+    return [this.ASSETS_DIR, subfolder, name].filter(Boolean).join("/");
+  },
+
+  // Turns a stored relative path into something the browser can actually load.
+  // The editor is served over http(s) while assets live in a local folder, so
+  // relative paths can't resolve on their own — they're read through the folder
+  // handle and handed back as blob URLs.
+  async resolveAssetURL(path) {
+    if (!path) return "";
+    if (/^(data:|https?:|blob:)/i.test(path)) return path; // already loadable
+    if (!this._assetUrlCache) this._assetUrlCache = {};
+    if (this._assetUrlCache[path]) return this._assetUrlCache[path];
+    if (!(await this.folderReady())) return path;
+
+    try {
+      const parts = path.split("/").filter(Boolean);
+      let dir = this.projectDir;
+      for (let i = 0; i < parts.length - 1; i++) {
+        dir = await dir.getDirectoryHandle(parts[i]);
+      }
+      const fh = await dir.getFileHandle(parts[parts.length - 1]);
+      const url = URL.createObjectURL(await fh.getFile());
+      this._assetUrlCache[path] = url;
+      return url;
+    } catch (err) {
+      return path; // missing file — let the img/audio tag show its own failure
+    }
+  },
+
+  // cb(value, file, embedded) — value is a relative "assets/..." path (copy or
+  // reference mode) or a base64 data URL (embed mode).
+  // subfolder groups copies, e.g. "backgrounds" / "characters" / "audio".
+  pickFile(accept, cb, subfolder) {
+    if (!subfolder) subfolder = accept.startsWith("audio") ? "audio" : "images";
+
     const input = document.createElement("input");
     input.type = "file";
     input.accept = accept;
-    input.onchange = () => {
+    input.onchange = async () => {
       const file = input.files && input.files[0];
       if (!file) return;
 
-      if (this.getAssetMode() === "reference") {
-        const path = "assets/" + file.name;
-        this.toast(`Referenced as "${path}" — keep the file in an assets folder next to this editor and next to any published HTML.`, "success");
+      const mode = this.getAssetMode();
+
+      if (mode === "copy") {
+        if (await this.folderReady()) {
+          try {
+            const path = await this.copyFileIntoProject(file, subfolder);
+            this.toast(`Copied into ${path}`, "success");
+            cb(path, file, false);
+            return;
+          } catch (err) {
+            this.toast("Couldn't copy into the project folder: " + err.message + " — embedding instead.", "warning");
+          }
+        } else {
+          this.toast("No project folder set (Save / Load → Choose…) — embedding this file instead.", "warning");
+        }
+        // fall through to embed
+      } else if (mode === "reference") {
+        const path = `${this.ASSETS_DIR}/${subfolder}/${file.name}`;
+        this.toast(`Referenced as "${path}" — put the file there yourself.`, "success");
         cb(path, file, false);
         return;
       }
 
-      if (file.size > 3 * 1024 * 1024) {
-        this.toast("Heads up: large embedded files can exceed browser save limits. Consider switching to 'Reference by path' in the sidebar, or use a URL.", "warning");
+      // Last resort: inline as base64. Measured cost — a 2MB image becomes 2.7MB
+      // of text that every 1.2s undo checkpoint re-serializes, so warn early and
+      // every time rather than once at a threshold that's already too late.
+      if (file.size > 512 * 1024) {
+        this.toast(`"${file.name}" is ${(file.size / 1048576).toFixed(1)}MB and has to be stored inline, which slows the editor. Set a project folder (Save / Load → Choose…) to copy files instead.`, "warning");
       }
       const reader = new FileReader();
       reader.onload = () => cb(reader.result, file, true);
@@ -2100,12 +2429,42 @@ const VNovelApp = {
     return null;
   },
 
-  startPlayback(customStartNode = null, customStartState = null) {
-    const story = this.compileStory();
+  // Swaps relative asset paths for blob URLs so in-editor playback can display
+  // files that live in the project folder. Publish deliberately skips this —
+  // the exported HTML sits next to assets/ and resolves them natively.
+  async resolveStoryAssets(story) {
+    const resolved = JSON.parse(JSON.stringify(story));
+
+    const swap = async (obj, key) => {
+      if (obj && typeof obj[key] === "string" && obj[key]) {
+        obj[key] = await this.resolveAssetURL(obj[key]);
+      }
+    };
+
+    for (const id in resolved.nodes) {
+      const p = resolved.nodes[id].p;
+      await swap(p, "background");
+      await swap(p, "audioLoop");
+      await swap(p, "audioOneShot");
+    }
+    for (const cat in (resolved.varMeta || {})) {
+      for (const name in resolved.varMeta[cat]) {
+        const meta = resolved.varMeta[cat][name];
+        await swap(meta, "background");
+        await swap(meta, "audioLoop");
+        await swap(meta, "image");
+      }
+    }
+    return resolved;
+  },
+
+  async startPlayback(customStartNode = null, customStartState = null) {
+    let story = this.compileStory();
     if (!Object.keys(story.nodes).length) {
       this.toast("Add some nodes first — the story is empty!", "warning");
       return;
     }
+    story = await this.resolveStoryAssets(story);
     const startNode = customStartNode || this.getSelectedStoryNode();
     const entry = startNode ? startNode.id : story.entry;
 
@@ -2131,19 +2490,40 @@ const VNovelApp = {
 
   // ================= PUBLISH (standalone playable HTML) =================
 
-  publishStory() {
+  async publishStory() {
     const story = this.compileStory();
     if (!Object.keys(story.nodes).length) {
       this.toast("Nothing to publish yet — the story is empty.", "warning");
       return;
     }
+    // Asset paths stay relative here (unlike playback, which swaps in blob URLs):
+    // the published file sits beside assets/ and resolves them natively.
     const html = this.buildStandaloneHTML(story);
-    const slug = (this.projectTitle || "story").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "story";
-    this.downloadFile(`${slug}.html`, html, "text/html");
-    if (JSON.stringify(story).includes('"assets/')) {
-      this.toast("This story references files by path — ship the assets folder alongside the downloaded HTML.", "warning");
+    const usesAssetPaths = JSON.stringify(story).includes('"assets/');
+    const fileName = (this.currentGraphName
+      ? this.safeFileName(this.currentGraphName)
+      : (this.projectTitle || "story").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "story") + ".html";
+
+    // Into the project folder, next to assets/, so relative paths resolve
+    if (await this.folderReady()) {
+      try {
+        const fh = await this.projectDir.getFileHandle(fileName, { create: true });
+        const w = await fh.createWritable();
+        await w.write(html);
+        await w.close();
+        this.toast(`Published to ${this.projectDir.name}/${fileName} — open it from that folder and the assets load with it.`, "success");
+        return;
+      } catch (err) {
+        this.toast("Couldn't write into the project folder: " + err.message + " — downloading instead.", "warning");
+      }
     }
-    this.toast("Standalone story downloaded! Anyone can open the HTML file in a browser — no install, no server.", "success");
+
+    this.downloadFile(fileName, html, "text/html");
+    if (usesAssetPaths) {
+      this.toast("Heads up: this story references files under assets/, which won't resolve in your Downloads folder. Set a project folder (Save / Load → Choose…) and publish again, or move the HTML next to your assets folder.", "warning");
+    } else {
+      this.toast("Standalone story downloaded! Anyone can open the HTML file in a browser — no install, no server.", "success");
+    }
   },
 
   buildStandaloneHTML(story) {
@@ -2406,6 +2786,18 @@ ${scriptClose}
     return md;
   },
 
+  // Property keys understood inside a "## Node" block. Used to tell a real property
+  // line apart from a "Speaker: line" of dialogue.
+  MD_NODE_PROP_KEYS: new Set([
+    "title", "location", "loc", "background", "bg",
+    "audioloop", "audiooneshot", "audioshot",
+    "rewarditems", "rewarditem", "item", "rewardknowledge", "rewardknow",
+    "startmission", "completemission", "ischapterstart", "bookmark",
+    "next", "escape", "success", "earlyexit", "exit",
+    "true", "false", "check", "condition", "cond",
+    "target", "targetscore"
+  ]),
+
   parseMarkdown(md) {
     const lines = md.split(/\r?\n/);
     const vars = {
@@ -2519,8 +2911,11 @@ ${scriptClose}
         }
 
         if (state === "DIALOGUE") {
-          const propCheck = trimmed.match(/^([A-Za-z0-9_]+)\s*:\s*(.*)/);
-          if (propCheck && !propCheck[1].match(/^(mr\.|ms\.|esss|trout|narrator|char|joe|bill|frank)/i)) {
+          // Only a recognized node property key ends the dialogue block — any other
+          // "Name: line" is a speaker, so arbitrary character names survive.
+          const propCheck = trimmed.match(/^([A-Za-z0-9_ ]+)\s*:\s*(.*)/);
+          const propKey = propCheck ? propCheck[1].toLowerCase().replace(/\s+/g, "") : null;
+          if (propKey && this.MD_NODE_PROP_KEYS.has(propKey)) {
             state = "PROPERTIES";
           } else {
             textLines.push(line);
@@ -2967,35 +3362,123 @@ ${scriptClose}
     }
   },
 
-  saveVersion() {
-    const input = document.getElementById("version_name_input");
-    const name = input.value.trim() || `Version ${new Date().toLocaleString()}`;
-    const list = this.getVersions();
-    list.unshift({ name, date: new Date().toISOString(), state: this.currentState() });
-    if (list.length > 25) list.length = 25;
-    if (this.setVersions(list)) {
-      input.value = "";
-      this.renderVersionsList();
-      this.toast(`Version "${name}" saved`, "success");
-    }
+  async openSaveLoadModal() {
+    this.openModal("versions_modal_overlay");
+    await this.renderSaveLoad();
   },
 
-  renderVersionsList() {
-    const container = document.getElementById("versions_list");
-    const list = this.getVersions();
-    if (!list.length) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No saved versions yet.</div>`;
+  async renderSaveLoad() {
+    const folderLabel = document.getElementById("project_folder_label");
+    const folderHint = document.getElementById("project_folder_hint");
+    const chooseBtn = document.getElementById("btn_choose_folder");
+    const graphList = document.getElementById("graph_list");
+    const versionSelect = document.getElementById("version_select");
+    const historyGroup = document.getElementById("version_history_group");
+    const keepToggle = document.getElementById("keep_versions_toggle");
+    if (!folderLabel) return;
+
+    this.updateCurrentFileLabel();
+    if (keepToggle) keepToggle.checked = this.keepVersionsEnabled();
+
+    // --- Folder status ---
+    if (!this.fsSupported()) {
+      folderLabel.textContent = "Not supported in this browser";
+      folderHint.textContent = "Saving to a folder needs Chrome or Edge. You can still use Import / Export here.";
+      chooseBtn.disabled = true;
+      graphList.innerHTML = "";
+      historyGroup.style.display = "none";
+      this.renderLegacyVersions(graphList);
       return;
     }
-    container.innerHTML = "";
-    list.forEach((v, i) => {
+
+    chooseBtn.disabled = false;
+    const ready = await this.folderReady();
+
+    if (!this.projectDir) {
+      folderLabel.textContent = "Not set";
+      folderHint.textContent = "Pick a folder to keep your graphs, versions and assets together.";
+    } else if (!ready) {
+      folderLabel.textContent = this.projectDir.name + " (needs reconnecting)";
+      folderHint.innerHTML = `Chrome asks for folder permission once per session. <a href="#" id="link_reconnect_folder" style="color:var(--accent-primary);">Reconnect</a>`;
+      const link = document.getElementById("link_reconnect_folder");
+      if (link) link.onclick = async (e) => { e.preventDefault(); await this.reconnectProjectFolder(); };
+    } else {
+      folderLabel.textContent = this.projectDir.name;
+      folderHint.textContent = "Graphs save here. Versions go in a versions/ subfolder.";
+    }
+
+    // --- Version dropdown for the current graph ---
+    historyGroup.style.display = (ready && this.currentGraphName) ? "flex" : "none";
+    if (ready && this.currentGraphName) {
+      const versions = await this.listVersionFiles(this.currentGraphName);
+      versionSelect.innerHTML = "";
+      if (!versions.length) {
+        versionSelect.innerHTML = `<option value="">No versions saved yet</option>`;
+        versionSelect.disabled = true;
+        document.getElementById("btn_restore_version").disabled = true;
+      } else {
+        versionSelect.disabled = false;
+        document.getElementById("btn_restore_version").disabled = false;
+        versions.forEach((v, i) => {
+          const opt = document.createElement("option");
+          opt.value = v.file;
+          opt.textContent = `v${String(v.num).padStart(3, "0")}${i === 0 ? " (most recent)" : ""}`;
+          versionSelect.appendChild(opt);
+        });
+      }
+    }
+
+    // --- Graphs in the folder ---
+    graphList.innerHTML = "";
+    if (!ready) {
+      graphList.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">Set a project folder to see your saved graphs.</div>`;
+    } else {
+      const names = await this.listGraphFiles();
+      if (!names.length) {
+        graphList.innerHTML = `<div style="font-size:12px; color:var(--text-dark); font-style:italic;">No graphs saved in this folder yet. Use Save to create one.</div>`;
+      }
+      names.forEach(name => {
+        const isCurrent = name === this.currentGraphName;
+        const row = document.createElement("div");
+        row.className = "version-row";
+        if (isCurrent) row.style.borderColor = "var(--accent-primary)";
+        row.innerHTML = `
+          <div>
+            <div class="v-name">${this.escapeHtml(name)}</div>
+            <div class="v-date">${isCurrent ? "Currently open" : "Click Open to load"}</div>
+          </div>
+          <div class="v-actions">
+            <button class="btn" style="padding:4px 10px; font-size:11px;" data-act="open" ${isCurrent ? "disabled" : ""}>
+              <i class="fas fa-folder-open"></i> ${isCurrent ? "Open" : "Open"}
+            </button>
+          </div>
+        `;
+        row.querySelector('[data-act="open"]').onclick = () => this.openGraph(name);
+        graphList.appendChild(row);
+      });
+    }
+
+    this.renderLegacyVersions(graphList);
+  },
+
+  // Versions saved by the old localStorage-only system. Shown so earlier work
+  // isn't stranded — load one, then Save to move it into the project folder.
+  renderLegacyVersions(container) {
+    const legacy = this.getVersions();
+    if (!legacy.length) return;
+
+    const header = document.createElement("div");
+    header.style.cssText = "font-size:11px; color:var(--text-muted); margin-top:10px; padding-top:8px; border-top:1px solid var(--border-color);";
+    header.textContent = "From older browser-storage saves (load one, then Save to move it into your folder):";
+    container.appendChild(header);
+
+    legacy.forEach((v, i) => {
       const row = document.createElement("div");
       row.className = "version-row";
-      const d = new Date(v.date);
       row.innerHTML = `
         <div>
           <div class="v-name">${this.escapeHtml(v.name)}</div>
-          <div class="v-date">${d.toLocaleString()}</div>
+          <div class="v-date">${new Date(v.date).toLocaleString()}</div>
         </div>
         <div class="v-actions">
           <button class="btn" style="padding:4px 10px; font-size:11px;" data-act="load"><i class="fas fa-folder-open"></i> Load</button>
@@ -3005,16 +3488,281 @@ ${scriptClose}
       row.querySelector('[data-act="load"]').onclick = () => {
         this.applyImportedState(v.state);
         this.closeModal("versions_modal_overlay");
-        this.toast(`Loaded version "${v.name}" (undo restores your previous state)`, "success");
+        this.toast(`Loaded "${v.name}" (undo restores your previous state)`, "success");
       };
-      row.querySelector('[data-act="del"]').onclick = () => {
+      row.querySelector('[data-act="del"]').onclick = async () => {
         const l = this.getVersions();
         l.splice(i, 1);
         this.setVersions(l);
-        this.renderVersionsList();
+        await this.renderSaveLoad();
       };
       container.appendChild(row);
     });
+  },
+
+  // ================= PROJECT FOLDER (File System Access) =================
+  //
+  // Model: a "project" is a folder on disk. A "graph" is one .json file in it —
+  // the file you are currently in. Saving overwrites that file and, when Keep
+  // Versions is on, also drops a numbered snapshot in versions/ that you never
+  // have to look at unless you want to roll back.
+  //
+  //   MyProject/
+  //     MyStory.json          <- current graph
+  //     versions/
+  //       MyStory_v001.json   <- automatic snapshots
+  //     assets/
+
+  FS_DB: "vnovel_fs",
+  FS_STORE: "handles",
+  VERSIONS_DIR: "versions",
+
+  fsSupported() {
+    return typeof window.showDirectoryPicker === "function";
+  },
+
+  _openFsDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.FS_DB, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(this.FS_STORE)) {
+          req.result.createObjectStore(this.FS_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async idbGet(key) {
+    const db = await this._openFsDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.FS_STORE, "readonly");
+      const req = tx.objectStore(this.FS_STORE).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async idbSet(key, value) {
+    const db = await this._openFsDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.FS_STORE, "readwrite");
+      tx.objectStore(this.FS_STORE).put(value, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+
+  // Chrome hands back a stored handle without permission; it has to be re-granted
+  // once per session, and requestPermission() only works inside a user gesture.
+  async ensureFolderPermission(handle, { prompt = true } = {}) {
+    if (!handle) return false;
+    const opts = { mode: "readwrite" };
+    if ((await handle.queryPermission(opts)) === "granted") return true;
+    if (!prompt) return false;
+    return (await handle.requestPermission(opts)) === "granted";
+  },
+
+  async chooseProjectFolder() {
+    if (!this.fsSupported()) {
+      this.toast("Folder saving needs Chrome or Edge. Use Export/Import in other browsers.", "warning");
+      return false;
+    }
+    try {
+      const handle = await window.showDirectoryPicker({ mode: "readwrite", id: "vnovel-project" });
+      this.projectDir = handle;
+      await this.idbSet("projectDir", handle);
+      await this.renderSaveLoad();
+      this.toast(`Project folder set to "${handle.name}"`, "success");
+      return true;
+    } catch (err) {
+      if (err && err.name === "AbortError") return false; // user closed the picker
+      this.toast("Couldn't open that folder: " + err.message, "danger");
+      return false;
+    }
+  },
+
+  // Called on boot. Does NOT prompt — no user gesture available — so a folder
+  // needing re-grant shows a Reconnect button instead of silently failing.
+  async restoreProjectFolder() {
+    if (!this.fsSupported()) return;
+    try {
+      const handle = await this.idbGet("projectDir");
+      if (!handle) return;
+      this.projectDir = handle;
+      this.projectDirNeedsGrant = !(await this.ensureFolderPermission(handle, { prompt: false }));
+    } catch (err) {
+      console.warn("Could not restore project folder", err);
+    }
+  },
+
+  async reconnectProjectFolder() {
+    if (!this.projectDir) return false;
+    const ok = await this.ensureFolderPermission(this.projectDir);
+    this.projectDirNeedsGrant = !ok;
+    if (ok) {
+      await this.renderSaveLoad();
+      this.toast(`Reconnected to "${this.projectDir.name}"`, "success");
+    } else {
+      this.toast("Folder access denied.", "warning");
+    }
+    return ok;
+  },
+
+  // True only when we hold a folder we can actually write to right now.
+  async folderReady() {
+    if (!this.projectDir) return false;
+    const ok = await this.ensureFolderPermission(this.projectDir, { prompt: false });
+    this.projectDirNeedsGrant = !ok;
+    return ok;
+  },
+
+  safeFileName(name) {
+    return String(name || "Untitled")
+      .replace(/\.json$/i, "")
+      .replace(/[^a-zA-Z0-9 _-]/g, "")
+      .trim()
+      .slice(0, 60) || "Untitled";
+  },
+
+  async listGraphFiles() {
+    if (!(await this.folderReady())) return [];
+    const out = [];
+    for await (const entry of this.projectDir.values()) {
+      if (entry.kind === "file" && /\.json$/i.test(entry.name)) {
+        out.push(entry.name.replace(/\.json$/i, ""));
+      }
+    }
+    return out.sort((a, b) => a.localeCompare(b));
+  },
+
+  async readGraphFile(name) {
+    const fh = await this.projectDir.getFileHandle(this.safeFileName(name) + ".json");
+    return JSON.parse(await (await fh.getFile()).text());
+  },
+
+  async writeJsonFile(dirHandle, fileName, data) {
+    const fh = await dirHandle.getFileHandle(fileName, { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(data, null, 2));
+    await w.close();
+  },
+
+  async listVersionFiles(baseName) {
+    if (!(await this.folderReady())) return [];
+    let versionsDir;
+    try {
+      versionsDir = await this.projectDir.getDirectoryHandle(this.VERSIONS_DIR);
+    } catch (err) {
+      return []; // no versions/ yet
+    }
+    const base = this.safeFileName(baseName);
+    const re = new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "_v(\\d+)\\.json$", "i");
+    const out = [];
+    for await (const entry of versionsDir.values()) {
+      const m = entry.kind === "file" && entry.name.match(re);
+      if (m) out.push({ file: entry.name, num: parseInt(m[1], 10) });
+    }
+    return out.sort((a, b) => b.num - a.num); // newest first
+  },
+
+  async writeVersionSnapshot(baseName, state) {
+    const versionsDir = await this.projectDir.getDirectoryHandle(this.VERSIONS_DIR, { create: true });
+    const existing = await this.listVersionFiles(baseName);
+    const next = (existing.length ? existing[0].num : 0) + 1;
+    const file = `${this.safeFileName(baseName)}_v${String(next).padStart(3, "0")}.json`;
+    await this.writeJsonFile(versionsDir, file, state);
+    return next;
+  },
+
+  keepVersionsEnabled() {
+    return localStorage.getItem("vnovel_keep_versions") !== "false"; // default on
+  },
+
+  // ---- Save / Save As / Open ----
+
+  async saveGraph() {
+    if (!(await this.folderReady())) {
+      if (this.projectDir && this.projectDirNeedsGrant) {
+        if (!(await this.reconnectProjectFolder())) return;
+      } else if (!(await this.chooseProjectFolder())) {
+        return;
+      }
+    }
+    if (!this.currentGraphName) return this.saveGraphAs();
+
+    try {
+      const state = this.currentState();
+      await this.writeJsonFile(this.projectDir, this.safeFileName(this.currentGraphName) + ".json", state);
+      let msg = `Saved "${this.currentGraphName}"`;
+      if (this.keepVersionsEnabled()) {
+        const n = await this.writeVersionSnapshot(this.currentGraphName, state);
+        msg += ` (v${String(n).padStart(3, "0")})`;
+      }
+      this.updateCurrentFileLabel();
+      await this.renderSaveLoad();
+      this.toast(msg, "success");
+    } catch (err) {
+      this.toast("Save failed: " + err.message, "danger");
+    }
+  },
+
+  async saveGraphAs() {
+    if (!(await this.folderReady())) {
+      if (!(await this.chooseProjectFolder())) return;
+    }
+    const suggested = this.currentGraphName || this.safeFileName(this.projectTitle);
+    const name = prompt("Save graph as:", suggested);
+    if (name === null) return;
+    const clean = this.safeFileName(name);
+
+    const existing = await this.listGraphFiles();
+    if (existing.includes(clean) && clean !== this.currentGraphName) {
+      if (!confirm(`"${clean}" already exists in this folder. Overwrite it?`)) return;
+    }
+    this.currentGraphName = clean;
+    await this.saveGraph();
+  },
+
+  async openGraph(name) {
+    try {
+      const state = await this.readGraphFile(name);
+      this.checkpoint(); // current work stays undoable
+      this.applyImportedState(state, "replace");
+      this.currentGraphName = this.safeFileName(name);
+      this.updateCurrentFileLabel();
+      await this.renderSaveLoad();
+      this.closeModal("versions_modal_overlay");
+      this.toast(`Opened "${name}"`, "success");
+    } catch (err) {
+      this.toast("Couldn't open that graph: " + err.message, "danger");
+    }
+  },
+
+  async restoreVersion(fileName) {
+    try {
+      const versionsDir = await this.projectDir.getDirectoryHandle(this.VERSIONS_DIR);
+      const fh = await versionsDir.getFileHandle(fileName);
+      const state = JSON.parse(await (await fh.getFile()).text());
+      this.checkpoint();
+      this.applyImportedState(state, "replace");
+      this.toast(`Restored ${fileName} — Save to keep it, or Undo to go back.`, "success");
+      this.closeModal("versions_modal_overlay");
+    } catch (err) {
+      this.toast("Couldn't restore that version: " + err.message, "danger");
+    }
+  },
+
+  updateCurrentFileLabel() {
+    const el = document.getElementById("current_file_label");
+    if (el) el.textContent = this.currentGraphName || "Unsaved graph";
+    // Remember which file we're "in" so the next session reopens in the same place
+    if (this.currentGraphName) {
+      localStorage.setItem("vnovel_current_graph", this.currentGraphName);
+    } else {
+      localStorage.removeItem("vnovel_current_graph");
+    }
   },
 
   // ================= THEME & TOASTS & MODALS =================
@@ -3052,7 +3800,29 @@ ${scriptClose}
 
   openModal(id) { document.getElementById(id).style.display = "flex"; },
   closeModal(id) { document.getElementById(id).style.display = "none"; },
-  openLLMModal() { this.openModal("llm_modal_overlay"); },
+  openLLMModal() {
+    this.openModal("llm_modal_overlay");
+    this.updateLLMConfigStatus();
+  },
+
+  // Mirrors the collapsed config into its summary line, so folding the section
+  // away doesn't hide which provider/model is active or whether a key is set.
+  updateLLMConfigStatus() {
+    const status = document.getElementById("llm_config_status");
+    if (!status) return;
+    const providerSelect = document.getElementById("llm_provider_select");
+    const modelSelect = document.getElementById("llm_model_select");
+    const keyInput = document.getElementById("llm_api_key_input");
+
+    const provider = providerSelect ? providerSelect.value : "anthropic";
+    const providerLabel = provider === "gemini" ? "Gemini" : "Claude";
+    const modelLabel = modelSelect && modelSelect.selectedOptions[0]
+      ? modelSelect.selectedOptions[0].textContent
+      : "";
+    const hasKey = !!(keyInput && keyInput.value.trim());
+
+    status.textContent = `${providerLabel}${modelLabel ? " · " + modelLabel : ""} · ${hasKey ? "key set" : "no key (offline mode)"}`;
+  },
   closeLLMModal() { this.closeModal("llm_modal_overlay"); },
 
   escapeHtml(s) {
@@ -3371,16 +4141,79 @@ Source material:
 ${content}`;
   },
 
-  copyLLMPrompt() {
-    const text = document.getElementById("llm_screenplay_input").value;
-    if (!text || !text.trim()) {
-      this.toast("Paste or write a screenplay in the textbox first to generate a full prompt.", "warning");
-      return;
-    }
-    const prompt = this.getScreenplayPrompt(text);
+  getMarkdownPrompt(content) {
+    return `You are a story compiler for a visual-novel node engine used to prototype a game. Convert the screenplay / premise below into the Markdown project format described here. Return ONLY the Markdown — no code fences, no commentary.
+
+Format:
+
+# Project: Story Title
+
+---
+Globals:
+- Characters: Hero, Goblin
+- Locations: Dark Forest
+- Collectibles: rusty_key
+- Knowledge: heard_rustle
+- Missions: Find the Rusty Key
+---
+
+## Node 1 (Dialogue)
+Title: Scene title
+Location: Dark Forest
+RewardItems: rusty_key
+RewardKnowledge: heard_rustle
+StartMission: Find the Rusty Key
+CompleteMission:
+Dialogue:
+Hero: A line of dialogue
+Narrator: A line of narration
+Next: 2
+
+## Node 2 (Choice)
+Title: Prompt shown to the player
+Choices:
+- [Option label] -> Node 3
+- [Locked option] -> Node 4 (requires: has_item('rusty_key')) (Starts: Find the Rusty Key)
+
+## Node 3 (Traversal)
+Title: Maze name
+Target: 50
+Outcomes:
+- [Trap] (10%): What happens -> Node 5
+Escape: Node 4
+Early Exit: Node 6
+
+## Node 4 (Logic)
+Title: Gate name
+Check: has_item('rusty_key')
+True: Node 7
+False: Node 8
+
+Rules:
+- Node headings must be "## Node <integer> (Type)" with Type one of Dialogue, Choice, Traversal, Logic. Number nodes sequentially from 1 and never reuse an id.
+- List EVERY character, location, collectible, knowledge flag and mission you use in the Globals block, comma-separated. Omit a line entirely if that category is empty.
+- Dialogue: one beat per line in "Name: line" format; lines without a name are narration. Every line of source dialogue must survive into some node.
+- Everything after a "Dialogue:" line is spoken text until a recognized property line (Next, Title, Location, ...) or the next "## Node" heading. Put descriptive properties before "Dialogue:" and "Next:" after it, as shown.
+- Choices are "- [label] -> Node <id>", optionally followed by "(requires: <condition>)" and "(Starts: <Mission Name>)".
+- Outcomes are "- [label] (<n>%): description -> Node <id>". Probabilities are percentages.
+- Conditions may only use: has_item('id'), has_knowledge('id'), mission_active('Name'), mission_done('Name') — with ids/names listed in Globals. Multiple checks in one string are ANDed.
+- Missions: a choice's "(Starts: Name)" accepts that mission; a Dialogue node's "CompleteMission:" completes it. Wire at least one mission if the material supports it.
+- Wire everything up: every node except endings should lead somewhere via Next / -> Node / Escape / True / False. Branches may converge on the same node.
+- Use RewardItems and RewardKnowledge to make conditions satisfiable before they are checked.
+
+Source material:
+${content}`;
+  },
+
+  copyLLMPrompt(format) {
+    const input = document.getElementById("llm_screenplay_input");
+    const text = (input && input.value.trim()) || "<paste your screenplay, premise, or story notes here>";
+    const isMarkdown = format === "markdown";
+    const prompt = isMarkdown ? this.getMarkdownPrompt(text) : this.getScreenplayPrompt(text);
+    const label = isMarkdown ? "Markdown" : "JSON";
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(prompt).then(
-        () => this.toast("Prompt copied to clipboard!", "success"),
+        () => this.toast(`${label} prompt copied to clipboard!`, "success"),
         (err) => this.toast("Failed to copy: " + err, "danger")
       );
     } else {
@@ -3392,7 +4225,7 @@ ${content}`;
       textarea.select();
       try {
         document.execCommand("copy");
-        this.toast("Prompt copied to clipboard!", "success");
+        this.toast(`${label} prompt copied to clipboard!`, "success");
       } catch (err) {
         this.toast("Failed to copy to clipboard", "danger");
       }
@@ -3815,7 +4648,7 @@ ${content}`;
 
      // Header buttons
     on("btn_new_graph", () => this.newGraph());
-    on("btn_versions", () => { this.renderVersionsList(); this.openModal("versions_modal_overlay"); });
+    on("btn_versions", () => this.openSaveLoadModal());
     on("btn_import_project", () => this.openModal("import_modal_overlay"));
     on("btn_export_project", () => this.openModal("export_modal_overlay"));
     on("btn_publish", () => this.publishStory());
@@ -3828,12 +4661,27 @@ ${content}`;
     on("btn_new_empty", () => this.newEmptyGraph());
     on("btn_new_template", () => this.newTemplateGraph());
     on("btn_close_llm_modal", () => this.closeLLMModal());
-    on("btn_llm_copy_prompt", () => this.copyLLMPrompt());
+    on("btn_llm_copy_json_prompt", () => this.copyLLMPrompt("json"));
+    on("btn_llm_copy_md_prompt", () => this.copyLLMPrompt("markdown"));
     on("btn_llm_run_screenplay", () => this.runScreenplayImporter());
     on("btn_llm_run_debugger", () => this.runLogicDebugger());
     on("btn_do_import", () => this.doImport());
     on("btn_do_export", () => this.doExport());
-    on("btn_save_version", () => this.saveVersion());
+    on("btn_choose_folder", () => this.chooseProjectFolder());
+    on("btn_save_graph", () => this.saveGraph());
+    on("btn_save_graph_as", () => this.saveGraphAs());
+    on("btn_restore_version", () => {
+      const sel = document.getElementById("version_select");
+      if (sel && sel.value) this.restoreVersion(sel.value);
+    });
+
+    const keepToggle = document.getElementById("keep_versions_toggle");
+    if (keepToggle) {
+      keepToggle.checked = this.keepVersionsEnabled();
+      keepToggle.addEventListener("change", () => {
+        localStorage.setItem("vnovel_keep_versions", keepToggle.checked ? "true" : "false");
+      });
+    }
     on("btn_save_item_info", () => this.saveItemModal());
 
     // Undo / redo buttons on the palette
@@ -3846,9 +4694,9 @@ ${content}`;
       assetSelect.value = this.getAssetMode();
       assetSelect.addEventListener("change", () => {
         localStorage.setItem("vnovel_asset_mode", assetSelect.value);
-        this.toast(assetSelect.value === "embed"
-          ? "Picked files will be embedded into the project (fully portable)."
-          : "Picked files will be referenced as assets/<name> — keep an assets folder next to the editor and published HTML.");
+        this.toast(assetSelect.value === "copy"
+          ? "Picked files will be copied into your project folder under assets/."
+          : "Picked files will be referenced as assets/<name> — you put the file there yourself.");
       });
     }
 
@@ -3859,6 +4707,7 @@ ${content}`;
       if (savedKey) apiKeyInput.value = savedKey;
       apiKeyInput.addEventListener("input", () => {
         localStorage.setItem("vnovel_llm_api_key", apiKeyInput.value.trim());
+        this.updateLLMConfigStatus();
       });
     }
 
@@ -3869,6 +4718,7 @@ ${content}`;
       providerSelect.addEventListener("change", () => {
         localStorage.setItem("vnovel_llm_provider", providerSelect.value);
         this.updateLLMModels();
+        this.updateLLMConfigStatus();
       });
     }
 
@@ -3877,6 +4727,7 @@ ${content}`;
       modelSelect.addEventListener("change", () => {
         const provider = providerSelect ? providerSelect.value : "anthropic";
         localStorage.setItem(`vnovel_llm_model_${provider}`, modelSelect.value);
+        this.updateLLMConfigStatus();
       });
     }
 
@@ -3908,6 +4759,13 @@ ${content}`;
           if (m.style.display === "flex") { m.style.display = "none"; return; }
         }
         if (!this.gamePlaying && !typing) this.closeInspector();
+        return;
+      }
+
+      // Ctrl+S saves from anywhere, including mid-edit in a text field
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!this.gamePlaying) this.saveGraph();
         return;
       }
 
