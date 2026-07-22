@@ -117,6 +117,20 @@ class StoryPlayer {
 .sp-ending-text { font-family:'EB Garamond',Georgia,serif; font-size:17px; color:#cbd5e1; line-height:1.6; margin-bottom:24px; }
 .sp-ending-actions { display:flex; gap:12px; justify-content:center; }
 
+/* Cast layer: everyone present in the scene, speaker emphasised.
+   Lives outside .sp-stage so advancing a line doesn't remount the portraits. */
+.sp-cast { position:absolute; left:0; right:0; bottom:150px; display:flex; justify-content:center; align-items:flex-end; gap:2%; pointer-events:none; z-index:5; height:min(480px,48vh); }
+.sp-cast:empty { display:none; }
+/* Scale/dim live on .sp-char; the entrance animation lives on the inner <img>.
+   Kept apart because spSlideUp animates transform, which would otherwise
+   override the speaker scale for the whole 0.4s the animation runs. */
+.sp-char { display:flex; align-items:flex-end; justify-content:center; height:100%; flex:0 1 auto; min-width:0;
+  transition:transform .3s ease, filter .3s ease, opacity .3s ease; transform-origin:bottom center;
+  transform:scale(.86); opacity:.62; filter:brightness(.6) saturate(.8); }
+.sp-char.sp-active { transform:scale(1); opacity:1; filter:none; z-index:6; }
+.sp-char img { max-height:100%; max-width:100%; object-fit:contain; object-position:bottom; display:block; animation:spSlideUp .4s ease; }
+
+/* Legacy single-portrait classes, retained for older published files */
 .sp-char-container { display:flex; justify-content:center; align-items:flex-end; width:min(860px, 92%); height:min(480px, 48vh); pointer-events:none; margin-bottom:12px; z-index:5; }
 .sp-char-img { max-height:100%; max-width:66%; object-fit:contain; animation:spSlideUp .4s ease; }
 @keyframes spSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
@@ -229,11 +243,13 @@ class StoryPlayer {
         <div class="sp-panel-body"></div>
       </div>
       <div class="sp-toasts"></div>
+      <div class="sp-cast"></div>
       <div class="sp-stage"></div>`;
 
     const q = sel => this.container.querySelector(sel);
     this.el = {
       bg: q(".sp-bg"),
+      cast: q(".sp-cast"),
       stage: q(".sp-stage"),
       inv: q(".sp-inv-items"),
       missionsBtn: q(".sp-btn-missions"),
@@ -265,8 +281,11 @@ class StoryPlayer {
 
   _goto(id) {
     const node = this._node(id);
-    if (!node) { this._renderEnding("The narrative reaches a quiet end. Thank you for playing."); return; }
+    if (!node) { this._clearCast(); this._renderEnding("The narrative reaches a quiet end. Thank you for playing."); return; }
     this._currentId = id;
+    // The cast layer sits outside .sp-stage, so it survives the stage rebuild —
+    // clear it here or portraits linger over choices, traversals and endings.
+    if (node.type !== "dialogue") this._clearCast();
     switch (node.type) {
       case "dialogue": return this._playDialogue(node);
       case "choice": return this._playChoice(node);
@@ -317,17 +336,9 @@ class StoryPlayer {
     const parsed = this._parseLine(line);
     const last = this._queueIdx >= this._queue.length - 1;
 
-    let charImgHtml = "";
-    if (p.showCharacterImages !== false && parsed.speaker) {
-      const charMeta = this.story.varMeta && this.story.varMeta.characters && this.story.varMeta.characters[parsed.speaker];
-      const charImg = charMeta && charMeta.image;
-      if (charImg) {
-        charImgHtml = `<div class="sp-char-container"><img class="sp-char-img" src="${this._esc(charImg)}" alt="${this._esc(parsed.speaker)}"></div>`;
-      }
-    }
+    this._renderCast(node, parsed.speaker);
 
     this.el.stage.innerHTML = `
-      ${charImgHtml}
       <div class="sp-dialogue">
         ${parsed.speaker ? `<div class="sp-speaker" style="color:${this._charColor(parsed.speaker)}">${this._esc(parsed.speaker)}</div>` : ""}
         <div class="sp-text">${this._richText(parsed.text)}</div>
@@ -341,6 +352,58 @@ class StoryPlayer {
         this._goto(this._out(node, 0));
       }
     };
+  }
+
+  _clearCast() {
+    this._castKey = null;
+    if (this.el && this.el.cast) this.el.cast.innerHTML = "";
+  }
+
+  _charImage(name) {
+    const chars = this.story.varMeta && this.story.varMeta.characters;
+    const meta = chars && chars[name];
+    const img = meta && meta.image;
+    return (typeof img === "string" && img.trim()) ? img : null;
+  }
+
+  // Who to show for this node: every distinct speaker in its dialogue, in first-
+  // spoken order, skipping anyone with no portrait so they get no slot at all.
+  _castForNode(node) {
+    const p = node.p || {};
+    if (p.showCharacterImages === false) return [];
+    const seen = new Set();
+    const cast = [];
+    String(p.text || "").split("\n").forEach(line => {
+      const t = line.trim();
+      if (!t) return;
+      const speaker = this._parseLine(t).speaker;
+      if (!speaker || seen.has(speaker)) return;
+      seen.add(speaker);
+      const img = this._charImage(speaker);
+      if (img) cast.push({ name: speaker, img });
+    });
+    return cast;
+  }
+
+  // Rebuilds the row only when the cast changes; otherwise just moves the
+  // highlight, so portraits don't replay their entrance on every click.
+  _renderCast(node, speaker) {
+    if (!this.el || !this.el.cast) return;
+    const cast = this._castForNode(node);
+    const key = cast.map(c => c.name + "|" + c.img).join("~");
+
+    if (key !== this._castKey) {
+      this._castKey = key;
+      this.el.cast.innerHTML = cast.map(c =>
+        `<div class="sp-char" data-char="${this._esc(c.name)}">
+           <img src="${this._esc(c.img)}" alt="${this._esc(c.name)}">
+         </div>`
+      ).join("");
+    }
+
+    this.el.cast.querySelectorAll(".sp-char").forEach(el => {
+      el.classList.toggle("sp-active", el.dataset.char === speaker);
+    });
   }
 
   // Accepts "{Name}: text", "{Name} text", "Name: text"
