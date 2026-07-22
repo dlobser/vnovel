@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Night Crusher: The Dust Bowl Paranoia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; height:100%; background:#05060a; overflow:hidden; }
+  #story_root { position:fixed; inset:0; }
+</style>
+</head>
+<body>
+<div id="story_root"></div>
+<script>
+var STORY = {"title":"Night Crusher: The Dust Bowl Paranoia","entry":1,"vars":{"characters":["Jakob","Father","Tobin","Night Crusher","Grandfather Wieland","Store Clerk","Town Constable","Sitting Woman","Narrator"],"locations":["Kid's Bedroom","Kitchen & Parlor","Father's Study","Endless Hallway","Porch & Yard","Cornfield Entrance","Deep Corn Rows","Scarecrow Clearing","Small Town Square","General Store","Town Pump","Storm Cellar Entrance","Basement Vault","Factory Loading Dock","Industrial Conveyor Hall","Factory Gantry Catwalks","Effigy Altar Chamber","Subterranean Cavern Tunnels","Wieland Core Chamber","Epilogue Room"],"collectibles":["dusty_pocketknife","family_radio","cleansed_water_flask","cellar_journal","meat_truck_key","obsidian_dagger","effigy_heart","scratched_photo"],"knowledge":["father_warmth","father_lies_suspected","father_escape_theory","effigy_sacrificial_secret","father_apotheosis_truth","symbol_corruption","eye_cleansing_ritual","face_repetition_truth","tobin_patrol_pattern"],"missions":["Errand 1: Find Brother's Radio","Errand 2: Search Grandfather's Cellar","Errand 3: Intercept Tobin's Key","Errand 4: Inspect Factory Grates","Errand 5: Complete the Subterranean Task"]},"varMeta":{"characters":{"Jakob":{"info":"A boy of about ten, narrow through the shoulders, in hand-me-down denim overalls a size too big with the cuffs rolled twice. Home-cut dark hair, uneven over the ears. Sunburnt neck; dust worked into the creases of his knuckles and the seams of his boots. He watches more than he speaks, and he has the particular stillness of a child who has learned that questions have a cost. 1930s Dust Bowl, muted ochre and bone-grey palette, hard low sunlight.","image":"assets/characters/jakob-5-cutout.png","imageName":"jakob-5-cutout.png"},"Father":{"info":"A lean, close-shaved man in his mid-forties, tall enough to stoop in his own doorways. Collarless work shirt buttoned to the throat, sleeves rolled to the elbow, forearms roped from field work. Sandy hair greying at the temples, deep-set pale eyes, a mouth that rests in something close to kindness. Nothing about him reads as a threat, and that is the point: his warmth is genuine rather than a mask, which is what makes what he is building unbearable. He is the reference face for the Store Clerk, the Town Constable and the Sitting Woman — generate him first and reuse him. If you want his arc on his face, regenerate per chapter: rested and steady at Errand 1, sleepless and glassy by Errand 3, gold-lit and hollowed out at Errand 5.","image":"assets/characters/father-cutout.png","imageName":"father-cutout.png"},"Tobin":{"info":"An enormous man in a rubber butcher's apron over a canvas smock, both gone dark and stiff with old work. Hands and forearms of someone who lifts carcasses for a living. His face stays under the brim of a low cap or just outside the frame — never render him fully; he is far worse as a shape and a smell than as a face. He is not malicious and never hurries. He handles Jakob the way you would handle livestock that isn't ready yet: without cruelty, and without the slightest doubt that he will be back for it.","image":"assets/characters/tobin-cutout.png","imageName":"tobin-cutout.png"},"Night Crusher":{"info":"Not a figure but an absence roughly the size of a man — a silhouette that reads as a hole punched through the image, edges unresolved, film grain and static bleeding where the outline should be. No face, no hands, no clothing, no light on it. It never chases and never speaks. It arrives after the failure, gathers Jakob up almost tenderly, and puts him back where he started. That is the horror of it: it is not the punishment, it is the mechanism that makes the punishment repeatable.","image":"assets/characters/night-crusher-cutout.png","imageName":"night-crusher-cutout.png"},"Grandfather Wieland":{"info":"A very old man grown into a wall of packed soil and white root — ribs, legs and one shoulder already earth, with only the face and a single free hand still clear of it. Root threads run beneath the skin like veins. His eyes are open, calm, and entirely alive; he has been down here long enough to have stopped minding. Lit only by a low flame burning in a stone cup, the colour of a held breath.","image":"assets/characters/grandfather-wieland-cutout.png","imageName":"grandfather-wieland-cutout.png"},"Store Clerk":{"info":"This is Father's face, exactly — same bone structure, same age, same pale deep-set eyes. Generate from the Father reference and change only the dressing: shopkeeper's collar, sleeve garters, hair parted on the opposite side. The scene works on recognition, so any drift in the face breaks it. He stands behind a counter of dust-furred canned goods stacked in perfect pyramids, every label faced out, arranged a long time ago and never sold from.","image":"assets/characters/store-clerk-cutout.png","imageName":"store-clerk-cutout.png"},"Town Constable":{"info":"Father's face again, from the same reference — but weathered a decade further, or a decade less. The ambiguity is deliberate; Jakob cannot decide which, and neither should the viewer. Iron star badge, dark flat-brimmed hat, high buttoned collar. He stands where the street stops being a street, and he places himself between Jakob and the road out of town without ever appearing to move.","image":"assets/characters/town-constable-cutout.png","imageName":"town-constable-cutout.png"},"Sitting Woman":{"info":"Father's bone structure beneath a woman's face and hair — the same jaw, the same deep-set eyes, unmistakable once noticed. Faded print dress, dust to the knee, hands open and slack in her lap. She sits on the lip of a dry well and does not look up. Flies walk on her forearm and she lets them. The well stone under her palms has been worn into two smooth cups.","image":"assets/characters/sitting-woman-cutout.png","imageName":"sitting-woman-cutout.png"},"Narrator":{"info":"Voice only — no portrait; leave this asset without an image. Dry, unhurried, and specific about physical detail: temperature, smell, the sound a particular room makes. It never explains the supernatural and never reassures. Its one tell is that it occasionally knows things Jakob has not been told, and states them flatly, one beat too late to be of any use to him.","image":"","imageName":""}},"locations":{"Kid's Bedroom":{"info":"The domestic starting point of every return home, featuring cracked wallpaper and floorboard acoustics.","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png"},"Kitchen & Parlor":{"info":"The warm domestic hub of the house where Father bakes bread and tunes the radio.","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png"},"Father's Study":{"info":"A locked room containing Father's desk, old maps, and inverted scale crests.","background":"assets/backgrounds/father-s-study.png","backgroundName":"father-s-study.png"},"Endless Hallway":{"info":"A shifting domestic corridor connecting the house to exterior maze regions.","background":"assets/backgrounds/endless-hallway.png","backgroundName":"endless-hallway.png"},"Porch & Yard":{"info":"The transitional porch overlooking the towering cornfield perimeter.","background":"assets/backgrounds/porch-yard.png","backgroundName":"porch-yard.png"},"Cornfield Entrance":{"info":"The edge of the property where dry corn stalks reach into yellow fog.","background":"assets/backgrounds/cornfield-entrance.png","backgroundName":"cornfield-entrance.png"},"Deep Corn Rows":{"info":"An organic maze of tall, dry cornstalks where Tobin's truck engine rumbles in the distance.","background":"assets/backgrounds/deep-corn-rows.png","backgroundName":"deep-corn-rows.png"},"Scarecrow Clearing":{"info":"A clearing in the cornfield containing a leaning scarecrow and the lost family radio.","background":"assets/backgrounds/scarecrow-clearing.png","backgroundName":"scarecrow-clearing.png"},"Small Town Square":{"info":"A decaying 1930s settlement where faces seem strangely repeated among townsfolk.","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png"},"General Store":{"info":"A dusty shop filled with canned goods and wooden counter displays.","background":"assets/backgrounds/general-store.png","backgroundName":"general-store.png"},"Town Pump":{"info":"A rusted cast-iron well pump pouring clean subterranean water.","background":"assets/backgrounds/town-pump.png","backgroundName":"town-pump.png"},"Storm Cellar Entrance":{"info":"A heavy wooden trapdoor leading beneath the house into damp subterranean soil.","background":"assets/backgrounds/storm-cellar-entrance.png","backgroundName":"storm-cellar-entrance.png"},"Basement Vault":{"info":"A concrete archival room holding land deeds, old passes, and Father's hidden journal.","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png"},"Factory Loading Dock":{"info":"A rusted metal loading bay at the rear of the dead meat factory.","background":"assets/backgrounds/factory-loading-dock.png","backgroundName":"factory-loading-dock.png"},"Industrial Conveyor Hall":{"info":"A vertical maze of rusted gears, conveyor belts, and scalding steam vents."},"Factory Gantry Catwalks":{"info":"High iron catwalks overlooking the central Effigy chamber.","background":"assets/backgrounds/factory-gantry-catwalks.png","backgroundName":"factory-gantry-catwalks.png"},"Effigy Altar Chamber":{"info":"The central industrial hall housing the colossal bone-and-iron idol.","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png"},"Subterranean Cavern Tunnels":{"info":"Underground passages of soil, roots, and ancient fossilized gears.","background":"assets/backgrounds/subterranean-cavern-tunnels.png","backgroundName":"subterranean-cavern-tunnels.png"},"Wieland Core Chamber":{"info":"A mythic subterranean sanctuary holding Grandfather Wieland and the core flame.","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png"},"Epilogue Room":{"info":"The quiet space after the story closes.","background":"assets/backgrounds/epilogue-room.png","backgroundName":"epilogue-room.png"}},"collectibles":{"dusty_pocketknife":{"info":"A small folding pocketknife found in Jakob's desk drawer, wrapped in twine that has been knotted and reknotted until it went furry."},"family_radio":{"info":"An old brass radio emitting heavy static and Father's distorted voice."},"cleansed_water_flask":{"info":"A glass flask filled with pure well water, used to wash eyes corrupted by sigils."},"cellar_journal":{"info":"A leather binder containing Father's private notes and conflicting accounts of the town."},"meat_truck_key":{"info":"A rusted ignition key, taken off Tobin's steering column from a cab door he left open."},"obsidian_dagger":{"info":"An ancient ritual blade of black glass, laid out on a folded cloth beside the Effigy's pedestal."},"effigy_heart":{"info":"A glowing ancestral artifact at the center of the subterranean engine. It beats, and it is warm, and it is recognisably yours."},"scratched_photo":{"info":"An old framed photograph of a family where every face has been gouged out with a nail — except Father's."}},"knowledge":{"father_warmth":{"info":"Initial trust in Father's gentle guidance."},"father_lies_suspected":{"info":"Suspicion that Father's warnings about the town cult are fabricated."},"father_escape_theory":{"info":"Theory that Father staged the cult to escape with Jakob."},"effigy_sacrificial_secret":{"info":"Horrific realization that the factory Effigy requires Jakob's heart, given willingly."},"father_apotheosis_truth":{"info":"Final realization of Father's true dark ambition: he is not fleeing this place, he is becoming it."},"symbol_corruption":{"info":"Perception debuff from inspecting wall sigils, distorting dialogue and choices."},"eye_cleansing_ritual":{"info":"Understanding how to use pure water to restore objective vision."},"face_repetition_truth":{"info":"Awareness that townsfolk all share Father's features."},"tobin_patrol_pattern":{"info":"Insight into Tobin's truck route: sixty and turn, always left, always on the same count."}},"missions":{"Errand 1: Find Brother's Radio":{"info":"Locate the brass family radio lost somewhere in the Corn Rows maze."},"Errand 2: Search Grandfather's Cellar":{"info":"Descend into the storm cellar to retrieve Grandfather Wieland's hidden iron box."},"Errand 3: Intercept Tobin's Key":{"info":"Locate Tobin's meat truck in town and retrieve the family ignition key."},"Errand 4: Inspect Factory Grates":{"info":"Infiltrate the Dead Factory to investigate the growing Effigy idol."},"Errand 5: Complete the Subterranean Task":{"info":"Descend into the mythic subterranean core for the final confrontation.\n\n---"}}},"nodes":{"1":{"type":"dialogue","p":{"title":"Waking in the Dust Bed","location":"Kid's Bedroom","charactersPresent":"","text":"Narrator: Morning light comes through the cracked panes in long yellow bars, and the dust turns over inside them like something breathing.\nNarrator: From the kitchen below: warm bread, and Father's slow footfalls crossing and recrossing the same three boards.\nFather: Jakob? You awake up there? Wind's quiet this morning.\nJakob: I'm up.\nFather: Good boy. Before you eat — your brother left the brass radio out in the corn last night. Go bring it in for me.\nFather: Stay on the path. The fog sits low near the tree line, and it does something to a boy's sense of direction.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"Errand 1: Find Brother's Radio","completeMission":"","isChapterStart":false},"out":[2]},"2":{"type":"choice","p":{"title":"Bedroom Preparations","location":"Kid's Bedroom","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Examine the strange sigil carved by the window","condition":"","mission":""},{"text":"Search the desk drawer","condition":"","mission":""},{"text":"Look at the framed photograph on the dresser","condition":"","mission":""},{"text":"Go downstairs","condition":"","mission":""}],"text":""},"out":[3,4,5,6]},"3":{"type":"dialogue","p":{"title":"The Sigil by the Window","location":"Kid's Bedroom","charactersPresent":"","text":"Narrator: Someone has cut a symbol into the window frame — a set of scales, hanging upside down, the heavier pan on top.\nNarrator: A warmth starts behind your eyes, gentle as a hand on the back of the neck. The room softens. The corners go round.\nJakob: Oh. That's — that's nice, actually.\nNarrator: You feel certain, suddenly, that nothing in this house has ever meant you harm.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"symbol_corruption","startMission":"","completeMission":"","isChapterStart":false},"out":[2]},"4":{"type":"dialogue","p":{"title":"Searching the Desk","location":"Kid's Bedroom","charactersPresent":"","text":"Narrator: The drawer sticks, then gives. Inside, under a nest of dried-out rubber bands, is a folding pocketknife wrapped in twine.\nNarrator: The twine has been knotted and reknotted so many times it has gone furry.\nJakob: Brother's. He said he lost it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png","showCharacterImages":true,"rewardItems":"dusty_pocketknife","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[2]},"5":{"type":"dialogue","p":{"title":"The Scratched Photo","location":"Kid's Bedroom","charactersPresent":"","text":"Narrator: An oval silver frame. Four people on the front porch, squinting into a summer that hasn't happened in years.\nNarrator: Every face has been gouged out with a nail — worked at, not scratched once, worked at until the paper gave. Every face but Father's.\nJakob: That's my porch. That's our rail, the one with the split in it.\nNarrator: You cannot find yourself anywhere in the photograph, and you are not certain which of the ruined faces you were hoping was yours.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png","showCharacterImages":true,"rewardItems":"scratched_photo","rewardKnowledge":"face_repetition_truth","startMission":"","completeMission":"","isChapterStart":false},"out":[2]},"6":{"type":"choice","p":{"title":"Exploring the House Hub","location":"Kitchen & Parlor","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Speak to Father in the kitchen","condition":"","mission":""},{"text":"Examine Father's study door","condition":"","mission":""},{"text":"Head down the hallway toward the porch","condition":"","mission":""}],"text":""},"out":[7,8,9]},"7":{"type":"dialogue","p":{"title":"Morning in the Kitchen","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: Father stands at the iron stove humming something low, cutting bread with the long knife, and he does not look up when you come in.\nFather: Eat before you go. Field's wide and the dust takes it out of you.\nJakob: I'll be quick.\nFather: I know you will.\nNarrator: He sets the heel of the loaf in your hand — the good piece, the one he likes.\nFather: And Jakob. If you hear anything out there that sounds like me, and it isn't coming from this kitchen, you keep walking.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"father_warmth","startMission":"","completeMission":"","isChapterStart":false},"out":[6]},"8":{"type":"choice","p":{"title":"Father's Study Door","location":"Father's Study","background":"assets/backgrounds/father-s-study.png","backgroundName":"father-s-study.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Try the heavy brass knob","condition":"","mission":""},{"text":"Work the lock with your pocketknife","condition":"has_item('dusty_pocketknife')","mission":""},{"text":"Leave it alone","condition":"","mission":""}],"text":""},"out":[61,62,6]},"9":{"type":"traversal","p":{"title":"The Endless Hallway","location":"Endless Hallway","background":"assets/backgrounds/endless-hallway.png","backgroundName":"endless-hallway.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","targetAccumulation":60,"outcomes":[{"label":"The hallway folds","probability":14,"description":"The runner rug slides under you and the shadows come loose from the wall."}],"text":""},"out":[68,10,6]},"10":{"type":"dialogue","p":{"title":"Returned Home by Night Crusher","location":"Kid's Bedroom","charactersPresent":"","text":"Narrator: The world goes to grey static. Something with too much give in its arms takes your weight, and it is not unkind about it.\nNarrator: You blink and you are sitting on your own bed with your boots still on. Father is in the doorway. He has been there a while.\nFather: Got turned around in the hall, did you.\nJakob: I don't know what happened.\nFather: No. Well. Go on and try again, son. It's only a hallway.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kid-s-bedroom-4.png","backgroundName":"kid-s-bedroom.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[2]},"11":{"type":"choice","p":{"title":"Cornfield Perimeter","location":"Cornfield Entrance","background":"assets/backgrounds/cornfield-entrance.png","backgroundName":"cornfield-entrance.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Walk straight in down the main row","condition":"","mission":""},{"text":"Crouch at the fence line and listen first","condition":"","mission":""}],"text":""},"out":[13,66]},"12":{"type":"dialogue","p":{"title":"The Scarecrow Clearing","location":"Scarecrow Clearing","charactersPresent":"","text":"Narrator: The rows open into a circle of flattened ground. A scarecrow leans at the center of it in a coat you know — Father's good coat, the winter one.\nNarrator: The brass radio sits upright at its feet, out of the dirt, squared to face the house. Nothing left in a field overnight sits like that.\nNarrator: It is already on. Through the static, a voice keeps a slow rhythm, and the rhythm is a name, and the name is yours.\nJakob: ...I'll just take it back. That's all I came for.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/scarecrow-clearing.png","backgroundName":"scarecrow-clearing.png","showCharacterImages":true,"rewardItems":"family_radio","rewardKnowledge":"","startMission":"","completeMission":"Errand 1: Find Brother's Radio","isChapterStart":false},"out":[15]},"13":{"type":"traversal","p":{"title":"Deep Corn Rows","location":"Deep Corn Rows","background":"assets/backgrounds/deep-corn-rows.png","backgroundName":"deep-corn-rows.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","targetAccumulation":70,"outcomes":[{"label":"Tobin's truck corners you","probability":9,"description":"Rusted headlights swing into the row and there is nowhere in a cornfield to go sideways."},{"label":"Headlights sweep the row","probability":18,"description":"Light rakes the stalks a row over and you fold yourself into the dirt."}],"text":""},"out":[12,14,63,11]},"14":{"type":"dialogue","p":{"title":"Caught by Tobin","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: A hand takes your collar the way you'd take a kitten. Your boots leave the dirt entirely.\nTobin: Little. Too little.\nNarrator: He carries you out of the corn without any hurry at all and sets you down on your own porch steps like a delivery.\nTobin: Not yet, this one.\nNarrator: Father is already at the screen door. He was not surprised to see the truck.\nFather: I said the path, Jakob.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[6]},"15":{"type":"dialogue","p":{"title":"Return Home - Errand 1 Complete","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: You set the radio on the kitchen table. Father turns the dial down through the voice until it is only weather and hum.\nFather: There. Thank you, son.\nNarrator: His hand stays on the counter edge after he lets go of the dial, and his knuckles go white, and stay white.\nFather: Now. Your grandfather left an iron box in the storm cellar. I need it up here.\nJakob: What's in it?\nFather: Papers, mostly. Old news. There's a good deal of paper down there and none of it is worth your time. Bring the box, leave the rest.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"Errand 2: Search Grandfather's Cellar","completeMission":"","isChapterStart":false},"out":[16]},"16":{"type":"choice","p":{"title":"Preparing for the Cellar Descent","location":"Kitchen & Parlor","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Ask Father why the town has gone so quiet","condition":"","mission":""},{"text":"Open the storm cellar trapdoor","condition":"","mission":""}],"text":""},"out":[18,19]},"17":{"type":"choice","p":{"title":"House Hub - Errand 2","location":"Kitchen & Parlor","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Open the storm cellar trapdoor","condition":"","mission":""},{"text":"Try Father's study again","condition":"","mission":""}],"text":""},"out":[19,8]},"18":{"type":"dialogue","p":{"title":"Questioning Father","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: He does not turn around. He is looking at the radio speaker cloth as if there is something behind it.\nFather: Quiet because they wandered. Every one of them. You wander, you end up somewhere, and then somebody has to go and get you.\nJakob: Get you back?\nFather: Get you back. Yes.\nNarrator: He says it the way you'd say a word in a language you only half speak.\nFather: Go on down. Don't linger.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[17]},"19":{"type":"dialogue","p":{"title":"Entering the Storm Cellar","location":"Storm Cellar Entrance","charactersPresent":"","text":"Narrator: The cellar door is heavier than a door needs to be. Cold comes up out of it — damp earth, and old paper, and the ammonia smell of a room nobody airs.\nNarrator: Your boots find the dirt floor. Somewhere overhead the house settles, one long groan, and it goes on a beat longer than a house should.\nNarrator: When it stops, the light coming down the stairs is falling at a different angle than it was.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/storm-cellar-entrance.png","backgroundName":"storm-cellar-entrance.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"father_lies_suspected","startMission":"","completeMission":"","isChapterStart":false},"out":[20]},"20":{"type":"choice","p":{"title":"Storm Cellar Exploration","location":"Basement Vault","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Examine the dirt walls","condition":"","mission":""},{"text":"Pry open the stacked crates","condition":"","mission":""},{"text":"Open the concrete archival vault","condition":"","mission":""}],"text":""},"out":[21,22,23]},"21":{"type":"dialogue","p":{"title":"Dirt Walls & Underground Roots","location":"Storm Cellar Entrance","charactersPresent":"","text":"Narrator: White roots run through the soil wall in a fine net, and where they cross they have grown around small bones and held them up like beads on a string.\nNarrator: The roots are wet. Nothing else down here is wet.\nNarrator: Far below, something turns over — a heavy thump, then a pause, then a thump. Not machinery. Machinery keeps better time than that.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/storm-cellar-entrance.png","backgroundName":"storm-cellar-entrance.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[20]},"22":{"type":"dialogue","p":{"title":"Stacked Wooden Crates","location":"Basement Vault","charactersPresent":"","text":"Narrator: The crate is full of land deeds, hundreds, each stamped with the town elder crest — a set of scales, hanging upside down.\nNarrator: Every deed lists the same two residents. Case Pair 409. Father, and you.\nNarrator: The earliest is dated 1847. The handwriting is Father's.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[20]},"23":{"type":"dialogue","p":{"title":"The Concrete Vault","location":"Basement Vault","charactersPresent":"","text":"Narrator: In a concrete alcove at the back you find the iron box, sitting square on a stack of archived travel passes.\nNarrator: It is not locked. Inside, under the papers, is a leather binder written front to back in Father's small neat hand.\nNarrator: You know you were told to leave the paper. You open it anyway.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png","showCharacterImages":true,"rewardItems":"cellar_journal","rewardKnowledge":"","startMission":"","completeMission":"Errand 2: Search Grandfather's Cellar","isChapterStart":false},"out":[24]},"24":{"type":"logic","p":{"title":"How the Journal Reads","condition":"has_knowledge('symbol_corruption')","location":"Basement Vault","text":"","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png"},"out":[25,65]},"25":{"type":"dialogue","p":{"title":"Reading the Journal Through the Warmth","location":"Basement Vault","charactersPresent":"","text":"Narrator: The warmth behind your eyes moves down into the page and the letters settle into it like they were waiting.\nNarrator: Lists of names — people he prayed for. Drafts of warnings — the ones he wrote to keep the town safe. Travel passes he must have got for families in trouble.\nNarrator: What a good man. What an enormously good man, to sit down here in the cold and do all this and never once mention it.\nJakob: I shouldn't have opened it. He didn't want me to see because he didn't want the credit.\nNarrator: You close the binder gently and you do not read the last page, which is a list, and which is short, and which has your name on it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[26]},"26":{"type":"dialogue","p":{"title":"Return Home - Errand 2 Complete","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: Father takes the iron box out of your arms before you are all the way up the stairs.\nFather: You didn't open it.\nJakob: No.\nNarrator: He looks at you for four full seconds. Then he decides something, and the deciding shows.\nFather: No. Of course not.\nFather: Tobin's running the south road today. He's carrying a key that belongs to this family and I want it back in this house before dark.\nJakob: You want me to take something off Tobin?\nFather: I want you to pick it up. There's a difference and you'll see it when you're there.\nFather: And if your eyes go heavy — if things start looking soft to you — you put your face in the town pump and you hold it there. Don't argue with me about this one.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"Errand 3: Intercept Tobin's Key","completeMission":"","isChapterStart":false},"out":[27]},"27":{"type":"dialogue","p":{"title":"Arriving in Town","location":"Small Town Square","charactersPresent":"","text":"Narrator: Town is four streets and a water pump. Awnings sag. A dog lies in the road and does not get up when you pass, and does not follow you with its eyes either.\nNarrator: There are perhaps a dozen people out in the square, and you have the immediate sense — before you have looked at any of them properly — that there are fewer than a dozen people here.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[28]},"28":{"type":"choice","p":{"title":"Small Town Square","location":"Small Town Square","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Wash your face at the town pump","condition":"","mission":""},{"text":"Go into the general store","condition":"","mission":""},{"text":"Talk to the constable","condition":"","mission":""},{"text":"Approach the woman sitting by the well","condition":"","mission":""},{"text":"Go find Tobin's truck","condition":"","mission":""}],"text":""},"out":[29,30,31,32,70]},"29":{"type":"dialogue","p":{"title":"The Town Pump","location":"Town Pump","charactersPresent":"","text":"Narrator: The handle takes both hands. The water comes up cold enough to hurt and clean in a way nothing else out here is clean.\nNarrator: You put your face into your cupped hands and hold it there until your ears ring.\nNarrator: When you come up, the square has not changed, but you have stopped being willing to overlook it. The awning shadows are the wrong shape for the sun. The carvings on the well stones are not decoration. They are hooks, and they are angled inward.\nJakob: I'm taking some of this with me.\nNarrator: You fill your brother's glass flask and stopper it. Whatever the warmth is, this is the opposite of it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/town-pump.png","backgroundName":"town-pump.png","showCharacterImages":true,"rewardItems":"cleansed_water_flask","rewardKnowledge":"eye_cleansing_ritual","startMission":"","completeMission":"","isChapterStart":false},"out":[28]},"30":{"type":"dialogue","p":{"title":"The General Store","location":"General Store","charactersPresent":"","text":"Narrator: Bell over the door. Canned goods stacked in perfect pyramids, every label facing out, thick with dust — arranged a long time ago and never sold from.\nNarrator: The clerk turns around and it is Father's face. Not like Father's. Father's, the same face, wearing an expression Father has never worn.\nStore Clerk: Chores today, is it.\nJakob: ...Yes, sir.\nStore Clerk: Good boy.\nNarrator: He says it in Father's exact voice, at Father's exact pitch, and goes back to facing the labels out.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/general-store.png","backgroundName":"general-store.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[28]},"31":{"type":"dialogue","p":{"title":"The Constable","location":"Small Town Square","charactersPresent":"","text":"Narrator: The constable stands where the street stops being a street. Iron badge. Father's face, older, the way Father might look in ten years, or the way he looked ten years ago — you find you can't decide.\nTown Constable: Fence line's the fence line, son. Tobin's harvesting the south road today.\nJakob: How do you know what I'm out here for?\nNarrator: He does not answer that. He adjusts his stance so that he is between you and the road out of town, and he does it without appearing to move.\nTown Constable: Go on and do your errand.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[28]},"32":{"type":"dialogue","p":{"title":"The Woman by the Well","location":"Small Town Square","charactersPresent":"","text":"Narrator: She sits on the lip of the dry well with her hands open in her lap. She does not look up. Flies walk on her forearm and she lets them.\nSitting Woman: Father builds the house.\nSitting Woman: Father holds the rain.\nJakob: Ma'am—\nSitting Woman: Father builds the house. Father holds the rain.\nNarrator: It is your father's cadence exactly — the rhythm he uses saying grace. Under the dust on her face, the bones of it are his bones.\nNarrator: She has been saying it long enough that the well stone under her hands has worn into two smooth cups.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[28]},"33":{"type":"traversal","p":{"title":"Tobin's Meat Truck","location":"Small Town Square","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","targetAccumulation":80,"outcomes":[{"label":"Tobin sees you in the mirror","probability":10,"description":"The truck stops. The door opens. It is very fast for something that big."}],"text":""},"out":[34,35,28]},"34":{"type":"dialogue","p":{"title":"Taking the Key","location":"Small Town Square","charactersPresent":"","text":"Narrator: Tobin is round the back of the truck with a crate on his shoulder. The cab door hangs open. The keys are in it.\nNarrator: You take the ring off the column and your hand is shaking so hard it rings like a little bell, and he does not turn around, and he does not turn around, and then you are two streets away.\nNarrator: Only later do you think about the fact that the cab door was open. That a man like Tobin left it open.\nJakob: He wanted me to have it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","showCharacterImages":true,"rewardItems":"meat_truck_key","rewardKnowledge":"","startMission":"","completeMission":"Errand 3: Intercept Tobin's Key","isChapterStart":false},"out":[36]},"35":{"type":"dialogue","p":{"title":"Locked in the Loading Dock","location":"Factory Loading Dock","charactersPresent":"","text":"Narrator: He does not hurt you. That is the part you will keep coming back to. He carries you across town in the cab with the window down and drops you inside the factory's rear dock, and the iron door comes down.\nTobin: Wait here. He'll come and get you when it's ready.\nJakob: When what's ready?\nNarrator: Tobin considers the question honestly, the way a man does when he's been asked something he's never had to put into words.\nTobin: You are.\nNarrator: The truck pulls out. On a nail by the door, left there deliberately, hangs the key ring — the one you came into town for.\nNarrator: The wall speaker crackles. It is the same static as the kitchen radio, the same hum, and then it is Father, from somewhere in this building.\nFather: Jakob. Good. You're early.\nFather: The sub-floor grates, son — go down and look at the central altar and tell me what you see. That's all I need. That's the last one.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/factory-loading-dock.png","backgroundName":"factory-loading-dock.png","showCharacterImages":true,"rewardItems":"meat_truck_key","rewardKnowledge":"","startMission":"Errand 4: Inspect Factory Grates","completeMission":"Errand 3: Intercept Tobin's Key","isChapterStart":false},"out":[38]},"36":{"type":"dialogue","p":{"title":"Return Home - Errand 3 Complete","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: Father takes the key out of your palm before you've got your coat off. His breathing is shallow and high in his chest, and the kitchen smells of sweat over bread.\nFather: Good. Good. That's it, then, that's the last of it.\nJakob: The last of what?\nNarrator: He is not listening. He is turning the key over and over and his mouth is moving through a list.\nFather: One more, and then we're done, and then I'll sit down and I'll explain the whole thing to you properly, start to finish, I promise you that.\nFather: The dead factory, at the corn's edge. There are grates in the sub-floor. Go and look at the central altar and tell me exactly what you see.\nJakob: You've been out there. You know what's there.\nFather: I need you to see it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"Errand 4: Inspect Factory Grates","completeMission":"","isChapterStart":false},"out":[37]},"37":{"type":"choice","p":{"title":"The Dead Factory","location":"Factory Loading Dock","background":"assets/backgrounds/factory-loading-dock.png","backgroundName":"factory-loading-dock.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Go in through the loading dock","condition":"","mission":""},{"text":"Climb the gantry catwalks","condition":"","mission":""},{"text":"Drop straight down into the conveyor hall","condition":"","mission":""}],"text":""},"out":[38,39,40]},"38":{"type":"choice","p":{"title":"Conveyor Access","location":"Industrial Conveyor Hall","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Cross the conveyor floor","condition":"","mission":""},{"text":"Climb to the catwalks first and look","condition":"","mission":""}],"text":""},"out":[40,39]},"39":{"type":"dialogue","p":{"title":"The Gantry Catwalks","location":"Factory Gantry Catwalks","charactersPresent":"","text":"Narrator: The catwalk rail is warm. The whole building is warm, and nothing in it has run in ten years.\nNarrator: Below, the floor opens into a hall the size of a church, and standing in it is a made thing — forty feet of bone lashed to iron, hides stretched and dried across the frame, gears set into the joints where a body would have joints.\nNarrator: It is not finished. You can see exactly where it is not finished. There is a cavity in the chest of it, and the cavity is small, and it is a very particular size.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/factory-gantry-catwalks.png","backgroundName":"factory-gantry-catwalks.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[38]},"40":{"type":"traversal","p":{"title":"The Conveyor Floor","location":"Industrial Conveyor Hall","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","targetAccumulation":80,"outcomes":[{"label":"A steam line lets go","probability":15,"description":"The pipe above you splits and the hall fills white."}],"text":""},"out":[42,41,37]},"41":{"type":"dialogue","p":{"title":"Driven Back","location":"Factory Loading Dock","charactersPresent":"","text":"Narrator: Scalding white fills the hall and something takes you by the back of the shirt and pulls, hard, and the floor is gone for a moment.\nNarrator: You come down on the loading dock concrete with your palms stinging and your eyebrows singed off clean.\nNarrator: The dark shape that pulled you is already going thin at the edges. It does not have a face to read. It waits until you are standing, and then it isn't there.\nJakob: ...Thank you.\nNarrator: The dock door is still open. The hall is still down there.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/factory-loading-dock.png","backgroundName":"factory-loading-dock.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[37]},"42":{"type":"dialogue","p":{"title":"The Altar","location":"Effigy Altar Chamber","charactersPresent":"","text":"Narrator: You come up through the sub-floor grates and the Effigy is directly above you, filling the whole of the ceiling of your vision.\nNarrator: The pedestal is cut with an inscription, and the cut is fresh — the stone dust is still in the grooves.\nNarrator: THE EFFIGY REQUIRES THE SON'S HEART AND THE FATHER'S MIND.\nNarrator: Beneath it, in the same hand, smaller: BOTH ARE GIVEN WILLINGLY OR NEITHER COUNTS.\nNarrator: On the pedestal lies a knife of black glass. It has been set out on a folded cloth, the way you'd set a table.\nJakob: He said tell him what I see.\nNarrator: He knows what's here. He has always known what's here. He wanted you to be the one to read it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","showCharacterImages":true,"rewardItems":"obsidian_dagger","rewardKnowledge":"effigy_sacrificial_secret","startMission":"","completeMission":"Errand 4: Inspect Factory Grates","isChapterStart":false},"out":[43]},"43":{"type":"choice","p":{"title":"The Effigy Chamber","location":"Effigy Altar Chamber","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Look up at its face","condition":"","mission":""},{"text":"Look down the rear drainage pipe","condition":"","mission":""},{"text":"Go home","condition":"","mission":""}],"text":""},"out":[44,45,46]},"44":{"type":"dialogue","p":{"title":"The Effigy's Face","location":"Effigy Altar Chamber","charactersPresent":"","text":"Narrator: The head is carved from one piece and split down the middle. The left half is Father.\nNarrator: The right half is you — but not you now. You at Father's age. The face you'd have grown into.\nNarrator: Somebody has had to know that face for a long time to carve it that well.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[43]},"45":{"type":"dialogue","p":{"title":"The Drainage Pipe","location":"Effigy Altar Chamber","charactersPresent":"","text":"Narrator: The pipe goes down further than the factory has any business going. The air coming up it is cold, and it smells of turned earth rather than iron.\nNarrator: A voice comes up with it — old, and slow, and not in any hurry to be understood.\nGrandfather Wieland: ...bring it down here, child. Not up there. Down here, where the thing was started.\nNarrator: The Effigy behind you does not move. You become aware that you have been assuming it might.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[43]},"46":{"type":"dialogue","p":{"title":"Return Home - The Last Errand","location":"Kitchen & Parlor","charactersPresent":"","text":"Narrator: The house is cold. The kitchen floor has opened from the stove to the back wall, and what is under it is not a cellar, and it goes down a long way.\nNarrator: Father stands at the edge of it with his good coat on — the winter one, the one on the scarecrow. There is a great deal wrong with his eyes.\nFather: You read it.\nJakob: I read it.\nFather: Then you know I couldn't have told you. It doesn't count if I tell you. It only counts if you walk down there knowing.\nJakob: You made the town scared so we could leave. That's what the book said. That's what it said, Father.\nFather: That was true when I wrote it.\nNarrator: He says it gently. It is the gentlest he has been with you since the morning of the radio.\nFather: Go down. Your grandfather's waiting, and he'll tell it to you straighter than I can.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/kitchen-parlor.png","backgroundName":"kitchen-parlor.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"Errand 5: Complete the Subterranean Task","completeMission":"","isChapterStart":false},"out":[47]},"47":{"type":"choice","p":{"title":"The Descent","location":"Subterranean Cavern Tunnels","background":"assets/backgrounds/subterranean-cavern-tunnels.png","backgroundName":"subterranean-cavern-tunnels.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Go down toward your grandfather","condition":"","mission":""},{"text":"Go back up to the altar and end it now","condition":"","mission":""}],"text":""},"out":[48,49]},"48":{"type":"dialogue","p":{"title":"The Caverns","location":"Subterranean Cavern Tunnels","charactersPresent":"","text":"Narrator: Stone steps, cut by hand, worn in the middle by more feet than this family has ever had.\nNarrator: The walls change as you go — soil, then root, then soil packed around brass gears gone green, fossilized into the earth at angles no one installed them at.\nNarrator: The gears are older than the factory. The factory was built on top of them. Somebody found this and put a slaughterhouse over it to have a reason to be here.\nNarrator: At the bottom: an iron door, and on it the scales, hanging upside down.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/subterranean-cavern-tunnels.png","backgroundName":"subterranean-cavern-tunnels.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[50]},"49":{"type":"choice","p":{"title":"At the Altar","location":"Effigy Altar Chamber","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Put the black knife into the Effigy's core","condition":"has_item('obsidian_dagger')","mission":""},{"text":"Lie down on the altar","condition":"","mission":""},{"text":"Take the drainage pipe down instead","condition":"","mission":""}],"text":""},"out":[56,55,48]},"50":{"type":"dialogue","p":{"title":"Grandfather Wieland","location":"Wieland Core Chamber","charactersPresent":"","text":"Narrator: The chamber is root and stone and a low flame burning in a stone cup, burning without fuel, burning the colour of a held breath.\nNarrator: Grandfather Wieland is in the wall. Grown into it — root through the ribs, soil to the shoulder, only the face and one hand still free of it. He has been here a long time and he is not dead.\nGrandfather Wieland: Jakob. You've got his walk.\nJakob: You're supposed to be buried out by the fence.\nGrandfather Wieland: I am. Both things are true. That's the trouble with this house.\nNarrator: The free hand opens. In it is something that beats — small, warm, and yours in a way you can feel from across the room.\nGrandfather Wieland: Take it. I held it for you as long as I could, and I am nearly all root now.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","showCharacterImages":true,"rewardItems":"effigy_heart","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[51]},"51":{"type":"choice","p":{"title":"In the Core Chamber","location":"Wieland Core Chamber","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Ask him what Father actually wants","condition":"","mission":""},{"text":"Say nothing and go to the flame","condition":"","mission":""}],"text":""},"out":[67,52]},"52":{"type":"logic","p":{"title":"Vision Check - Corrupted?","condition":"has_knowledge('symbol_corruption')","location":"Wieland Core Chamber","text":"","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png"},"out":[64,53]},"53":{"type":"choice","p":{"title":"The Flame, Clear-Eyed","location":"Wieland Core Chamber","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Go up and give him what he asked for","condition":"","mission":""},{"text":"Go up and put the black knife into the Effigy","condition":"has_item('obsidian_dagger')","mission":""},{"text":"Pour the well water over the flame","condition":"has_item('cleansed_water_flask') && has_item('cellar_journal') && has_item('effigy_heart')","mission":""},{"text":"Take your grandfather's place in the wall","condition":"","mission":""}],"text":""},"out":[55,56,57,58]},"54":{"type":"choice","p":{"title":"The Flame, Through the Warmth","location":"Wieland Core Chamber","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Go up and give him what he asked for","condition":"","mission":""},{"text":"Take your grandfather's place in the wall","condition":"","mission":""}],"text":""},"out":[55,58]},"55":{"type":"dialogue","p":{"title":"Ending A - Willing Submission","location":"Effigy Altar Chamber","charactersPresent":"","text":"Narrator: You climb back up and you lie down on the cold stone and you fold your hands, because that is how you were taught to lie still.\nNarrator: Father comes and stands over you and he is crying, which you did not expect, and it does not stop him, which you should have.\nFather: Willingly. Say it willingly, son.\nJakob: Willingly.\nNarrator: The Effigy takes its first breath in the shape of the room's air going out of it.\nNarrator: The dust rises everywhere at once, over the county and then past it, and it does not come down again, and somewhere inside it a very large thing that has your father's voice begins to speak, and goes on speaking.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Errand 5: Complete the Subterranean Task","isChapterStart":false},"out":[60]},"56":{"type":"dialogue","p":{"title":"Ending B - Severance","location":"Effigy Altar Chamber","charactersPresent":"","text":"Narrator: You put the black knife into the cavity in its chest — the small one, the particular size, the one that was cut for you.\nNarrator: The Effigy does not scream. Father does, somewhere below, one floor down and going further, and the sound goes thin and long like a train leaving.\nNarrator: Forty feet of bone and iron comes apart into grey ash and the ash goes up through the roof.\nNarrator: It rains that night for the first time in ten years. It rains for three days. You sit on the porch of an empty house and you let it come down on you, and you do not go inside, because there is nothing in there now.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/effigy-altar-chamber.png","backgroundName":"effigy-altar-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Errand 5: Complete the Subterranean Task","isChapterStart":false},"out":[60]},"57":{"type":"dialogue","p":{"title":"Ending C - Ancestral Overthrow","location":"Wieland Core Chamber","charactersPresent":"","text":"Narrator: You unstopper your brother's flask and pour the town's clean water over the flame in the stone cup.\nNarrator: It does not hiss. It simply stops, the way a held note stops, and the whole weight of the house comes off your shoulders at once and you understand for the first time that it had been there your entire life.\nGrandfather Wieland: ...oh. Oh, that's good.\nNarrator: The roots go slack. The old man's face comes free of the wall and it is only an old man's face, tired and glad, and then it is soil.\nNarrator: The bargain is off. The rain is nobody's. Above you the dust begins to fall out of the sky as ordinary dirt, ten years of it, settling on the fields it was taken from.\nNarrator: You walk up out of the ground into a wet grey morning. There is a man asleep at the kitchen table with his head on his arms, and he is smaller than he was, and when he wakes he will not remember any of it, and you will have to decide what to do about that for the rest of your life.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Errand 5: Complete the Subterranean Task","isChapterStart":false},"out":[60]},"58":{"type":"dialogue","p":{"title":"Ending D - The New Architect","location":"Wieland Core Chamber","charactersPresent":"","text":"Narrator: You put your back into the hollow your grandfather is leaving and the roots come up through the stone to meet you, unhurried, as if they had been told to expect you.\nGrandfather Wieland: Ah, lad. No.\nNarrator: The soil takes your legs. It does not hurt. It is the warmest you have been since the kitchen.\nNarrator: Upstairs the radio settles out of static, and what comes through the speaker cloth is your voice, keeping a slow rhythm, saying a name.\nNarrator: The house has a master again. Somewhere above, a father hears his son's voice come out of the radio and understands that he has lost, and that he is not going to be allowed to stop.\nNarrator: The dust goes on. It is yours now. In a hundred years a boy will come down these steps, and you will have had a long time to think about what to say to him.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Errand 5: Complete the Subterranean Task","isChapterStart":false},"out":[60]},"60":{"type":"dialogue","p":{"title":"Epilogue","location":"Epilogue Room","charactersPresent":"","text":"Narrator: The radio hum thins out into the sound of wind over open ground.\nNarrator: Thank you for playing Night Crusher: The Dust Bowl Paranoia.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/epilogue-room.png","backgroundName":"epilogue-room.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[]},"61":{"type":"dialogue","p":{"title":"Locked Study Door","location":"Father's Study","charactersPresent":"","text":"Narrator: The knob turns a quarter inch and stops. Locked, and locked from this side — the keyhole is on your side of the door.\nNarrator: Through it you can make out a corner of the oak desk, brass calipers, and red string running wall to wall like something spun.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/father-s-study.png","backgroundName":"father-s-study.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[6]},"62":{"type":"dialogue","p":{"title":"Inside Father's Private Study","location":"Father's Study","charactersPresent":"","text":"Narrator: The blade finds the tumbler and lifts it. The door opens without a sound, which is worse than if it had creaked.\nNarrator: The red string connects pins pushed into a county map. Not roads. Not rail lines. It makes a shape, and the shape is a set of scales, hanging upside down.\nNarrator: On the desk, a ledger. Column one: names. Column two: dates. Column three, in Father's small neat hand, a single word repeated all the way down — KEPT.\nJakob: That's Mrs. Ferrin's name. She moved to Enid. Father drove her to the station himself, he said.\nNarrator: Her date is last week.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/father-s-study.png","backgroundName":"father-s-study.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"father_lies_suspected","startMission":"","completeMission":"","isChapterStart":false},"out":[6]},"63":{"type":"dialogue","p":{"title":"Near Miss in the Rows","location":"Deep Corn Rows","charactersPresent":"","text":"Narrator: The truck passes close enough that you can smell the bed of it — salt, and copper, and something sweeter underneath that you decide not to think about.\nNarrator: It does not slow. On the tailgate, hand-painted, a set of scales hanging upside down.\nNarrator: You wait for the engine note to drop away, and then you keep going.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/deep-corn-rows.png","backgroundName":"deep-corn-rows.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[13]},"64":{"type":"logic","p":{"title":"Vision Check - Cleansed?","condition":"has_knowledge('eye_cleansing_ritual')","location":"Wieland Core Chamber","text":"","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png"},"out":[53,54]},"65":{"type":"dialogue","p":{"title":"Reading the Journal Clearly","location":"Basement Vault","charactersPresent":"","text":"Narrator: Railway passes, forged. Four of them, in four different names, all in his hand.\nNarrator: And then pages of it — rumors, drafted and redrafted. What the cult is said to want. What is said to happen to families that stay. Marginal notes on which version of the story frightened people fastest.\nNarrator: He wrote the thing everyone in this town is afraid of. He wrote it in a cellar, at a desk, on purpose.\nJakob: He made them all scared so they'd let us go.\nNarrator: It is the kindest way to read it. You go up the stairs holding it carefully, the way you'd carry water.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/basement-vault.png","backgroundName":"basement-vault.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"father_escape_theory","startMission":"","completeMission":"","isChapterStart":false},"out":[26]},"66":{"type":"dialogue","p":{"title":"Listening at the Fence Line","location":"Cornfield Entrance","charactersPresent":"","text":"Narrator: You put your ear near the ground the way your brother showed you and hold still until your knees ache.\nNarrator: An engine, far off. It runs a long straight, idles, turns, runs the same straight back. Always turning left. Always at the same count.\nJakob: Sixty and turn. Sixty and turn.\nNarrator: You know where it will be now. It is a small thing to know, out here, and you hold onto it.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/cornfield-entrance.png","backgroundName":"cornfield-entrance.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"tobin_patrol_pattern","startMission":"","completeMission":"","isChapterStart":false},"out":[13]},"67":{"type":"dialogue","p":{"title":"What Father Wants","location":"Wieland Core Chamber","charactersPresent":"","text":"Jakob: He said you'd tell it straighter.\nGrandfather Wieland: I'll tell it short, which is the same thing down here.\nGrandfather Wieland: There was no drought. There was a bargain, and the price of it was the rain, and your father paid the rain because it wasn't his to keep and he wanted what came after.\nJakob: The dust is his?\nGrandfather Wieland: The dust is the cost of the thing he's building. Ten years of it. Every field, every child that left, every face in that town that went back to being his because there was nothing left to keep it its own.\nGrandfather Wieland: He isn't trying to escape this place, boy. He's trying to become it.\nNarrator: The old man's eye moves to the flame in the stone cup, and back to you.\nGrandfather Wieland: And he can't finish without you handing it over yourself. That is the one thing in all of it he never worked out how to fake.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/wieland-core-chamber.png","backgroundName":"wieland-core-chamber.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"father_apotheosis_truth","startMission":"","completeMission":"","isChapterStart":false},"out":[52]},"68":{"type":"dialogue","p":{"title":"Crossing the Yard","location":"Porch & Yard","charactersPresent":"","text":"Narrator: The screen door bangs behind you and the heat takes hold of your face like a wet cloth.\nNarrator: The corn starts twelve feet from the porch rail and goes up nine feet from there. It has not rained in ten years. Nobody has ever explained why the corn is fine.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/porch-yard.png","backgroundName":"porch-yard.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[11]},"69":{"type":"traversal","p":{"title":"Tobin's Meat Truck - Waiting for the Turn","location":"Small Town Square","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","targetAccumulation":50,"outcomes":[{"label":"Tobin sees you in the mirror","probability":8,"description":"The truck stops. The door opens. It is very fast for something that big."}],"text":""},"out":[34,35,28]},"70":{"type":"logic","p":{"title":"Do You Know His Route?","condition":"has_knowledge('tobin_patrol_pattern')","location":"Small Town Square","text":"","background":"assets/backgrounds/small-town-square.png","backgroundName":"small-town-square.png"},"out":[69,33]}}};
+class StoryPlayer {
+
+  static CSS = `
+.sp-root { position:absolute; inset:0; overflow:hidden; background:#05060a; font-family:'Inter',system-ui,sans-serif; color:#e2e8f0; }
+.sp-bg { position:absolute; inset:0; background-size:cover; background-position:center; transition:background-image .6s ease, opacity .6s ease; }
+.sp-vignette { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(0,0,0,.35) 0%, rgba(0,0,0,.1) 40%, rgba(0,0,0,.88) 100%); pointer-events:none; }
+
+.sp-topbar { position:absolute; top:0; left:0; right:0; height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; z-index:20; background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent); }
+.sp-title { font-family:'EB Garamond',Georgia,serif; font-size:19px; letter-spacing:.5px; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.8); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34%; }
+.sp-hud { display:flex; align-items:center; gap:8px; }
+.sp-hud-btn { background:rgba(10,12,18,.6); border:1px solid rgba(255,255,255,.14); color:#e2e8f0; border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:.15s ease; backdrop-filter:blur(6px); }
+.sp-hud-btn:hover { background:rgba(99,102,241,.35); border-color:rgba(99,102,241,.6); }
+.sp-hud-btn.sp-attn { border-color:rgba(245,158,11,.8); box-shadow:0 0 12px rgba(245,158,11,.35); }
+.sp-badge { background:#6366f1; color:#fff; border-radius:10px; min-width:17px; height:17px; font-size:10px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; padding:0 4px; }
+
+.sp-inv { display:flex; align-items:center; gap:5px; background:rgba(10,12,18,.6); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:5px 12px; font-size:11px; max-width:340px; overflow-x:auto; backdrop-filter:blur(6px); }
+.sp-inv::-webkit-scrollbar { height:0; }
+.sp-inv-chip { background:rgba(6,182,212,.18); border:1px solid rgba(6,182,212,.4); color:#67e8f9; border-radius:10px; padding:2px 8px; white-space:nowrap; }
+.sp-inv-empty { color:#64748b; font-style:italic; }
+
+.sp-panel { position:absolute; top:60px; right:12px; width:320px; max-height:calc(100% - 140px); background:rgba(12,14,20,.92); border:1px solid rgba(255,255,255,.12); border-radius:12px; z-index:30; display:flex; flex-direction:column; box-shadow:0 18px 50px rgba(0,0,0,.6); backdrop-filter:blur(10px); overflow:hidden; animation:spFadeIn .25s ease; }
+.sp-panel.sp-hidden { display:none; }
+.sp-panel-head { padding:12px 16px; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#94a3b8; border-bottom:1px solid rgba(255,255,255,.09); display:flex; justify-content:space-between; align-items:center; }
+.sp-panel-x { background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer; }
+.sp-panel-body { overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+
+.sp-mission { border:1px solid rgba(255,255,255,.1); border-left:3px solid #f59e0b; border-radius:0 8px 8px 0; background:rgba(255,255,255,.03); padding:10px 12px; font-size:12.5px; line-height:1.5; }
+.sp-mission.sp-required { border-left-color:#ef4444; }
+.sp-mission.sp-done { border-left-color:#10b981; opacity:.65; }
+.sp-mission.sp-done .sp-mission-name { text-decoration:line-through; }
+.sp-mission-name { font-weight:600; color:#fff; display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.sp-mission-tag { font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; border-radius:8px; padding:2px 7px; }
+.sp-mission-tag.sp-req { background:rgba(239,68,68,.18); color:#f87171; border:1px solid rgba(239,68,68,.4); }
+.sp-mission-tag.sp-opt { background:rgba(148,163,184,.15); color:#94a3b8; border:1px solid rgba(148,163,184,.3); }
+.sp-mission-tag.sp-donetag { background:rgba(16,185,129,.18); color:#34d399; border:1px solid rgba(16,185,129,.4); }
+.sp-mission-info { color:#94a3b8; font-size:11.5px; margin-top:4px; font-family:'EB Garamond',Georgia,serif; font-size:13px; }
+.sp-panel-empty { color:#64748b; font-size:12px; font-style:italic; padding:6px 0; }
+
+.sp-diary-entry { background:rgba(255,255,255,.03); border-left:3px solid #a855f7; padding:10px 12px; border-radius:0 8px 8px 0; font-size:13.5px; line-height:1.55; font-family:'EB Garamond',Georgia,serif; }
+.sp-diary-label { color:#e2e8f0; }
+.sp-diary-info { color:#94a3b8; font-size:13px; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,.07); white-space:pre-wrap; }
+
+.sp-stage { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:36px; }
+
+.sp-dialogue { width:min(860px, 92%); background:rgba(14,16,24,.88); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:26px 30px 34px; box-shadow:0 14px 40px rgba(0,0,0,.55); cursor:pointer; position:relative; backdrop-filter:blur(8px); animation:spFadeIn .3s ease; min-height:130px; }
+.sp-dialogue:hover { border-color:rgba(99,102,241,.45); }
+.sp-speaker { font-family:'EB Garamond',Georgia,serif; font-size:21px; font-weight:700; letter-spacing:.5px; display:inline-block; margin-bottom:10px; padding-bottom:3px; border-bottom:2px solid currentColor; }
+.sp-text { font-family:'EB Garamond',Georgia,serif; font-size:19px; line-height:1.65; color:#f1f5f9; }
+.sp-text .sp-tok { font-weight:600; }
+.sp-next { position:absolute; bottom:12px; right:18px; font-size:11px; color:#94a3b8; animation:spPulse 1.6s infinite; font-family:'Inter',sans-serif; }
+@keyframes spPulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+@keyframes spFadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.sp-choices { width:min(620px,92%); display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.sp-choice { background:rgba(22,28,44,.85); border:1px solid rgba(255,255,255,.13); color:#fff; padding:13px 22px; border-radius:30px; font-size:15px; font-family:'EB Garamond',Georgia,serif; cursor:pointer; transition:.15s ease; text-align:center; backdrop-filter:blur(6px); position:relative; }
+.sp-choice:hover { background:linear-gradient(135deg,#6366f1,#a855f7); border-color:transparent; transform:translateY(-2px); box-shadow:0 6px 20px rgba(99,102,241,.4); }
+.sp-choice.sp-locked { opacity:.45; cursor:not-allowed; }
+.sp-choice.sp-locked:hover { background:rgba(22,28,44,.85); transform:none; box-shadow:none; border-color:rgba(255,255,255,.13); }
+.sp-choice-mission { display:inline-block; margin-left:8px; font-size:10px; font-family:'Inter',sans-serif; font-weight:700; letter-spacing:.5px; text-transform:uppercase; background:rgba(245,158,11,.2); color:#fbbf24; border:1px solid rgba(245,158,11,.45); border-radius:10px; padding:2px 8px; vertical-align:2px; }
+.sp-lock-why { display:block; font-size:10.5px; font-family:'Inter',sans-serif; color:#94a3b8; margin-top:3px; }
+
+.sp-dice { width:min(430px,92%); background:rgba(14,16,24,.92); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:24px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px; box-shadow:0 16px 44px rgba(0,0,0,.6); backdrop-filter:blur(8px); animation:spFadeIn .3s ease; }
+.sp-dice-title { font-family:'EB Garamond',Georgia,serif; font-size:21px; font-weight:700; color:#fbbf24; }
+.sp-dice-score { font-size:13px; color:#94a3b8; }
+.sp-dice-score b { color:#fff; font-size:16px; }
+.sp-cube { width:76px; height:76px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:12px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; box-shadow:0 8px 24px rgba(245,158,11,.4); }
+.sp-cube.sp-rolling { animation:spRoll .5s infinite linear; }
+@keyframes spRoll { 0% { transform:rotate(0deg) scale(.9); } 50% { transform:rotate(180deg) scale(1.1); } 100% { transform:rotate(360deg) scale(.9); } }
+.sp-roll-btn { background:linear-gradient(135deg,#6366f1,#a855f7); border:none; color:#fff; border-radius:30px; padding:12px 26px; font-size:14px; font-weight:600; cursor:pointer; width:100%; transition:.15s ease; }
+.sp-roll-btn:hover { filter:brightness(1.15); }
+.sp-roll-btn:disabled { opacity:.5; cursor:default; }
+.sp-exit-btn { background:rgba(148,163,184,.12); border:1px solid rgba(148,163,184,.35); color:#cbd5e1; border-radius:30px; padding:9px 20px; font-size:12.5px; cursor:pointer; width:100%; transition:.15s ease; }
+.sp-exit-btn:hover { background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.4); color:#fca5a5; }
+.sp-dice-desc { font-size:12px; color:#94a3b8; min-height:18px; }
+.sp-dice-risks { width:100%; text-align:left; background:rgba(0,0,0,.25); border-radius:8px; padding:10px 12px; font-size:11px; color:#94a3b8; }
+.sp-dice-risks div { display:flex; justify-content:space-between; margin-bottom:2px; }
+.sp-risk-pct { color:#f87171; font-weight:600; }
+
+.sp-toasts { position:absolute; top:64px; left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+.sp-toast { background:rgba(16,185,129,.92); color:#fff; padding:8px 18px; border-radius:20px; font-size:12.5px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.4); animation:spFadeIn .25s ease; }
+.sp-toast.sp-toast-mission { background:rgba(245,158,11,.94); }
+.sp-toast.sp-toast-info { background:rgba(99,102,241,.94); }
+
+.sp-splash { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; background:radial-gradient(ellipse at center, #131627 0%, #05060a 75%); }
+.sp-splash-title { font-family:'EB Garamond',Georgia,serif; font-size:clamp(34px, 6vw, 62px); color:#fff; text-align:center; letter-spacing:1px; text-shadow:0 4px 30px rgba(99,102,241,.5); padding:0 20px; }
+.sp-splash-sub { color:#94a3b8; font-size:13px; letter-spacing:3px; text-transform:uppercase; }
+.sp-begin { background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; border:none; border-radius:34px; padding:15px 52px; font-size:17px; font-family:'EB Garamond',Georgia,serif; letter-spacing:1px; cursor:pointer; box-shadow:0 10px 34px rgba(99,102,241,.45); transition:.2s ease; }
+.sp-begin:hover { transform:translateY(-2px); box-shadow:0 14px 44px rgba(99,102,241,.65); }
+
+.sp-ending { width:min(600px,92%); background:rgba(14,16,24,.92); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:36px; text-align:center; box-shadow:0 16px 44px rgba(0,0,0,.6); animation:spFadeIn .4s ease; margin-bottom:10vh; }
+.sp-ending-title { font-family:'EB Garamond',Georgia,serif; font-size:30px; color:#34d399; margin-bottom:14px; }
+.sp-ending-text { font-family:'EB Garamond',Georgia,serif; font-size:17px; color:#cbd5e1; line-height:1.6; margin-bottom:24px; }
+.sp-ending-actions { display:flex; gap:12px; justify-content:center; }
+
+/* Cast layer: everyone present in the scene, speaker emphasised.
+   Lives outside .sp-stage so advancing a line doesn't remount the portraits. */
+.sp-cast { position:absolute; left:0; right:0; bottom:150px; display:flex; justify-content:center; align-items:flex-end; gap:2%; pointer-events:none; z-index:5; height:min(480px,48vh); }
+.sp-cast:empty { display:none; }
+/* Scale/dim live on .sp-char; the entrance animation lives on the inner <img>.
+   Kept apart because spSlideUp animates transform, which would otherwise
+   override the speaker scale for the whole 0.4s the animation runs. */
+.sp-char { display:flex; align-items:flex-end; justify-content:center; height:100%; flex:0 1 auto; min-width:0;
+  transition:transform .3s ease, filter .3s ease, opacity .3s ease; transform-origin:bottom center;
+  transform:scale(.86); opacity:.62; filter:brightness(.6) saturate(.8); }
+.sp-char.sp-active { transform:scale(1); opacity:1; filter:none; z-index:6; }
+.sp-char img { max-height:100%; max-width:100%; object-fit:contain; object-position:bottom; display:block; animation:spSlideUp .4s ease; }
+
+/* Legacy single-portrait classes, retained for older published files */
+.sp-char-container { display:flex; justify-content:center; align-items:flex-end; width:min(860px, 92%); height:min(480px, 48vh); pointer-events:none; margin-bottom:12px; z-index:5; }
+.sp-char-img { max-height:100%; max-width:66%; object-fit:contain; animation:spSlideUp .4s ease; }
+@keyframes spSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+`;
+
+  constructor(container, story, opts = {}) {
+    this.container = container;
+    this.story = story || { nodes: {}, vars: {}, entry: null };
+    this.opts = opts; // { onExit: fn, standalone: bool }
+    this.state = null;
+    this._loopAudio = null;
+    this._loopSrc = null;
+    this._fadeTimer = null;
+    this._begun = false;
+    this._injectStyles();
+  }
+
+  _injectStyles() {
+    if (document.getElementById("sp-player-styles")) return;
+    const s = document.createElement("style");
+    s.id = "sp-player-styles";
+    s.textContent = StoryPlayer.CSS;
+    document.head.appendChild(s);
+  }
+
+  // ---------- lifecycle ----------
+
+  start(entryId, startState = null) {
+    this._entryId = (entryId !== undefined && entryId !== null) ? entryId : this.story.entry;
+    this.state = {
+      inventory: startState && startState.inventory ? new Set(startState.inventory) : new Set(),
+      knowledge: startState && startState.knowledge ? new Set(startState.knowledge) : new Set(),
+      missions: startState && startState.missions ? new Map(Object.entries(startState.missions)) : new Map(),
+      diary: [],
+      scores: {}
+    };
+    if (startState) {
+      if (startState.inventory && startState.inventory.length) {
+        this.state.diary.push("Started with items: " + startState.inventory.join(", "));
+      }
+      if (startState.knowledge && startState.knowledge.length) {
+        // One entry each, so every preset flag can show its own description
+        startState.knowledge.forEach(k => {
+          this.state.diary.push({ label: "Started knowing: " + k, key: k });
+        });
+      }
+      if (startState.missions) {
+        Object.entries(startState.missions).forEach(([name, status]) => {
+          this.state.diary.push(`Mission "${name}" preset to: ${status}`);
+        });
+      }
+    }
+    this._stopAllAudio();
+    if (this.opts.standalone && !this._begun) {
+      this._renderSplash();
+    } else {
+      this._begin();
+    }
+  }
+
+  destroy() {
+    this._stopAllAudio();
+    this.container.innerHTML = "";
+    this.container.classList.remove("sp-root");
+  }
+
+  _begin() {
+    this._begun = true;
+    this._buildShell();
+    const entryNode = this._node(this._entryId);
+    if (!entryNode) {
+      this._renderEnding("This story has no scenes yet. Add a Dialogue node in the editor to begin.");
+      return;
+    }
+    this._goto(this._entryId);
+  }
+
+  _renderSplash() {
+    this.container.classList.add("sp-root");
+    this.container.innerHTML = `
+      <div class="sp-splash">
+        <div class="sp-splash-sub">A Story</div>
+        <div class="sp-splash-title">${this._esc(this.story.title || "Untitled Story")}</div>
+        <button class="sp-begin">Begin</button>
+      </div>`;
+    this.container.querySelector(".sp-begin").onclick = () => this._begin();
+  }
+
+  _buildShell() {
+    this.container.classList.add("sp-root");
+    this.container.innerHTML = `
+      <div class="sp-bg"></div>
+      <div class="sp-vignette"></div>
+      <div class="sp-topbar">
+        <div class="sp-title">${this._esc(this.story.title || "Untitled Story")}</div>
+        <div class="sp-hud">
+          <div class="sp-inv"><span>&#128188;</span><span class="sp-inv-items"><span class="sp-inv-empty">empty</span></span></div>
+          <button class="sp-hud-btn sp-btn-missions">&#9873; Missions <span class="sp-badge">0</span></button>
+          <button class="sp-hud-btn sp-btn-diary">&#128214; Diary</button>
+          <button class="sp-hud-btn sp-btn-restart" title="Restart story">&#8635;</button>
+          ${this.opts.onExit ? '<button class="sp-hud-btn sp-btn-exit">&#10005; Exit</button>' : ""}
+        </div>
+      </div>
+      <div class="sp-panel sp-hidden sp-missions-panel">
+        <div class="sp-panel-head"><span>Missions</span><button class="sp-panel-x">&times;</button></div>
+        <div class="sp-panel-body"></div>
+      </div>
+      <div class="sp-panel sp-hidden sp-diary-panel">
+        <div class="sp-panel-head"><span>Diary</span><button class="sp-panel-x">&times;</button></div>
+        <div class="sp-panel-body"></div>
+      </div>
+      <div class="sp-toasts"></div>
+      <div class="sp-cast"></div>
+      <div class="sp-stage"></div>`;
+
+    const q = sel => this.container.querySelector(sel);
+    this.el = {
+      bg: q(".sp-bg"),
+      cast: q(".sp-cast"),
+      stage: q(".sp-stage"),
+      inv: q(".sp-inv-items"),
+      missionsBtn: q(".sp-btn-missions"),
+      missionsBadge: q(".sp-btn-missions .sp-badge"),
+      missionsPanel: q(".sp-missions-panel"),
+      diaryPanel: q(".sp-diary-panel"),
+      toasts: q(".sp-toasts")
+    };
+
+    this.el.missionsBtn.onclick = () => this._togglePanel(this.el.missionsPanel);
+    q(".sp-btn-diary").onclick = () => this._togglePanel(this.el.diaryPanel);
+    q(".sp-btn-restart").onclick = () => this.start(this.story.entry);
+    this.el.missionsPanel.querySelector(".sp-panel-x").onclick = () => this.el.missionsPanel.classList.add("sp-hidden");
+    this.el.diaryPanel.querySelector(".sp-panel-x").onclick = () => this.el.diaryPanel.classList.add("sp-hidden");
+    if (this.opts.onExit) q(".sp-btn-exit").onclick = () => this.opts.onExit();
+    this._updateHUD();
+  }
+
+  _togglePanel(panel) {
+    const others = [this.el.missionsPanel, this.el.diaryPanel].filter(p => p !== panel);
+    others.forEach(p => p.classList.add("sp-hidden"));
+    panel.classList.toggle("sp-hidden");
+    this._renderPanels();
+  }
+
+  // ---------- graph walking ----------
+
+  _node(id) { return (id === null || id === undefined) ? null : this.story.nodes[id]; }
+
+  _goto(id) {
+    const node = this._node(id);
+    if (!node) { this._clearCast(); this._renderEnding("The narrative reaches a quiet end. Thank you for playing."); return; }
+    this._currentId = id;
+    // The cast layer sits outside .sp-stage, so it survives the stage rebuild —
+    // clear it here or portraits linger over choices, traversals and endings.
+    if (node.type !== "dialogue") this._clearCast();
+    switch (node.type) {
+      case "dialogue": return this._playDialogue(node);
+      case "choice": return this._playChoice(node);
+      case "traversal": return this._playTraversal(node, id);
+      case "logic": return this._playLogic(node);
+      default: return this._playDialogue(node);
+    }
+  }
+
+  _out(node, slot) {
+    const t = node.out && node.out[slot];
+    return (t === undefined || t === null) ? null : t;
+  }
+
+  // ---------- dialogue ----------
+
+  _playDialogue(node) {
+    const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
+    // Rewards & mission transitions on entering the node
+    if (p.rewardItems && !this.state.inventory.has(p.rewardItems)) {
+      this.state.inventory.add(p.rewardItems);
+      this._toast("Acquired: " + p.rewardItems);
+    }
+    if (p.rewardKnowledge && !this.state.knowledge.has(p.rewardKnowledge)) {
+      this.state.knowledge.add(p.rewardKnowledge);
+      // Keep the key alongside the label so the diary can show what the author
+      // wrote about this flag, not just that it was found
+      this.state.diary.push({ label: 'Discovered: "' + p.rewardKnowledge + '"', key: p.rewardKnowledge });
+      this._toast("Diary updated", "info");
+    }
+    if (p.startMission) this._acceptMission(p.startMission);
+    if (p.completeMission) this._completeMission(p.completeMission);
+    this._updateHUD();
+
+    this._queue = String(p.text || "...").split("\n").map(l => l.trim()).filter(Boolean);
+    if (this._queue.length === 0) this._queue = ["..."];
+    this._queueIdx = 0;
+    this._renderLine(node);
+  }
+
+  _renderLine(node) {
+    const p = node.p || {};
+    const line = this._queue[this._queueIdx];
+    const parsed = this._parseLine(line);
+    const last = this._queueIdx >= this._queue.length - 1;
+
+    this._renderCast(node, parsed.speaker);
+
+    this.el.stage.innerHTML = `
+      <div class="sp-dialogue">
+        ${parsed.speaker ? `<div class="sp-speaker" style="color:${this._charColor(parsed.speaker)}">${this._esc(parsed.speaker)}</div>` : ""}
+        <div class="sp-text">${this._richText(parsed.text)}</div>
+        <div class="sp-next">${last ? "click to continue" : `next (${this._queueIdx + 1}/${this._queue.length})`} &#8250;</div>
+      </div>`;
+    this.el.stage.querySelector(".sp-dialogue").onclick = () => {
+      if (this._queueIdx < this._queue.length - 1) {
+        this._queueIdx++;
+        this._renderLine(node);
+      } else {
+        this._goto(this._out(node, 0));
+      }
+    };
+  }
+
+  _clearCast() {
+    this._castKey = null;
+    if (this.el && this.el.cast) this.el.cast.innerHTML = "";
+  }
+
+  _charImage(name) {
+    const chars = this.story.varMeta && this.story.varMeta.characters;
+    const meta = chars && chars[name];
+    const img = meta && meta.image;
+    return (typeof img === "string" && img.trim()) ? img : null;
+  }
+
+  // Who to show for this node: every distinct speaker in its dialogue, in first-
+  // spoken order, skipping anyone with no portrait so they get no slot at all.
+  _castForNode(node) {
+    const p = node.p || {};
+    if (p.showCharacterImages === false) return [];
+    const seen = new Set();
+    const cast = [];
+    String(p.text || "").split("\n").forEach(line => {
+      const t = line.trim();
+      if (!t) return;
+      const speaker = this._parseLine(t).speaker;
+      if (!speaker || seen.has(speaker)) return;
+      seen.add(speaker);
+      const img = this._charImage(speaker);
+      if (img) cast.push({ name: speaker, img });
+    });
+    return cast;
+  }
+
+  // Rebuilds the row only when the cast changes; otherwise just moves the
+  // highlight, so portraits don't replay their entrance on every click.
+  _renderCast(node, speaker) {
+    if (!this.el || !this.el.cast) return;
+    const cast = this._castForNode(node);
+    const key = cast.map(c => c.name + "|" + c.img).join("~");
+
+    if (key !== this._castKey) {
+      this._castKey = key;
+      this.el.cast.innerHTML = cast.map(c =>
+        `<div class="sp-char" data-char="${this._esc(c.name)}">
+           <img src="${this._esc(c.img)}" alt="${this._esc(c.name)}">
+         </div>`
+      ).join("");
+    }
+
+    this.el.cast.querySelectorAll(".sp-char").forEach(el => {
+      el.classList.toggle("sp-active", el.dataset.char === speaker);
+    });
+  }
+
+  // Accepts "{Name}: text", "{Name} text", "Name: text"
+  _parseLine(line) {
+    let m = line.match(/^\{([^}]+)\}\s*:?\s*(.*)$/s);
+    if (m) return { speaker: m[1].trim(), text: m[2] };
+    m = line.match(/^([A-Za-z][A-Za-z0-9 .'\-]{0,28}?)\s*:\s+(.*)$/s);
+    if (m) return { speaker: m[1].trim(), text: m[2] };
+    return { speaker: null, text: line };
+  }
+
+  _richText(text) {
+    // Inline {Token} references get colored
+    let html = this._esc(text);
+    html = html.replace(/\{([^}]+)\}/g, (_, name) =>
+      `<span class="sp-tok" style="color:${this._charColor(name)}">${name}</span>`);
+    return html;
+  }
+
+  _charColor(name) {
+    const n = String(name).toLowerCase().trim();
+    if (n === "narrator") return "#94a3b8";
+    let h = 0;
+    for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+    return `hsl(${h % 360}, 70%, 68%)`;
+  }
+
+  // ---------- choice ----------
+
+  _playChoice(node) {
+    const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
+    const choices = p.choices || [];
+    let html = `
+      <div class="sp-dialogue" style="cursor:default; min-height:auto;">
+        <div class="sp-speaker" style="color:#94a3b8;">Narrator</div>
+        <div class="sp-text">${this._richText(p.title || "What will you do?")}</div>
+      </div>
+      <div class="sp-choices">`;
+    choices.forEach((c, i) => {
+      const ok = this._evalCond(c.condition);
+      const missionBadge = c.mission ? `<span class="sp-choice-mission">&#9873; ${this._esc(c.mission)}</span>` : "";
+      if (ok) {
+        html += `<button class="sp-choice" data-i="${i}">${this._esc(c.text)}${missionBadge}</button>`;
+      } else {
+        html += `<button class="sp-choice sp-locked" disabled>${this._esc(c.text)}${missionBadge}<span class="sp-lock-why">requires: ${this._esc(c.condition)}</span></button>`;
+      }
+    });
+    html += "</div>";
+    this.el.stage.innerHTML = html;
+    this.el.stage.querySelectorAll(".sp-choice:not(.sp-locked)").forEach(btn => {
+      btn.onclick = () => {
+        const i = parseInt(btn.dataset.i, 10);
+        const choice = choices[i];
+        if (choice.mission) this._acceptMission(choice.mission);
+        this._updateHUD();
+        this._goto(this._out(node, i));
+      };
+    });
+    this._updateHUD();
+  }
+
+  // ---------- traversal (dice maze) ----------
+
+  _playTraversal(node, id) {
+    const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
+    const key = "n" + id;
+    if (this.state.scores[key] === undefined) this.state.scores[key] = 0;
+    const target = p.targetAccumulation || 100;
+    const outcomes = p.outcomes || [];
+    const earlyExitSlot = outcomes.length + 1;
+    const hasEarlyExit = this._out(node, earlyExitSlot) !== null;
+
+    let risksHtml = "";
+    if (outcomes.length) {
+      risksHtml = `<div class="sp-dice-risks">
+        ${outcomes.map(o => `<div><span>&bull; ${this._esc(o.label)}</span><span class="sp-risk-pct">${o.probability}%</span></div>`).join("")}
+      </div>`;
+    }
+
+    this.el.stage.innerHTML = `
+      <div class="sp-dice">
+        <div class="sp-dice-title">${this._esc(p.title || "Maze Challenge")}</div>
+        <div class="sp-dice-score">Progress: <b class="sp-score-val">${this.state.scores[key]}</b> / ${target}</div>
+        <div class="sp-cube">?</div>
+        <button class="sp-roll-btn">Roll d20</button>
+        ${hasEarlyExit ? '<button class="sp-exit-btn">&#128682; Take the early exit &mdash; leave before risking another roll</button>' : ""}
+        <div class="sp-dice-desc">Each roll adds points toward escape&hellip; but every roll is a risk.</div>
+        ${risksHtml}
+      </div>`;
+
+    const cube = this.el.stage.querySelector(".sp-cube");
+    const btn = this.el.stage.querySelector(".sp-roll-btn");
+    const desc = this.el.stage.querySelector(".sp-dice-desc");
+    const scoreEl = this.el.stage.querySelector(".sp-score-val");
+    const exitBtn = this.el.stage.querySelector(".sp-exit-btn");
+    if (exitBtn) exitBtn.onclick = () => this._goto(this._out(node, earlyExitSlot));
+
+    btn.onclick = () => {
+      btn.disabled = true;
+      if (exitBtn) exitBtn.disabled = true;
+      cube.classList.add("sp-rolling");
+      cube.textContent = "?";
+      setTimeout(() => {
+        cube.classList.remove("sp-rolling");
+        const roll = Math.floor(Math.random() * 20) + 1;
+        cube.textContent = roll;
+
+        let triggered = null;
+        for (const o of outcomes) {
+          const chance = o.probability !== undefined ? o.probability : 10;
+          if (Math.random() * 100 < chance) { triggered = o; break; }
+        }
+
+        if (triggered) {
+          desc.innerHTML = `<span style="color:#f87171;font-weight:600;">${this._esc(triggered.label)}!</span> ${this._esc(triggered.description || "")}`;
+          setTimeout(() => {
+            const slot = outcomes.indexOf(triggered) + 1;
+            const targetId = this._out(node, slot);
+            if (targetId !== null) {
+              this._goto(targetId);
+            } else {
+              this._toast("Event path not connected — restarting room", "info");
+              this.state.scores[key] = 0;
+              this._playTraversal(node, id);
+            }
+          }, 1800);
+          return;
+        }
+
+        this.state.scores[key] += roll;
+        scoreEl.textContent = this.state.scores[key];
+        if (this.state.scores[key] >= target) {
+          desc.innerHTML = `<span style="color:#34d399;font-weight:600;">You made it out! (+${roll})</span>`;
+          setTimeout(() => this._goto(this._out(node, 0)), 1300);
+        } else {
+          desc.textContent = `Rolled ${roll} — keep going to reach ${target}.`;
+          btn.disabled = false;
+          if (exitBtn) exitBtn.disabled = false;
+        }
+      }, 700);
+    };
+  }
+
+  // ---------- logic gate ----------
+
+  _playLogic(node) {
+    const ok = this._evalCond((node.p || {}).condition);
+    this._goto(this._out(node, ok ? 0 : 1));
+  }
+
+  // ---------- missions ----------
+
+  _acceptMission(name) {
+    if (!name || this.state.missions.has(name)) return;
+    this.state.missions.set(name, "active");
+    this._toast("Mission accepted: " + name, "mission");
+    this._pulseMissions();
+  }
+
+  _completeMission(name) {
+    if (!name) return;
+    if (this.state.missions.get(name) === "done") return;
+    this.state.missions.set(name, "done");
+    this._toast("Mission complete: " + name, "mission");
+    this._pulseMissions();
+  }
+
+  _missionMeta(name) {
+    const vm = this.story.varMeta || {};
+    return (vm.missions && vm.missions[name]) || {};
+  }
+
+  _knowledgeMeta(name) {
+    const vm = this.story.varMeta || {};
+    return (vm.knowledge && vm.knowledge[name]) || {};
+  }
+
+  _pulseMissions() {
+    this._updateHUD();
+    if (!this.el) return;
+    this.el.missionsBtn.classList.add("sp-attn");
+    setTimeout(() => this.el.missionsBtn && this.el.missionsBtn.classList.remove("sp-attn"), 2600);
+  }
+
+  // ---------- conditions ----------
+  // Supported: has_item('x')  has_knowledge('x')  mission_active('x')  mission_done('x')
+  // Multiple checks in one expression are ANDed together.
+
+  _evalCond(cond) {
+    if (!cond || !String(cond).trim()) return true;
+    let ok = true;
+    const scan = (fnName, test) => {
+      const re = new RegExp(fnName + "\\(['\"]([^'\"]+)['\"]\\)", "g");
+      let m;
+      while ((m = re.exec(cond))) { if (!test(m[1])) ok = false; }
+    };
+    scan("has_item", v => this.state.inventory.has(v));
+    scan("has_knowledge", v => this.state.knowledge.has(v));
+    scan("mission_active", v => this.state.missions.get(v) === "active");
+    scan("mission_done", v => this.state.missions.get(v) === "done");
+    return ok;
+  }
+
+  // ---------- HUD, panels, endings ----------
+
+  _updateHUD() {
+    if (!this.el) return;
+    // Inventory
+    if (this.state.inventory.size === 0) {
+      this.el.inv.innerHTML = '<span class="sp-inv-empty">empty</span>';
+    } else {
+      this.el.inv.innerHTML = Array.from(this.state.inventory)
+        .map(i => `<span class="sp-inv-chip">${this._esc(i)}</span>`).join("");
+    }
+    // Missions badge counts active only
+    let active = 0;
+    this.state.missions.forEach(v => { if (v === "active") active++; });
+    this.el.missionsBadge.textContent = active;
+    this._renderPanels();
+  }
+
+  _renderPanels() {
+    if (!this.el) return;
+    // Missions panel
+    const mBody = this.el.missionsPanel.querySelector(".sp-panel-body");
+    if (this.state.missions.size === 0) {
+      mBody.innerHTML = '<div class="sp-panel-empty">No missions accepted yet.</div>';
+    } else {
+      let html = "";
+      this.state.missions.forEach((status, name) => {
+        const meta = this._missionMeta(name);
+        const done = status === "done";
+        html += `
+          <div class="sp-mission ${meta.required ? "sp-required" : ""} ${done ? "sp-done" : ""}">
+            <div class="sp-mission-name">
+              <span>${this._esc(name)}</span>
+              ${done
+                ? '<span class="sp-mission-tag sp-donetag">done</span>'
+                : (meta.required ? '<span class="sp-mission-tag sp-req">required</span>' : '<span class="sp-mission-tag sp-opt">optional</span>')}
+            </div>
+            ${meta.info ? `<div class="sp-mission-info">${this._esc(meta.info)}</div>` : ""}
+          </div>`;
+      });
+      mBody.innerHTML = html;
+    }
+    // Diary panel
+    const dBody = this.el.diaryPanel.querySelector(".sp-panel-body");
+    dBody.innerHTML = this.state.diary.length
+      ? this.state.diary.map(e => {
+          // Entries are {label, key}; bare strings are still accepted
+          const entry = (typeof e === "string") ? { label: e } : (e || {});
+          const info = entry.key ? this._knowledgeMeta(entry.key).info : "";
+          return `<div class="sp-diary-entry">
+            <div class="sp-diary-label">${this._esc(entry.label || "")}</div>
+            ${info ? `<div class="sp-diary-info">${this._esc(info)}</div>` : ""}
+          </div>`;
+        }).join("")
+      : '<div class="sp-panel-empty">Nothing discovered yet.</div>';
+  }
+
+  _renderEnding(message) {
+    if (!this.el) this._buildShell();
+    // Any required missions left unfinished?
+    let unfinished = [];
+    this.state.missions.forEach((status, name) => {
+      if (status !== "done" && this._missionMeta(name).required) unfinished.push(name);
+    });
+    const missionNote = unfinished.length
+      ? `<div style="color:#f87171; font-size:13px; margin-bottom:16px;">Unfinished required missions: ${unfinished.map(n => this._esc(n)).join(", ")}</div>`
+      : "";
+    this.el.stage.innerHTML = `
+      <div class="sp-ending">
+        <div class="sp-ending-title">&#10022; The End &#10022;</div>
+        <div class="sp-ending-text">${this._esc(message)}</div>
+        ${missionNote}
+        <div class="sp-ending-actions">
+          <button class="sp-roll-btn" style="width:auto;" data-act="restart">Play Again</button>
+          ${this.opts.onExit ? '<button class="sp-exit-btn" style="width:auto;" data-act="exit">Back to Editor</button>' : ""}
+        </div>
+      </div>`;
+    this.el.stage.querySelector('[data-act="restart"]').onclick = () => this.start(this.story.entry);
+    const ex = this.el.stage.querySelector('[data-act="exit"]');
+    if (ex) ex.onclick = () => this.opts.onExit();
+  }
+
+  // ---------- background & audio ----------
+
+  _setBackground(value) {
+    if (!this.el) return;
+    const v = String(value || "").trim();
+    let css;
+    if (!v) {
+      css = "linear-gradient(135deg, #1e1b4b, #0f172a)";
+    } else if (v.includes("gradient(")) {
+      css = v;
+      // blob: has no file extension, so it needs the protocol test — the editor
+      // resolves project-folder images to blob URLs for playback
+    } else if (/^(blob:|data:|https?:|\.{0,2}\/)/.test(v) || /\.(png|jpe?g|gif|webp|avif)$/i.test(v)) {
+      css = `url("${v.replace(/"/g, '%22')}")`;
+    } else {
+      css = "linear-gradient(135deg, #1e1b4b, #0f172a)";
+    }
+    this.el.bg.style.backgroundImage = css;
+  }
+
+  _setLoop(src) {
+    if (!src || src === this._loopSrc) return;
+    this._loopSrc = src;
+    if (this._fadeTimer) { clearInterval(this._fadeTimer); this._fadeTimer = null; }
+    const old = this._loopAudio;
+    const next = new Audio(src);
+    next.loop = true;
+    next.volume = 0;
+    const p = next.play();
+    if (p && p.catch) p.catch(() => {});
+    this._loopAudio = next;
+    // Crossfade over ~700ms
+    let step = 0;
+    this._fadeTimer = setInterval(() => {
+      step++;
+      const t = Math.min(1, step / 14);
+      next.volume = t;
+      if (old) old.volume = Math.max(0, 1 - t);
+      if (t >= 1) {
+        clearInterval(this._fadeTimer);
+        this._fadeTimer = null;
+        if (old) { old.pause(); old.src = ""; }
+      }
+    }, 50);
+  }
+
+  _playOneShot(src) {
+    if (!src) return;
+    const a = new Audio(src);
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});
+  }
+
+  _stopAllAudio() {
+    if (this._fadeTimer) { clearInterval(this._fadeTimer); this._fadeTimer = null; }
+    if (this._loopAudio) { this._loopAudio.pause(); this._loopAudio.src = ""; this._loopAudio = null; }
+    this._loopSrc = null;
+  }
+
+  // ---------- misc ----------
+
+  _toast(msg, kind) {
+    if (!this.el) return;
+    const t = document.createElement("div");
+    t.className = "sp-toast" + (kind ? " sp-toast-" + kind : "");
+    t.textContent = msg;
+    this.el.toasts.appendChild(t);
+    setTimeout(() => t.remove(), 2800);
+  }
+
+  _esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+}
+new StoryPlayer(document.getElementById("story_root"), STORY, { standalone: true }).start(STORY.entry);
+</script>
+</body>
+</html>

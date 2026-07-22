@@ -1,0 +1,274 @@
+# NIGHT CRUSHER: THE DUST BOWL PARANOIA
+## High-Level Narrative & Architectural Plan
+
+---
+
+## 1. CORE PREMISE & DESIGN PILLARS
+
+### Surreal Southern Gothic Horror
+A tightly-paced, atmospheric narrative horror experience set in a decaying 1930s Dust Bowl town. Inspired by *Inside*, *Little Nightmares*, *Iron Lung*, and *Night of the Hunter*.
+
+### Core Gameplay & Narrative Loop
+The game is structured as a linear, escalating series of **Father's Errands**. The family house serves as the emotional hub of the game.
+
+```
+       [Wake in Bedroom / Conversation with Father]
+                            │
+                            ▼
+               [Receive an Atmospheric Errand]
+                            │
+                            ▼
+           [Enter a Distinct, Non-Repetitive Maze]
+                            │
+                            ▼
+          [Navigate Hazards & Uncover Conspiracy Clue]
+                            │
+                            ▼
+           [Sideways Outcome / Return Home]
+                            │
+                            ▼
+     [Observe Transformations in Father, House, and Town]
+                            │
+                            ▼
+                 [Next Deepening Errand]
+```
+
+### Key Pillars
+- **The House as Emotional Anchor**: The player returns home after every mission. Story progress, emotional tension, and Father's psychological decay occur during these domestic returns.
+- **Failing Forward (No Repetition)**: Failure never resets progress or forces level replays. Getting caught moves the story sideways (e.g., Night Crusher carrying you home, Tobin locking you in the factory).
+- **Folk Gothic over Sci-Fi**: The subterranean depths are surreal, mythic, and ancestral—avoiding sci-fi computer simulations or technological explanations.
+- **Streamlined Inventory**: One thematic prop per maze (e.g., Pocketknife, Family Radio, Cellar Journal, Obsidian Dagger, Effigy Heart).
+- **Father’s Dynamic Character Arc**: Father evolves across missions: **Warm $\rightarrow$ Protective $\rightarrow$ Anxious $\rightarrow$ Paranoid $\rightarrow$ Desperate $\rightarrow$ Terrifying**.
+
+---
+
+## 2. PROGRESSIVE REVELATION ARC
+
+Instead of multi-playthrough restarts, the game unfolds in one continuous, escalating narrative arc where each errand shatters the player's previous understanding:
+
+```
+[ERRAND 1] ──► Father appears warm, gentle, and protective.
+     │
+     ▼
+[ERRAND 2] ──► Clues suggest Father is lying about the town's cult.
+     │
+     ▼
+[ERRAND 3] ──► Clues suggest Father staged the cult to save Jakob and escape.
+     │
+     ▼
+[ERRAND 4] ──► Clues contradict everything—Father is building an Effigy requiring sacrifice.
+     │
+     ▼
+[ERRAND 5] ──► Final horrific truth—Father engineered the Dust Bowl for dark godhood.
+```
+
+---
+
+## 3. MAZE IDENTITIES BIBLE
+
+Each maze region has a distinct aesthetic, emotional tone, and mechanical focus:
+
+### 1. Bedroom & Endless Hallway
+* **Emotion**: Confusion & Isolation
+* **Gameplay**: Navigation & Acoustic Listening
+* **Maze Type**: Domestic Labyrinth
+* **Thematic Prop**: `dusty_pocketknife`
+
+### 2. Corn Rows
+* **Emotion**: Exposure & Panic
+* **Gameplay**: Stealth & Evasion (Hunted by Tobin's Meat Truck)
+* **Maze Type**: Organic Cornfield Maze
+* **Thematic Prop**: `family_radio`
+
+### 3. Small Town Square
+* **Emotion**: Paranoia & Distrust
+* **Gameplay**: Dialogue Choices & Uncanny Reused Faces
+* **Maze Type**: Open Surface Network
+* **Thematic Prop**: `cleansed_water_flask`
+
+### 4. Storm Cellar & Basement Vault
+* **Emotion**: Claustrophobia & Dread
+* **Gameplay**: Archival Exploration & Deciphering Secrets
+* **Maze Type**: Subterranean Vault
+* **Thematic Prop**: `cellar_journal`
+
+### 5. Dead Factory
+* **Emotion**: Industrial Oppression
+* **Gameplay**: Machinery Traversal & Effigy Investigation
+* **Maze Type**: Vertical Mechanical Maze
+* **Thematic Prop**: `obsidian_dagger`
+
+### 6. Mythic Underground Core
+* **Emotion**: Mythic Disorientation
+* **Gameplay**: Subconscious Dream Geometry & Ritual Confrontation
+* **Maze Type**: Ancestral Labyrinth
+* **Thematic Prop**: `effigy_heart`
+
+---
+
+## 4. GLOBAL ASSET MANIFEST
+
+### Characters
+* **Jakob (The Child)**: The protagonist obeying Father's errands while discovering the true nature of his home.
+* **Father**: The emotional core of the game; evolves from a gentle parent into a terrifying cosmic figure.
+* **Tobin**: Wandering antagonist driving a rusted Tyson meat truck; collects body parts for the factory idol.
+* **Night Crusher**: Metaphysical shadow entity that carries Jakob back home when caught.
+* **Grandfather Wieland**: Ancestral figure preserved deep within the subterranean core beneath the factory.
+* **Narrator**: Atmospheric guide describing sensory details, dream logic, and shifting acoustics.
+
+### Locations
+* **Kid's Bedroom & Family House**: Emotional hub (Level 0).
+* **Endless Hallway**: Spatial corridor connecting domestic space to the outside world.
+* **Corn Rows**: Towering cornfield surrounding the property.
+* **Small Town Square**: Decaying Dust Bowl settlement that subtly alters after every descent.
+* **Storm Cellar & Basement Vault**: Concrete subterranean bunker beneath the house (Level -1).
+* **Dead Factory**: Industrial slaughterhouse holding the giant Effigy (Level -2).
+* **Mythic Underground Core**: Subterranean subterranean cavern of soil, blood, and ancient gears (Level -3).
+
+### Streamlined Inventory Props
+* `dusty_pocketknife`: Small knife used to cut latches and corn stalks.
+* `family_radio`: Old brass radio emitting static and Father's distorted voice.
+* `cleansed_water_flask`: Flask of clean well water used to cleanse corrupted vision.
+* `cellar_journal`: Leather journal revealing Father's shifting notes.
+* `obsidian_dagger`: Ancient ritual blade required for the final choice.
+* `effigy_heart`: Glowing ancestral artifact at the center of the subterranean machine.
+
+### Knowledge Flags
+* `father_warmth`: Initial trust in Father.
+* `father_lies_suspected`: Suspicion that Father's cult warnings are staged.
+* `father_escape_theory`: Theory that Father is staging the cult to flee together.
+* `effigy_sacrificial_secret`: Discovery of the Effigy's horrific heart/brain requirement.
+* `father_apotheosis_truth`: Final realization of Father's true dark ambition.
+* `symbol_corruption`: Active perception debuff from looking at cult sigils.
+* `eye_cleansing_ritual`: Knowledge of how to wash eyes to restore objective vision.
+
+### Missions (Father's Errands)
+1. **Errand 1: "Find your brother's radio in the cornfield."** (Intro to Corn Rows & Tobin)
+2. **Errand 2: "Your grandfather left something in the storm cellar."** (Intro to Cellar Vault & Archives)
+3. **Errand 3: "Tobin has a key that belongs to our family."** (Town Square & Meat Truck Evasion)
+4. **Errand 4: "Check the grates at the dead factory."** (Factory Exploration & Effigy Discovery)
+5. **Errand 5: "There is one last task you must complete below."** (Subterranean Core & Final Climax)
+
+---
+
+## 5. HIERARCHICAL SCENE & NARRATIVE FLOW
+
+```
+=================================================================================
+CHAPTER 1: THE DOMESTIC HOME & THE CORNFIELD (Errand 1)
+=================================================================================
+ [Scene 1.1: Kid's Bedroom] ──► Father (Warm): "Find your brother's radio in the corn."
+       │
+       ├── Choice/Inspection ──► [Scene 1.2: Wall Sigil] ──► Vision Corrupted
+       │
+       └── Corridor Traversal ──► [Scene 1.3: Corn Rows Maze]
+                                    │
+                                    ├── Traversal Pass ──► [Scene 1.4: Finds Family Radio]
+                                    │                        │
+                                    │                        ▼
+                                    │             Return Home to Father (Scene 2.1)
+                                    │
+                                    └── Traversal Fail ──► Caught by Tobin / Night Crusher
+                                                             │
+                                                             ▼
+                                                Carried Home (Story Moves Sideways)
+
+=================================================================================
+CHAPTER 2: THE STORM CELLAR & ARCHIVES (Errand 2)
+=================================================================================
+ [Scene 2.1: Family House] ──► Father (Protective/Urgent): "Check grandfather's cellar."
+       │
+       └── Vertical Descent ──► [Scene 2.2: Storm Cellar Entrance] (Town Surface Shifts)
+                                  │
+                                  └── Vault Exploration ──► [Scene 2.3: Basement Vault]
+                                                             │
+                                                             ├── Finds: Cellar Journal
+                                                             └── Unlocks: "Father is lying" truth
+                                                                   │
+                                                                   ▼
+                                                       Return Home to Father (Scene 3.1)
+
+=================================================================================
+CHAPTER 3: THE DUST BOWL TOWN & TOBIN'S TRUCK (Errand 3)
+=================================================================================
+ [Scene 3.1: Family House] ──► Father (Anxious): "Get our key back from Tobin."
+       │
+       └── Surface Exploration ──► [Scene 3.2: Transformed Town Square]
+                                     │
+                                     ├── Eye Cleansing ──► Town Pump (Restores Vision)
+                                     │
+                                     └── Truck Pursuit ──► [Scene 3.3: Tobin's Meat Truck]
+                                                             │
+                                                             ├── Pass ──► Obtains Truck Key & Key Clue
+                                                             └── Fail ──► Locked in Factory Loading Bay
+                                                                           │
+                                                                           ▼
+                                                               Proceed to Factory (Scene 4.2)
+
+=================================================================================
+CHAPTER 4: THE DEAD FACTORY & THE EFFIGY (Errand 4)
+=================================================================================
+ [Scene 4.1: Family House / Factory Dock] ──► Father (Paranoid/Unhinged): "Inspect the factory."
+       │
+       └── Mechanical Traversal ──► [Scene 4.2: Factory Conveyor Sub-Floor]
+                                      │
+                                      └── Deep Exploration ──► [Scene 4.3: Effigy Altar Room]
+                                                                 │
+                                                                 ├── Finds: Obsidian Dagger
+                                                                 └── Uncovers: Effigy Sacrificial Requirement
+                                                                       │
+                                                                       ▼
+                                                           Return Home / Descent (Scene 5.1)
+
+=================================================================================
+CHAPTER 5: THE MYTHIC SUBTERRANEAN CORE & CLIMAX (Errand 5)
+=================================================================================
+ [Scene 5.1: Family House] ──► Father (Desperate/Terrifying): "The final task awaits below."
+       │
+       └── Deepest Descent ──► [Scene 5.2: Mythic Subterranean Caverns]
+                                 │
+                                 └── Core Discovery ──► [Scene 5.3: Grandfather Wieland's Chamber]
+                                                          │
+                                                          ▼
+                                             [Scene 5.4: Final Choice Gate]
+```
+
+---
+
+## 6. BRANCHING FAILURES & SIDEWAYS CONSEQUENCES
+
+| Hazard / Event | Failure Consequence (Sideways Progression) | Narrative Impact |
+| :--- | :--- | :--- |
+| **Night Crusher Catch** | Carried back to Bedroom by Father. | Father's dialogue becomes more stern, suspicious, and chastising. |
+| **Tobin Meat Truck Catch** | Locked in Factory Loading Dock. | Skips return home for Chapter 3; advances directly into Factory sub-floor. |
+| **Sigil Exposure** | Perception stays corrupted for remainder of Chapter. | Dialogue choices describe sinister elements as "gentle" or "safe". |
+| **Missing Cleansed Flask** | Cannot perform eye-cleansing ritual before Climax. | Climax options favor submission unless knife/journal were found. |
+
+---
+
+## 7. CLIMAX & ENDINGS MATRIX
+
+```
+                        [FINAL ALTAR CONFRONTATION]
+                                     │
+        ┌────────────────────────────┼────────────────────────────┐
+        │                            │                            │
+        ▼                            ▼                            ▼
+[ENDING A: SUBMISSION]     [ENDING B: SEVERANCE]       [ENDING C: ANCESTRAL OVERTHROW]
+ Surrender heart to         Use Obsidian Dagger on      Take Grandfather Wieland's seat
+ Father's Effigy.           the Effigy core.            and extinguish the core flame.
+ Result: Eternal cosmic     Result: Rain falls over     Result: Breaking the cycle;
+ dust ritual.               free, quiet Dust Bowl.      becoming master of the house.
+```
+
+1. **Ending A: Willing Submission**
+   * *Trigger*: Choose to obey Father's final request OR maintain corrupted vision at altar.
+   * *Outcome*: Jakob willingly surrenders his heart to the Effigy. Father achieves dark godhood in an endless cosmic dust storm.
+
+2. **Ending B: Tragic Severance**
+   * *Trigger*: Possess `obsidian_dagger` AND `effigy_sacrificial_secret` with cleansed vision.
+   * *Outcome*: Jakob plunges the obsidian blade into the Effigy core. Father's ritual collapses, and rain falls over the Dust Bowl for the first time in a decade.
+
+3. **Ending C: Ancestral Overthrow (True Ending)**
+   * *Trigger*: Possess `cellar_journal`, `effigy_heart`, AND reach Grandfather Wieland's chamber.
+   * *Outcome*: Jakob extinguishes the ancestral core flame, severing Father's influence and inheriting the subterranean engine to end the nightmare forever.
