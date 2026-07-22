@@ -45,6 +45,9 @@
       <button class="btn" id="btn_open_llm_copilot" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
         <i class="fas fa-robot"></i> LLM Copilot
       </button>
+      <button class="btn" id="btn_open_content_copilot" style="border-color: var(--accent-info); color: var(--accent-info);">
+        <i class="fas fa-wand-magic-sparkles"></i> Content Copilot
+      </button>
       <button class="btn btn-icon" id="btn_toggle_theme" title="Toggle light / dark theme">
         <i class="fas fa-sun"></i>
       </button>
@@ -218,6 +221,174 @@ Run!"></textarea>
         </div>
         <div class="modal-footer">
           <button class="btn" onclick="VNovelApp.closeLLMModal()">Close Panel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Copilot: image generation for characters & locations -->
+    <div class="modal-overlay" id="content_modal_overlay">
+      <div class="modal-card" style="max-width:640px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-wand-magic-sparkles" style="color:var(--accent-info); margin-right:6px;"></i> Content Copilot</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeModal('content_modal_overlay')">&times;</button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Provider config -->
+          <details class="config-disclosure" id="content_config_disclosure">
+            <summary>
+              <span><i class="fas fa-sliders-h"></i> Image Provider &amp; Keys</span>
+              <span class="config-summary-status" id="content_config_status"></span>
+            </summary>
+            <div class="config-disclosure-body">
+              <div class="form-group">
+                <label><i class="fas fa-server"></i> Provider</label>
+                <select class="select-input" id="img_provider_select">
+                  <option value="gemini">Google Gemini (2.5 Flash Image)</option>
+                  <option value="comfy">Local ComfyUI</option>
+                </select>
+              </div>
+              <div class="form-group" id="gemini_key_group">
+                <label><i class="fas fa-key"></i> Google AI Studio API Key</label>
+                <input type="password" class="input-text" id="gemini_key_input" placeholder="Used directly from your browser; stored locally.">
+              </div>
+              <div class="form-group" id="comfy_group" style="display:none;">
+                <label><i class="fas fa-network-wired"></i> ComfyUI Address</label>
+                <input type="text" class="input-text" id="comfy_url_input" placeholder="http://127.0.0.1:8188">
+                <span style="font-size:10px; color:var(--text-dark);">Start ComfyUI with <code>--enable-cors-header</code> so the browser is allowed to call it.</span>
+                <label style="margin-top:10px;">Workflow (API format &mdash; <code>{{prompt}}</code> is substituted)</label>
+                <textarea class="textarea-input" id="comfy_workflow_input" style="min-height:90px; font-size:10.5px; font-family:monospace;"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <!-- Target asset -->
+          <div class="form-group">
+            <label><i class="fas fa-bullseye"></i> Generate for</label>
+            <div style="display:flex; gap:8px;">
+              <select class="select-input" id="img_category_select" style="flex:0 0 150px;">
+                <option value="characters">Character</option>
+                <option value="locations">Location</option>
+              </select>
+              <select class="select-input" id="img_target_select" style="flex:1;"></select>
+            </div>
+            <span id="img_target_status" style="font-size:10.5px; color:var(--text-dark);"></span>
+          </div>
+
+          <!-- Pre / post prompt -->
+          <div class="form-group">
+            <label>Pre-prompt <span style="font-weight:400; color:var(--text-dark);">(prepended &mdash; style, framing, background)</span></label>
+            <textarea class="textarea-input" id="img_pre_prompt" style="min-height:52px; font-size:11.5px;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Prompt</label>
+            <textarea class="textarea-input" id="img_prompt" style="min-height:96px; font-size:12px;" placeholder="Pick an asset to load its description, or draft one with the LLM."></textarea>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn" id="btn_img_use_desc" style="flex:1; justify-content:center;" title="Replace the prompt with this asset's description from the content page"><i class="fas fa-file-lines"></i> Use description</button>
+              <button class="btn" id="btn_img_draft" style="flex:1; justify-content:center;" title="Ask the LLM to turn the description into an image prompt"><i class="fas fa-robot"></i> Draft with LLM</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Post-prompt <span style="font-weight:400; color:var(--text-dark);">(appended &mdash; quality, negatives)</span></label>
+            <textarea class="textarea-input" id="img_post_prompt" style="min-height:52px; font-size:11.5px;"></textarea>
+          </div>
+
+          <!-- Meta-prompt used when drafting -->
+          <details class="config-disclosure">
+            <summary><span><i class="fas fa-pen-fancy"></i> Prompt used to draft image prompts</span></summary>
+            <div class="config-disclosure-body">
+              <div class="form-group">
+                <textarea class="textarea-input" id="img_meta_prompt" style="min-height:110px; font-size:11px;"></textarea>
+                <button class="btn" id="btn_img_reset_meta" style="align-self:flex-start; margin-top:8px;">Reset to default</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Single generate -->
+          <button class="btn btn-primary" id="btn_img_generate" style="justify-content:center;"><i class="fas fa-wand-magic-sparkles"></i> Generate &amp; Save</button>
+
+          <!-- Batch -->
+          <div class="form-group" style="border-top:1px solid var(--border-color); padding-top:12px;">
+            <label><i class="fas fa-layer-group"></i> Batch generate everything missing</label>
+            <div style="display:flex; gap:8px;">
+              <select class="select-input" id="img_batch_scope" style="flex:1;">
+                <option value="both">Characters + Locations</option>
+                <option value="characters">Characters only</option>
+                <option value="locations">Locations only</option>
+              </select>
+              <select class="select-input" id="img_batch_prompt_source" style="flex:1;" title="Whether each prompt is the asset's description verbatim, or an LLM rewrite of it">
+                <option value="description">Use descriptions as-is</option>
+                <option value="llm">Draft each with LLM</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn" id="btn_img_batch" style="flex:1; justify-content:center;"><i class="fas fa-layer-group"></i> Generate missing</button>
+              <button class="btn" id="btn_img_batch_cancel" style="display:none; color:var(--accent-danger);"><i class="fas fa-stop"></i> Stop</button>
+            </div>
+            <span id="img_batch_status" style="font-size:10.5px; color:var(--text-dark);"></span>
+          </div>
+
+          <!-- Push location art onto the nodes set in those locations -->
+          <div class="form-group" style="border-top:1px solid var(--border-color); padding-top:12px;">
+            <label><i class="fas fa-link"></i> Apply location art to nodes</label>
+            <button class="btn" id="btn_apply_loc_backgrounds" style="justify-content:center;">
+              <i class="fas fa-images"></i> Assign backgrounds to matching nodes
+            </button>
+            <span id="apply_loc_status" style="font-size:10.5px; color:var(--text-dark);"></span>
+          </div>
+
+          <!-- Preview -->
+          <div class="form-group" id="img_result_group" style="display:none;">
+            <label>Result</label>
+            <div id="img_result_preview" style="width:100%; height:190px; background-size:contain; background-repeat:no-repeat; background-position:center; border:1px solid var(--border-color); border-radius:8px; background-color:var(--console-bg);"></div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn" id="btn_img_cutout" style="flex:1; justify-content:center;"><i class="fas fa-eye-dropper"></i> Cut out background</button>
+              <button class="btn" id="btn_img_regen" style="flex:1; justify-content:center;"><i class="fas fa-rotate"></i> Regenerate</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Log</label>
+            <div id="img_console" style="background:var(--console-bg); border:1px solid var(--border-color); border-radius:6px; min-height:56px; max-height:130px; padding:10px; font-family:monospace; font-size:11px; overflow-y:auto;">
+              <span style="color:var(--text-dark);">Idle.</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Eyedropper / background cutout -->
+    <div class="modal-overlay" id="cutout_modal_overlay">
+      <div class="modal-card" style="max-width:760px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fas fa-eye-dropper" style="color:var(--accent-info); margin-right:6px;"></i> Cut Out Background</div>
+          <button class="section-add-btn" style="font-size:18px;" onclick="VNovelApp.closeCutout()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:11.5px; color:var(--text-muted);">
+            Click or drag across the background to sample it. Every connected region of that colour is made transparent. The original file is kept &mdash; this saves a new <code>-cutout.png</code>.
+          </div>
+          <div id="cutout_stage" style="position:relative; background:
+              repeating-conic-gradient(#2a2f3a 0% 25%, #1b1f27 0% 50%) 50% / 18px 18px;
+              border:1px solid var(--border-color); border-radius:8px; overflow:auto; max-height:380px; display:flex; align-items:center; justify-content:center;">
+            <canvas id="cutout_canvas" style="max-width:100%; cursor:crosshair;"></canvas>
+          </div>
+          <div class="form-group">
+            <label>Tolerance <span id="cutout_tol_label" style="font-weight:400; color:var(--text-dark);">32</span></label>
+            <input type="range" id="cutout_tolerance" min="0" max="160" value="32" style="width:100%;">
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <label style="display:flex; align-items:center; gap:7px; font-size:11px; cursor:pointer; font-weight:400; flex:1;">
+              <input type="checkbox" id="cutout_from_edges" checked style="margin:0;">
+              Only remove regions connected to the edges
+            </label>
+            <button class="btn" id="btn_cutout_reset">Reset</button>
+            <button class="btn btn-primary" id="btn_cutout_save"><i class="fas fa-check"></i> Save &amp; Assign</button>
+          </div>
+          <div id="cutout_status" style="font-size:11px; color:var(--text-dark);"></div>
         </div>
       </div>
     </div>
@@ -440,6 +611,9 @@ Run!"></textarea>
                 <button class="btn file-pick-btn" id="item_modal_char_img_pick"><i class="fas fa-folder-open"></i></button>
                 <button class="btn file-pick-btn" id="item_modal_char_img_clear" title="Clear"><i class="fas fa-times"></i></button>
               </div>
+              <button class="btn" id="btn_item_cutout" style="margin-top:6px; justify-content:center;" title="Sample the background colour and make it transparent, saving a new -cutout.png">
+                <i class="fas fa-eye-dropper"></i> Cut out background
+              </button>
             </div>
           </div>
 

@@ -48,17 +48,17 @@ const VNovelApp = {
     { key: 'missions', label: 'Missions', singular: 'mission', cssClass: 'mission' }
   ],
 
+  // Model IDs are exact strings — never append date suffixes. The Claude 3.x
+  // "-latest" aliases these replaced were all retired and returned 404.
   MODELS: {
     anthropic: [
-      { id: "claude-3-5-sonnet-latest", name: "Claude 3.5 Sonnet" },
-      { id: "claude-3-5-haiku-latest", name: "Claude 3.5 Haiku" },
-      { id: "claude-3-opus-latest", name: "Claude 3 Opus" }
+      { id: "claude-opus-4-8", name: "Claude Opus 4.8 (most capable)" },
+      { id: "claude-sonnet-5", name: "Claude Sonnet 5 (balanced)" },
+      { id: "claude-haiku-4-5", name: "Claude Haiku 4.5 (fastest)" }
     ],
     gemini: [
       { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
-      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
-      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
-      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" }
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" }
     ]
   },
 
@@ -1063,6 +1063,15 @@ const VNovelApp = {
           meta.imageName = file.name;
           updateCharPreview();
         }, "characters");
+      };
+      document.getElementById("btn_item_cutout").onclick = () => {
+        const current = document.getElementById("item_modal_char_img").value.trim();
+        if (!current) { this.toast("Give this character an image first.", "warning"); return; }
+        if (/^https?:/i.test(current)) {
+          this.toast("Cutout needs a local image — remote ones can't be read pixel-by-pixel.", "warning");
+          return;
+        }
+        this.openCutout("characters", name, current);
       };
       document.getElementById("item_modal_char_img_clear").onclick = () => {
         document.getElementById("item_modal_char_img").value = "";
@@ -3194,21 +3203,26 @@ ${scriptClose}
 
     return {
       title: projectTitle,
+      projectTitle,
       entry: entryId,
       vars,
+      globalVars: vars,
       varMeta,
       graphSchema
     };
   },
 
   applyImportedState(state, mode = "replace") {
+    const globalVars = state.globalVars || state.vars;
+    const projectTitle = state.projectTitle || state.title;
+
     if (mode === "append") {
       // 1. Merge globalVars (avoiding duplicates)
-      if (state.globalVars) {
+      if (globalVars) {
         if (!this.globalVars) this.globalVars = {};
-        for (const category in state.globalVars) {
+        for (const category in globalVars) {
           const existingArray = this.globalVars[category] || [];
-          const importedArray = state.globalVars[category] || [];
+          const importedArray = globalVars[category] || [];
           this.globalVars[category] = Array.from(new Set([...existingArray, ...importedArray]));
         }
       }
@@ -3292,9 +3306,9 @@ ${scriptClose}
     } else {
       // replace mode (original behavior)
       if (state.graphSchema) this.graph.configure(state.graphSchema);
-      if (state.globalVars) this.globalVars = state.globalVars;
+      if (globalVars) this.globalVars = globalVars;
       if (state.varMeta) this.varMeta = state.varMeta;
-      if (state.projectTitle) this.setProjectTitle(state.projectTitle);
+      if (projectTitle) this.setProjectTitle(projectTitle);
       this.bookmarks = state.bookmarks || [];
     }
 
@@ -3498,6 +3512,835 @@ ${scriptClose}
       };
       container.appendChild(row);
     });
+  },
+
+  // ================= CONTENT COPILOT (image generation) =================
+  //
+  // Generates art for characters and locations from the descriptions written on
+  // the content page. Saves straight into the project folder's assets/ and wires
+  // the result to the asset it was made for.
+  //
+  // Provider notes: Gemini returns inline base64, so nothing has to be fetched
+  // cross-origin. ComfyUI hands back a filename that is then pulled from /view on
+  // localhost, which needs ComfyUI started with --enable-cors-header.
+
+  IMG_DEFAULTS: {
+    prePrompt: {
+      characters: "Full-body character portrait, centred, standing, facing the viewer, head to toe fully in frame. Flat chroma-key green background (#00b140), evenly lit, no shadows cast on the background, no props touching the edges. Painterly gothic-horror illustration.",
+      locations: "Wide establishing shot of an empty location, no people or creatures visible. Cinematic composition, 16:9, atmospheric depth, moody directional light. Painterly gothic-horror illustration."
+    },
+    postPrompt: {
+      characters: "Sharp focus, consistent art direction, high detail. No text, no watermark, no signature, no frame or border.",
+      locations: "Sharp focus, high detail, rich texture. No text, no watermark, no people, no signature."
+    },
+    metaPrompt: `You write prompts for a text-to-image model used to illustrate a gothic-horror visual novel.
+
+Turn the description below into ONE vivid image prompt. Rules:
+- Return ONLY the prompt text. No preamble, no quotes, no bullet points, no explanation.
+- 40-70 words. Concrete visual nouns and adjectives only — describe what a camera would see.
+- Include physical appearance, clothing/materials, age and build if the subject is a person; architecture, weather, time of day and light source if it is a place.
+- Never describe actions, backstory, emotions, plot, or anything invisible.
+- Do not mention the background, framing, art style, or image quality — those are added separately.
+
+{{KIND}} name: {{NAME}}
+Description: {{DESCRIPTION}}`,
+    comfyWorkflow: JSON.stringify({
+      "3": { class_type: "KSampler", inputs: { seed: 0, steps: 20, cfg: 7, sampler_name: "euler", scheduler: "normal", denoise: 1, model: ["4", 0], positive: ["6", 0], negative: ["7", 0], latent_image: ["5", 0] } },
+      "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: "v1-5-pruned-emaonly.safetensors" } },
+      "5": { class_type: "EmptyLatentImage", inputs: { width: 1024, height: 576, batch_size: 1 } },
+      "6": { class_type: "CLIPTextEncode", inputs: { text: "{{prompt}}", clip: ["4", 1] } },
+      "7": { class_type: "CLIPTextEncode", inputs: { text: "text, watermark, signature, blurry, deformed", clip: ["4", 1] } },
+      "8": { class_type: "VAEDecode", inputs: { samples: ["3", 0], vae: ["4", 2] } },
+      "9": { class_type: "SaveImage", inputs: { filename_prefix: "vnovel", images: ["8", 0] } }
+    }, null, 2)
+  },
+
+  imgCfg(key, fallback) {
+    const v = localStorage.getItem("vnovel_img_" + key);
+    return (v === null || v === undefined) ? fallback : v;
+  },
+
+  setImgCfg(key, value) {
+    localStorage.setItem("vnovel_img_" + key, value);
+  },
+
+  imgCategory() {
+    const sel = document.getElementById("img_category_select");
+    return sel ? sel.value : "characters";
+  },
+
+  imgProvider() {
+    const sel = document.getElementById("img_provider_select");
+    return sel ? sel.value : "gemini";
+  },
+
+  imgLog(msg, level) {
+    const el = document.getElementById("img_console");
+    if (!el) return;
+    const colors = { danger: "var(--accent-danger)", success: "var(--accent-success)", warning: "var(--accent-warning)" };
+    if (el.dataset.fresh !== "1") { el.innerHTML = ""; el.dataset.fresh = "1"; }
+    const line = document.createElement("div");
+    line.style.cssText = `margin-bottom:4px; color:${colors[level] || "var(--text-muted)"};`;
+    line.textContent = msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+  },
+
+  async openContentModal() {
+    this.openModal("content_modal_overlay");
+    // Restore persisted config
+    const gk = document.getElementById("gemini_key_input");
+    const cu = document.getElementById("comfy_url_input");
+    const cw = document.getElementById("comfy_workflow_input");
+    const pv = document.getElementById("img_provider_select");
+    const mp = document.getElementById("img_meta_prompt");
+    if (gk) gk.value = this.imgCfg("gemini_key", "");
+    if (cu) cu.value = this.imgCfg("comfy_url", "http://127.0.0.1:8188");
+    if (cw) cw.value = this.imgCfg("comfy_workflow", this.IMG_DEFAULTS.comfyWorkflow);
+    if (pv) pv.value = this.imgCfg("provider", "gemini");
+    if (mp) mp.value = this.imgCfg("meta_prompt", this.IMG_DEFAULTS.metaPrompt);
+
+    const scope = document.getElementById("img_batch_scope");
+    const src = document.getElementById("img_batch_prompt_source");
+    if (scope) scope.value = this.imgCfg("batch_scope", "both");
+    if (src) src.value = this.imgCfg("batch_prompt_source", "description");
+
+    this.updateImgProviderUI();
+    this.renderImgTargets();
+    this.loadImgCategoryPrompts();
+    this.updateBatchStatusHint();
+  },
+
+  updateImgProviderUI() {
+    const provider = this.imgProvider();
+    const gk = document.getElementById("gemini_key_group");
+    const cg = document.getElementById("comfy_group");
+    if (gk) gk.style.display = provider === "gemini" ? "flex" : "none";
+    if (cg) cg.style.display = provider === "comfy" ? "flex" : "none";
+    const status = document.getElementById("content_config_status");
+    if (status) {
+      status.textContent = provider === "gemini"
+        ? `Gemini · ${this.imgCfg("gemini_key", "") ? "key set" : "no key"}`
+        : `ComfyUI · ${this.imgCfg("comfy_url", "http://127.0.0.1:8188")}`;
+    }
+  },
+
+  // Pre/post prompts are remembered separately per category, since a character
+  // wants a chroma-key backdrop and a location wants an empty establishing shot.
+  loadImgCategoryPrompts() {
+    const cat = this.imgCategory();
+    const pre = document.getElementById("img_pre_prompt");
+    const post = document.getElementById("img_post_prompt");
+    if (pre) pre.value = this.imgCfg("pre_" + cat, this.IMG_DEFAULTS.prePrompt[cat]);
+    if (post) post.value = this.imgCfg("post_" + cat, this.IMG_DEFAULTS.postPrompt[cat]);
+  },
+
+  renderImgTargets() {
+    const cat = this.imgCategory();
+    const sel = document.getElementById("img_target_select");
+    if (!sel) return;
+    const list = this.globalVars[cat] || [];
+    const previous = sel.value;
+    sel.innerHTML = "";
+    if (!list.length) {
+      sel.innerHTML = `<option value="">No ${cat} yet — add some on the content page</option>`;
+    } else {
+      list.forEach(name => {
+        const meta = this.getMeta(cat, name);
+        const has = cat === "characters" ? meta.image : meta.background;
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name + (has ? "  ✓" : "");
+        sel.appendChild(opt);
+      });
+      if (previous && list.includes(previous)) sel.value = previous;
+    }
+    this.updateImgTargetStatus();
+    this.updateBatchStatusHint();
+    this.updateApplyLocHint();
+  },
+
+  updateImgTargetStatus() {
+    const el = document.getElementById("img_target_status");
+    if (!el) return;
+    const cat = this.imgCategory();
+    const name = document.getElementById("img_target_select").value;
+    if (!name) { el.textContent = ""; return; }
+    const meta = this.getMeta(cat, name);
+    const current = cat === "characters" ? meta.image : meta.background;
+    const hasDesc = !!(meta.info && meta.info.trim());
+    el.textContent = [
+      current ? "has an image" : "no image yet",
+      hasDesc ? "has a description" : "no description written"
+    ].join(" · ");
+  },
+
+  useAssetDescription() {
+    const cat = this.imgCategory();
+    const name = document.getElementById("img_target_select").value;
+    if (!name) { this.toast("Pick an asset first.", "warning"); return; }
+    const meta = this.getMeta(cat, name);
+    const info = (meta.info || "").trim();
+    document.getElementById("img_prompt").value = info || name;
+    if (!info) this.imgLog(`"${name}" has no description — using the name alone. Add background info on the content page for better results.`, "warning");
+  },
+
+  async draftImagePrompt() {
+    const cat = this.imgCategory();
+    const name = document.getElementById("img_target_select").value;
+    if (!name) { this.toast("Pick an asset first.", "warning"); return; }
+    const key = (document.getElementById("llm_api_key_input") || {}).value;
+    if (!key || !key.trim()) {
+      this.imgLog("Drafting needs the LLM API key from the LLM Copilot panel.", "danger");
+      this.toast("Set your LLM API key in LLM Copilot first.", "warning");
+      return;
+    }
+    const meta = this.getMeta(cat, name);
+    const description = (meta.info || "").trim() || name;
+    const template = document.getElementById("img_meta_prompt").value || this.IMG_DEFAULTS.metaPrompt;
+    const filled = template
+      .replace(/\{\{KIND\}\}/g, cat === "characters" ? "Character" : "Location")
+      .replace(/\{\{NAME\}\}/g, name)
+      .replace(/\{\{DESCRIPTION\}\}/g, description);
+
+    this.imgLog(`Drafting an image prompt for "${name}"…`);
+    try {
+      const text = await this.callLLMApi(key.trim(), "raw", filled);
+      const cleaned = String(text).trim().replace(/^["'`]+|["'`]+$/g, "");
+      document.getElementById("img_prompt").value = cleaned;
+      this.imgLog("Draft ready — edit it if you like, then Generate.", "success");
+    } catch (err) {
+      this.imgLog("Draft failed: " + err.message, "danger");
+    }
+  },
+
+  composedImagePrompt() {
+    const pre = document.getElementById("img_pre_prompt").value.trim();
+    const body = document.getElementById("img_prompt").value.trim();
+    const post = document.getElementById("img_post_prompt").value.trim();
+    return [pre, body, post].filter(Boolean).join("\n\n");
+  },
+
+  // ---- Providers ----
+
+  async generateImageBlob(prompt) {
+    return this.imgProvider() === "comfy"
+      ? await this.generateViaComfy(prompt)
+      : await this.generateViaGemini(prompt);
+  },
+
+  async generateViaGemini(prompt) {
+    const key = this.imgCfg("gemini_key", "").trim();
+    if (!key) throw new Error("No Google AI Studio key set.");
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      }
+    );
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`Gemini ${res.status}: ${detail.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
+    const imagePart = parts.find(p => p.inlineData && p.inlineData.data);
+    if (!imagePart) {
+      const text = parts.map(p => p.text).filter(Boolean).join(" ").slice(0, 200);
+      throw new Error("Gemini returned no image." + (text ? ` It said: ${text}` : ""));
+    }
+    const mime = imagePart.inlineData.mimeType || "image/png";
+    const bytes = Uint8Array.from(atob(imagePart.inlineData.data), c => c.charCodeAt(0));
+    return new Blob([bytes], { type: mime });
+  },
+
+  async generateViaComfy(prompt) {
+    const base = this.imgCfg("comfy_url", "http://127.0.0.1:8188").replace(/\/+$/, "");
+    let workflow;
+    try {
+      workflow = JSON.parse(this.imgCfg("comfy_workflow", this.IMG_DEFAULTS.comfyWorkflow));
+    } catch (err) {
+      throw new Error("ComfyUI workflow isn't valid JSON.");
+    }
+    // Substitute the prompt and randomise the seed so repeats differ
+    const walk = (obj) => {
+      for (const k in obj) {
+        const v = obj[k];
+        if (typeof v === "string") obj[k] = v.replace(/\{\{prompt\}\}/g, prompt);
+        else if (v && typeof v === "object") walk(v);
+      }
+    };
+    walk(workflow);
+    for (const id in workflow) {
+      if (workflow[id].inputs && "seed" in workflow[id].inputs) {
+        workflow[id].inputs.seed = Math.floor(Math.random() * 1e15);
+      }
+    }
+
+    const clientId = "vnovel-" + Math.random().toString(36).slice(2);
+    const queued = await fetch(`${base}/prompt`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: workflow, client_id: clientId })
+    });
+    if (!queued.ok) {
+      const detail = await queued.text().catch(() => "");
+      throw new Error(`ComfyUI ${queued.status}: ${detail.slice(0, 200)}`);
+    }
+    const { prompt_id: promptId } = await queued.json();
+    if (!promptId) throw new Error("ComfyUI did not return a prompt id.");
+
+    // Poll history until the job reports an output image
+    const deadline = Date.now() + 180000;
+    let image = null;
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 1200));
+      const hres = await fetch(`${base}/history/${promptId}`);
+      if (!hres.ok) continue;
+      const hist = await hres.json();
+      const entry = hist[promptId];
+      if (!entry) continue;
+      const outputs = entry.outputs || {};
+      for (const nodeId in outputs) {
+        const imgs = outputs[nodeId].images;
+        if (imgs && imgs.length) { image = imgs[0]; break; }
+      }
+      if (image) break;
+      if (entry.status && entry.status.status_str === "error") {
+        throw new Error("ComfyUI reported an error running the workflow.");
+      }
+    }
+    if (!image) throw new Error("Timed out waiting for ComfyUI (3 minutes).");
+
+    const params = new URLSearchParams({
+      filename: image.filename,
+      subfolder: image.subfolder || "",
+      type: image.type || "output"
+    });
+    const viewRes = await fetch(`${base}/view?${params}`);
+    if (!viewRes.ok) throw new Error(`Couldn't fetch the generated image (${viewRes.status}).`);
+    return await viewRes.blob();
+  },
+
+  // ---- Generate → save → assign ----
+
+  slugForAsset(name) {
+    return String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "asset";
+  },
+
+  async generateForTarget(opts = {}) {
+    const cat = this.imgCategory();
+    const name = opts.name || document.getElementById("img_target_select").value;
+    if (!name) { this.toast("Pick an asset first.", "warning"); return null; }
+
+    if (!(await this.folderReady())) {
+      this.imgLog("No project folder set — generated images need somewhere to live.", "danger");
+      this.toast("Set a project folder first (Save / Load → Choose…).", "warning");
+      return null;
+    }
+
+    const prompt = opts.prompt || this.composedImagePrompt();
+    if (!prompt.trim()) { this.toast("Write or draft a prompt first.", "warning"); return null; }
+
+    this.imgLog(`Generating "${name}" via ${this.imgProvider() === "comfy" ? "ComfyUI" : "Gemini"}…`);
+    let blob;
+    try {
+      blob = await this.generateImageBlob(prompt);
+    } catch (err) {
+      this.imgLog(`Failed for "${name}": ${err.message}`, "danger");
+      return null;
+    }
+
+    const subfolder = cat === "characters" ? "characters" : "backgrounds";
+    const ext = (blob.type && blob.type.includes("jpeg")) ? ".jpg" : ".png";
+    const file = new File([blob], `${this.slugForAsset(name)}${ext}`, { type: blob.type || "image/png" });
+
+    let path;
+    try {
+      path = await this.copyFileIntoProject(file, subfolder);
+    } catch (err) {
+      this.imgLog(`Couldn't save into the project folder: ${err.message}`, "danger");
+      return null;
+    }
+
+    // Wire it to the asset it was generated for
+    const meta = this.getMeta(cat, name);
+    if (cat === "characters") {
+      meta.image = path;
+      meta.imageName = file.name;
+    } else {
+      meta.background = path;
+      meta.backgroundName = file.name;
+    }
+    if (this._assetUrlCache) delete this._assetUrlCache[path];
+    this.checkpoint();
+    this.saveToLocalStorage();
+    this.imgLog(`Saved ${path} and linked it to "${name}".`, "success");
+
+    if (!opts.silent) {
+      this._lastGenerated = { cat, name, path };
+      await this.showGeneratedResult(path);
+      await this.offerNodeLinking(cat, name, path);
+    }
+    this.renderImgTargets();
+    return path;
+  },
+
+  async showGeneratedResult(path) {
+    const group = document.getElementById("img_result_group");
+    const preview = document.getElementById("img_result_preview");
+    if (!group || !preview) return;
+    const url = await this.resolveAssetURL(path);
+    preview.style.backgroundImage = `url("${url}")`;
+    group.style.display = "flex";
+    // Cutting out a background only makes sense for character art
+    const cutBtn = document.getElementById("btn_img_cutout");
+    if (cutBtn) cutBtn.style.display = this.imgCategory() === "characters" ? "" : "none";
+  },
+
+  // Node locations are typed by hand, so match them the way the item modal's
+  // propagate button does — trimmed and case-insensitive — rather than exactly.
+  nodesInLocation(name) {
+    const norm = s => String(s == null ? "" : s).trim().toLowerCase();
+    const target = norm(name);
+    if (!target) return [];
+    return (this.graph._nodes || []).filter(n => n.properties && norm(n.properties.location) === target);
+  },
+
+  // Characters need no linking — the player looks portraits up by speaker name.
+  // Locations do: each node carries its own background.
+  async offerNodeLinking(cat, name, path) {
+    if (cat === "characters") {
+      this.imgLog(`"${name}" will now appear automatically wherever they speak.`, "success");
+      return;
+    }
+    const matches = this.nodesInLocation(name);
+    if (!matches.length) {
+      this.imgLog(`No nodes are set to location "${name}" yet, so nothing to link.`);
+      return;
+    }
+    const already = matches.filter(n => n.properties.background === path).length;
+    const todo = matches.length - already;
+    if (todo <= 0) {
+      this.imgLog(`All ${matches.length} node(s) at "${name}" already use this image.`);
+      return;
+    }
+    const withOther = matches.filter(n => n.properties.background && n.properties.background !== path).length;
+    const warn = withOther ? `\n\n${withOther} of them already have a different background, which will be replaced.` : "";
+    const ok = confirm(`Link this image to all ${todo} node(s) set in "${name}"?${warn}`);
+    if (!ok) { this.imgLog("Left node backgrounds untouched."); return; }
+
+    matches.forEach(n => {
+      n.properties.background = path;
+      n.properties.backgroundName = path.split("/").pop();
+      n.setDirtyCanvas(true, true);
+    });
+    this.canvas.draw(true, true);
+    this.checkpoint();
+    this.saveToLocalStorage();
+    this.imgLog(`Linked to ${matches.length} node(s) at "${name}".`, "success");
+    this.toast(`Background applied to ${matches.length} node(s).`, "success");
+  },
+
+  // Pre/post prompts are stored per category, so a cross-category batch has to
+  // look them up per item rather than reading whichever ones the panel is showing.
+  categoryPrompts(cat) {
+    return {
+      pre: (this.imgCfg("pre_" + cat, this.IMG_DEFAULTS.prePrompt[cat]) || "").trim(),
+      post: (this.imgCfg("post_" + cat, this.IMG_DEFAULTS.postPrompt[cat]) || "").trim()
+    };
+  },
+
+  missingAssets(scope) {
+    const cats = scope === "both" ? ["characters", "locations"] : [scope];
+    const out = [];
+    cats.forEach(cat => {
+      (this.globalVars[cat] || []).forEach(name => {
+        const meta = this.getMeta(cat, name);
+        const has = cat === "characters" ? meta.image : meta.background;
+        if (!has) out.push({ cat, name });
+      });
+    });
+    return out;
+  },
+
+  setBatchRunning(running) {
+    this._batchCancel = false;
+    const runBtn = document.getElementById("btn_img_batch");
+    const stopBtn = document.getElementById("btn_img_batch_cancel");
+    if (runBtn) runBtn.disabled = running;
+    if (stopBtn) stopBtn.style.display = running ? "" : "none";
+    this._batchRunning = running;
+  },
+
+  batchStatus(text) {
+    const el = document.getElementById("img_batch_status");
+    if (el) el.textContent = text;
+  },
+
+  // Shows how much work the current scope implies, before you commit to it
+  updateBatchStatusHint() {
+    if (this._batchRunning) return;
+    const scope = this.imgCfg("batch_scope", "both");
+    const pending = this.missingAssets(scope);
+    if (!pending.length) {
+      this.batchStatus("Nothing missing in this scope.");
+      return;
+    }
+    const noDesc = pending.filter(a => !(this.getMeta(a.cat, a.name).info || "").trim()).length;
+    this.batchStatus(
+      `${pending.length} without an image` +
+      (noDesc ? ` · ${noDesc} of them have no description yet` : "")
+    );
+  },
+
+  // Pushes every location's background (and its music loop, if it has one) onto
+  // the nodes set in that location. Music is only written when the location has
+  // one — a bulk pass shouldn't silently clear audio a node already had.
+  applyLocationBackgroundsToNodes() {
+    const withArt = (this.globalVars.locations || []).filter(
+      loc => (this.getMeta("locations", loc).background || "").trim()
+    );
+    if (!withArt.length) {
+      this.imgLog("No location has a background image yet — generate some first.", "warning");
+      this.applyLocStatus("No location backgrounds to apply.");
+      return;
+    }
+
+    let willSet = 0, willReplace = 0, withMusic = 0;
+    const unused = [];
+    const plan = withArt.map(loc => {
+      const meta = this.getMeta("locations", loc);
+      const nodes = this.nodesInLocation(loc);
+      if (!nodes.length) unused.push(loc);
+      nodes.forEach(n => {
+        const cur = n.properties.background;
+        if (cur === meta.background) return;
+        if (cur && String(cur).trim()) willReplace++;
+        willSet++;
+      });
+      if ((meta.audioLoop || "").trim()) withMusic += nodes.length;
+      return { loc, meta, nodes };
+    });
+
+    if (!willSet) {
+      this.imgLog("Every matching node already uses its location's background.", "success");
+      this.applyLocStatus("Nothing to change — all up to date.");
+      return;
+    }
+
+    const lines = [
+      `Assign backgrounds to ${willSet} node(s) across ${withArt.length - unused.length} location(s)?`
+    ];
+    if (willReplace) lines.push(`\n${willReplace} node(s) already have a different background and will be replaced.`);
+    if (withMusic) lines.push(`${withMusic} node(s) will also get their location's music loop.`);
+    if (unused.length) lines.push(`\nNo nodes are set in: ${unused.join(", ")}`);
+    if (!confirm(lines.join("\n"))) return;
+
+    let touched = 0;
+    plan.forEach(({ loc, meta, nodes }) => {
+      nodes.forEach(n => {
+        n.properties.background = meta.background;
+        n.properties.backgroundName = meta.backgroundName || String(meta.background).split("/").pop();
+        if ((meta.audioLoop || "").trim()) {
+          n.properties.audioLoop = meta.audioLoop;
+          n.properties.audioLoopName = meta.audioLoopName || "";
+        }
+        n.setDirtyCanvas(true, true);
+        touched++;
+      });
+      if (nodes.length) this.imgLog(`${loc} → ${nodes.length} node(s)`);
+    });
+
+    if (this.canvas) this.canvas.draw(true, true);
+    this.checkpoint();
+    this.saveToLocalStorage();
+    this.imgLog(`Applied location art to ${touched} node(s).`, "success");
+    this.applyLocStatus(`Applied to ${touched} node(s).`);
+    this.toast(`Backgrounds applied to ${touched} node(s).`, "success");
+  },
+
+  applyLocStatus(text) {
+    const el = document.getElementById("apply_loc_status");
+    if (el) el.textContent = text;
+  },
+
+  // Preview of what the button would do, shown before you press it
+  updateApplyLocHint() {
+    const withArt = (this.globalVars.locations || []).filter(
+      loc => (this.getMeta("locations", loc).background || "").trim()
+    );
+    if (!withArt.length) {
+      this.applyLocStatus("No location has a background image yet.");
+      return;
+    }
+    let pending = 0;
+    withArt.forEach(loc => {
+      const bg = this.getMeta("locations", loc).background;
+      this.nodesInLocation(loc).forEach(n => { if (n.properties.background !== bg) pending++; });
+    });
+    this.applyLocStatus(
+      pending
+        ? `${withArt.length} location(s) with art · ${pending} node(s) would change`
+        : `${withArt.length} location(s) with art · all matching nodes up to date`
+    );
+  },
+
+  async batchGenerateMissing() {
+    if (this._batchRunning) return;
+
+    const scope = this.imgCfg("batch_scope", "both");
+    const source = this.imgCfg("batch_prompt_source", "description");
+    const pending = this.missingAssets(scope);
+
+    if (!pending.length) {
+      this.imgLog("Nothing to generate — everything in scope already has an image.", "success");
+      this.batchStatus("");
+      return;
+    }
+
+    // Drafting needs the LLM key from the LLM Copilot panel; fall back rather than fail
+    let useLLM = source === "llm";
+    const key = ((document.getElementById("llm_api_key_input") || {}).value || "").trim();
+    if (useLLM && !key) {
+      this.imgLog("No LLM key set (LLM Copilot panel) — using descriptions as-is instead.", "warning");
+      useLLM = false;
+    }
+
+    const summary = pending.map(a => a.name).join(", ");
+    const how = useLLM ? "LLM-drafted prompts" : "descriptions as-is";
+    if (!confirm(`Generate ${pending.length} image(s) using ${how}?\n\n${summary}`)) return;
+
+    this.setBatchRunning(true);
+    const template = document.getElementById("img_meta_prompt").value || this.IMG_DEFAULTS.metaPrompt;
+    let done = 0, failed = 0, skipped = 0;
+
+    for (let i = 0; i < pending.length; i++) {
+      if (this._batchCancel) {
+        this.imgLog(`Stopped after ${done} of ${pending.length}.`, "warning");
+        break;
+      }
+      const { cat, name } = pending[i];
+      this.batchStatus(`${i + 1} / ${pending.length} — ${name}`);
+
+      const meta = this.getMeta(cat, name);
+      const description = (meta.info || "").trim();
+      if (!description) {
+        this.imgLog(`"${name}" has no description — using the name alone.`, "warning");
+      }
+      let body = description || name;
+
+      if (useLLM && description) {
+        try {
+          const filled = template
+            .replace(/\{\{KIND\}\}/g, cat === "characters" ? "Character" : "Location")
+            .replace(/\{\{NAME\}\}/g, name)
+            .replace(/\{\{DESCRIPTION\}\}/g, description);
+          body = String(await this.callLLMApi(key, "raw", filled)).trim().replace(/^["'`]+|["'`]+$/g, "");
+        } catch (err) {
+          this.imgLog(`Prompt draft failed for "${name}" (${err.message}) — using its description.`, "warning");
+        }
+      }
+
+      const { pre, post } = this.categoryPrompts(cat);
+      const prompt = [pre, body, post].filter(Boolean).join("\n\n");
+
+      // generateForTarget reads the category from the panel, so point it at this item's
+      const catSelect = document.getElementById("img_category_select");
+      const restore = catSelect ? catSelect.value : null;
+      if (catSelect) catSelect.value = cat;
+      const path = await this.generateForTarget({ name, prompt, silent: true });
+      if (catSelect && restore !== null) catSelect.value = restore;
+
+      if (path) done++; else failed++;
+    }
+
+    this.setBatchRunning(false);
+    this.batchStatus("");
+    this.renderImgTargets();
+    const parts = [`${done} generated`];
+    if (failed) parts.push(`${failed} failed`);
+    if (skipped) parts.push(`${skipped} skipped`);
+    this.imgLog(`Batch finished — ${parts.join(", ")}.`, failed ? "warning" : "success");
+    this.toast(`Batch complete: ${done} image(s) generated.`, failed ? "warning" : "success");
+  },
+
+  // ================= EYEDROPPER / BACKGROUND CUTOUT =================
+  //
+  // Text-to-image models won't reliably produce transparent PNGs, so characters
+  // are generated on a flat chroma-key backdrop and keyed out here. The original
+  // file is left alone — this writes a separate "-cutout.png".
+
+  async openCutout(category, name, path) {
+    this._cutout = { category, name, path };
+    const url = await this.resolveAssetURL(path);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error("Couldn't load that image."));
+      img.src = url;
+    });
+
+    const canvas = document.getElementById("cutout_canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+
+    this._cutout.original = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    this._cutout.samples = [];
+    this.openModal("cutout_modal_overlay");
+    document.getElementById("cutout_status").textContent =
+      `${canvas.width}×${canvas.height} — click or drag over the background to key it out.`;
+    this.wireCutoutCanvas();
+  },
+
+  closeCutout() {
+    this._cutout = null;
+    this.closeModal("cutout_modal_overlay");
+  },
+
+  wireCutoutCanvas() {
+    const canvas = document.getElementById("cutout_canvas");
+    if (!canvas || canvas.dataset.wired === "1") return;
+    canvas.dataset.wired = "1";
+
+    const pick = (e) => {
+      if (!this._cutout) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+      const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+      if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return;
+      const d = this._cutout.original.data;
+      const i = (y * canvas.width + x) * 4;
+      this._cutout.samples.push([d[i], d[i + 1], d[i + 2]]);
+      this.applyCutout();
+    };
+
+    let dragging = false;
+    canvas.addEventListener("mousedown", (e) => { dragging = true; pick(e); });
+    canvas.addEventListener("mousemove", (e) => { if (dragging) pick(e); });
+    window.addEventListener("mouseup", () => { dragging = false; });
+
+    const tol = document.getElementById("cutout_tolerance");
+    tol.addEventListener("input", () => {
+      document.getElementById("cutout_tol_label").textContent = tol.value;
+      this.applyCutout();
+    });
+    document.getElementById("cutout_from_edges").addEventListener("change", () => this.applyCutout());
+    document.getElementById("btn_cutout_reset").addEventListener("click", () => {
+      if (!this._cutout) return;
+      this._cutout.samples = [];
+      this.applyCutout();
+    });
+    document.getElementById("btn_cutout_save").addEventListener("click", () => this.saveCutout());
+  },
+
+  // Flood fill from the image edges (or globally) making every pixel within
+  // tolerance of a sampled colour transparent.
+  applyCutout() {
+    if (!this._cutout) return;
+    const canvas = document.getElementById("cutout_canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const src = this._cutout.original;
+    const w = canvas.width, h = canvas.height;
+    const out = ctx.createImageData(w, h);
+    out.data.set(src.data);
+
+    const samples = this._cutout.samples;
+    if (!samples.length) {
+      ctx.putImageData(out, 0, 0);
+      document.getElementById("cutout_status").textContent =
+        `${w}×${h} — click or drag over the background to key it out.`;
+      return;
+    }
+
+    const tol = parseInt(document.getElementById("cutout_tolerance").value, 10);
+    const tolSq = tol * tol * 3;
+    const edgesOnly = document.getElementById("cutout_from_edges").checked;
+    const d = src.data;
+
+    const matches = (idx) => {
+      for (let s = 0; s < samples.length; s++) {
+        const dr = d[idx] - samples[s][0];
+        const dg = d[idx + 1] - samples[s][1];
+        const db = d[idx + 2] - samples[s][2];
+        if (dr * dr + dg * dg + db * db <= tolSq) return true;
+      }
+      return false;
+    };
+
+    let cleared = 0;
+
+    if (edgesOnly) {
+      // Queue-based flood fill seeded from every border pixel
+      const visited = new Uint8Array(w * h);
+      const queue = [];
+      for (let x = 0; x < w; x++) { queue.push(x); queue.push((h - 1) * w + x); }
+      for (let y = 0; y < h; y++) { queue.push(y * w); queue.push(y * w + w - 1); }
+
+      while (queue.length) {
+        const p = queue.pop();
+        if (visited[p]) continue;
+        visited[p] = 1;
+        const idx = p * 4;
+        if (!matches(idx)) continue;
+        out.data[idx + 3] = 0;
+        cleared++;
+        const x = p % w, y = (p / w) | 0;
+        if (x > 0) queue.push(p - 1);
+        if (x < w - 1) queue.push(p + 1);
+        if (y > 0) queue.push(p - w);
+        if (y < h - 1) queue.push(p + w);
+      }
+    } else {
+      for (let p = 0; p < w * h; p++) {
+        const idx = p * 4;
+        if (matches(idx)) { out.data[idx + 3] = 0; cleared++; }
+      }
+    }
+
+    ctx.putImageData(out, 0, 0);
+    this._cutout.result = out;
+    const pct = ((cleared / (w * h)) * 100).toFixed(1);
+    document.getElementById("cutout_status").textContent =
+      `${samples.length} sample(s) · ${cleared.toLocaleString()} pixels transparent (${pct}%)`;
+  },
+
+  async saveCutout() {
+    if (!this._cutout || !this._cutout.result) {
+      this.toast("Sample the background first.", "warning");
+      return;
+    }
+    const { category, name, path } = this._cutout;
+    const canvas = document.getElementById("cutout_canvas");
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if (!blob) { this.toast("Couldn't encode the cutout.", "danger"); return; }
+
+    const base = path.split("/").pop().replace(/\.[^.]+$/, "");
+    const file = new File([blob], `${base}-cutout.png`, { type: "image/png" });
+    try {
+      const newPath = await this.copyFileIntoProject(file, "characters");
+      const meta = this.getMeta(category, name);
+      meta.image = newPath;
+      meta.imageName = file.name;
+      if (this._assetUrlCache) delete this._assetUrlCache[newPath];
+      this._lastGenerated = { cat: category, name, path: newPath };
+      this.checkpoint();
+      this.saveToLocalStorage();
+      this.closeCutout();
+      this.renderImgTargets();
+      if (document.getElementById("content_modal_overlay").style.display === "flex") {
+        await this.showGeneratedResult(newPath);
+      }
+      this.imgLog(`Saved ${newPath} and assigned it to "${name}". The original is untouched.`, "success");
+      this.toast(`Transparent version assigned to "${name}".`, "success");
+    } catch (err) {
+      this.toast("Couldn't save the cutout: " + err.message, "danger");
+    }
   },
 
   // ================= PROJECT FOLDER (File System Access) =================
@@ -4237,6 +5080,8 @@ ${content}`;
     let prompt = "";
     if (action === "screenplay") {
       prompt = this.getScreenplayPrompt(content);
+    } else if (action === "raw") {
+      prompt = content; // caller supplies the whole prompt
     } else {
       prompt = `Flesh out this visual novel dialogue to make it engaging and descriptive. Keep the "Name: line" format intact for each spoken line:
 ${content}`;
@@ -4259,7 +5104,7 @@ ${content}`;
   },
 
   async callAnthropicApi(key, prompt) {
-    const model = this.getSelectedModel() || "claude-3-5-sonnet-latest";
+    const model = this.getSelectedModel() || "claude-opus-4-8";
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: 'POST',
       headers: {
@@ -4653,6 +5498,7 @@ ${content}`;
     on("btn_export_project", () => this.openModal("export_modal_overlay"));
     on("btn_publish", () => this.publishStory());
     on("btn_open_llm_copilot", () => this.openLLMModal());
+    on("btn_open_content_copilot", () => this.openContentModal());
     on("btn_toggle_theme", () => this.toggleTheme());
     on("btn_help", () => this.openModal("help_modal_overlay"));
     on("btn_start_play", () => this.startPlayback());
@@ -4667,6 +5513,71 @@ ${content}`;
     on("btn_llm_run_debugger", () => this.runLogicDebugger());
     on("btn_do_import", () => this.doImport());
     on("btn_do_export", () => this.doExport());
+    // ---- Content Copilot ----
+    on("btn_img_use_desc", () => this.useAssetDescription());
+    on("btn_img_draft", () => this.draftImagePrompt());
+    on("btn_img_generate", () => this.generateForTarget());
+    on("btn_img_regen", () => this.generateForTarget());
+    on("btn_img_batch", () => this.batchGenerateMissing());
+    on("btn_apply_loc_backgrounds", () => this.applyLocationBackgroundsToNodes());
+    on("btn_img_batch_cancel", () => {
+      this._batchCancel = true;
+      this.imgLog("Stopping after the current image…", "warning");
+    });
+
+    [["img_batch_scope", "batch_scope"], ["img_batch_prompt_source", "batch_prompt_source"]].forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", () => {
+        this.setImgCfg(key, el.value);
+        this.updateBatchStatusHint();
+      });
+    });
+    on("btn_img_cutout", () => {
+      const g = this._lastGenerated;
+      if (g) this.openCutout(g.cat, g.name, g.path);
+    });
+    on("btn_img_reset_meta", () => {
+      document.getElementById("img_meta_prompt").value = this.IMG_DEFAULTS.metaPrompt;
+      this.setImgCfg("meta_prompt", this.IMG_DEFAULTS.metaPrompt);
+      this.toast("Prompt-drafting instructions reset.", "success");
+    });
+
+    const imgProvider = document.getElementById("img_provider_select");
+    if (imgProvider) {
+      imgProvider.addEventListener("change", () => {
+        this.setImgCfg("provider", imgProvider.value);
+        this.updateImgProviderUI();
+      });
+    }
+    const imgCategory = document.getElementById("img_category_select");
+    if (imgCategory) {
+      imgCategory.addEventListener("change", () => {
+        this.renderImgTargets();
+        this.loadImgCategoryPrompts();
+        document.getElementById("img_result_group").style.display = "none";
+      });
+    }
+    const imgTarget = document.getElementById("img_target_select");
+    if (imgTarget) imgTarget.addEventListener("change", () => this.updateImgTargetStatus());
+
+    // Persist the text fields as they're edited
+    [
+      ["gemini_key_input", "gemini_key"],
+      ["comfy_url_input", "comfy_url"],
+      ["comfy_workflow_input", "comfy_workflow"],
+      ["img_meta_prompt", "meta_prompt"]
+    ].forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", () => {
+        this.setImgCfg(key, el.value);
+        if (key === "gemini_key" || key === "comfy_url") this.updateImgProviderUI();
+      });
+    });
+    [["img_pre_prompt", "pre_"], ["img_post_prompt", "post_"]].forEach(([id, prefix]) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", () => this.setImgCfg(prefix + this.imgCategory(), el.value));
+    });
+
     on("btn_choose_folder", () => this.chooseProjectFolder());
     on("btn_save_graph", () => this.saveGraph());
     on("btn_save_graph_as", () => this.saveGraphAs());

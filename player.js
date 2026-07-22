@@ -644,7 +644,9 @@ class StoryPlayer {
       css = "linear-gradient(135deg, #1e1b4b, #0f172a)";
     } else if (v.includes("gradient(")) {
       css = v;
-    } else if (/^(data:|https?:|\.{0,2}\/)/.test(v) || /\.(png|jpe?g|gif|webp|avif)$/i.test(v)) {
+      // blob: has no file extension, so it needs the protocol test — the editor
+      // resolves project-folder images to blob URLs for playback
+    } else if (/^(blob:|data:|https?:|\.{0,2}\/)/.test(v) || /\.(png|jpe?g|gif|webp|avif)$/i.test(v)) {
       css = `url("${v.replace(/"/g, '%22')}")`;
     } else {
       css = "linear-gradient(135deg, #1e1b4b, #0f172a)";
