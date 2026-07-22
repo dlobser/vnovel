@@ -2708,7 +2708,19 @@ ${scriptClose}
       }
     }
     md += "---\n\n";
-    
+
+    // Asset descriptions (the background info written on each sidebar tag)
+    const meta = state.varMeta || {};
+    let descBlock = "";
+    for (const key in this.MD_DESC_LABELS) {
+      const list = (state.globalVars && state.globalVars[key]) || [];
+      list.forEach(name => {
+        const info = ((meta[key] && meta[key][name] && meta[key][name].info) || "").trim();
+        if (info) descBlock += `### ${name} (${this.MD_DESC_LABELS[key]})\n${info}\n\n`;
+      });
+    }
+    if (descBlock) md += "## Descriptions\n\n" + descBlock;
+
     // Build link lookup map
     const linkToTarget = {};
     const links = (state.graphSchema && state.graphSchema.links) || [];
@@ -2795,6 +2807,27 @@ ${scriptClose}
     return md;
   },
 
+  // Category -> singular label used in "### Name (Label)" description headings.
+  MD_DESC_LABELS: {
+    characters: "Character",
+    locations: "Location",
+    collectibles: "Collectible",
+    knowledge: "Knowledge",
+    missions: "Mission"
+  },
+
+  // Resolves the label written in a description heading back to a category key.
+  // Tolerates plurals and the same synonyms the Globals block accepts.
+  mdDescCategory(label) {
+    const l = (label || "").toLowerCase().trim();
+    if (l.startsWith("char")) return "characters";
+    if (l.startsWith("loc")) return "locations";
+    if (l.startsWith("collect") || l.startsWith("item") || l.startsWith("prop")) return "collectibles";
+    if (l.startsWith("know") || l.startsWith("flag") || l.startsWith("diary")) return "knowledge";
+    if (l.startsWith("miss")) return "missions";
+    return null;
+  },
+
   // Property keys understood inside a "## Node" block. Used to tell a real property
   // line apart from a "Speaker: line" of dialogue.
   MD_NODE_PROP_KEYS: new Set([
@@ -2826,6 +2859,9 @@ ${scriptClose}
     let textLines = [];
     let state = "HEADER";
 
+    let currentDesc = null;
+    let descLines = [];
+
     const flushDialogue = () => {
       if (currentNode && textLines.length > 0) {
         currentNode.p.text = textLines.join("\n").trim();
@@ -2833,11 +2869,56 @@ ${scriptClose}
       }
     };
 
+    const flushDescription = () => {
+      if (currentDesc) {
+        const info = descLines.join("\n").trim();
+        if (info) {
+          if (!varMeta[currentDesc.cat]) varMeta[currentDesc.cat] = {};
+          if (!varMeta[currentDesc.cat][currentDesc.name]) varMeta[currentDesc.cat][currentDesc.name] = {};
+          varMeta[currentDesc.cat][currentDesc.name].info = info;
+          // A described asset counts as declared even if Globals forgot to list it.
+          if (!vars[currentDesc.cat].includes(currentDesc.name)) vars[currentDesc.cat].push(currentDesc.name);
+        }
+      }
+      currentDesc = null;
+      descLines = [];
+    };
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const trimmed = line.trim();
-      if (!trimmed) continue;
-      
+      // Blank lines are paragraph breaks inside a description, noise everywhere else.
+      if (!trimmed) {
+        if (currentMode === "DESCRIPTIONS" && currentDesc) descLines.push("");
+        continue;
+      }
+
+      if (currentMode === "DESCRIPTIONS") {
+        const descHeading = trimmed.match(/^###\s*(.+?)\s*\(([^)]+)\)\s*$/);
+        if (descHeading) {
+          flushDescription();
+          const cat = this.mdDescCategory(descHeading[2]);
+          if (cat) currentDesc = { cat, name: descHeading[1].trim() };
+          continue;
+        }
+        // Anything that is not a new "##" section belongs to the open description.
+        if (!/^##(?!#)/.test(trimmed)) {
+          if (currentDesc) descLines.push(line);
+          continue;
+        }
+        flushDescription();
+      }
+
+      if (/^##\s*(?:Asset\s+)?Descriptions?\s*$/i.test(trimmed)) {
+        flushDialogue();
+        flushDescription();
+        currentMode = "DESCRIPTIONS";
+        currentNode = null;
+        currentNodeId = null;
+        state = "DESCRIPTIONS";
+        continue;
+      }
+
       const nodeMatch = trimmed.match(/^##\s*(?:Node\s*)?(\d+)(?:\s*\(([^)]+)\))?/i);
       if (nodeMatch) {
         flushDialogue();
@@ -3047,6 +3128,7 @@ ${scriptClose}
     }
     
     flushDialogue();
+    flushDescription();
 
     // First, resolve traversal early exit targets
     for (const nid in nodes) {
@@ -3600,6 +3682,10 @@ Description: {{DESCRIPTION}}`,
     if (pv) pv.value = this.imgCfg("provider", "gemini");
     if (mp) mp.value = this.imgCfg("meta_prompt", this.IMG_DEFAULTS.metaPrompt);
 
+    // Files can come and go while the panel is closed, so re-probe on open
+    // rather than trusting a cache from earlier in the session.
+    this._assetExistsCache = {};
+
     const scope = document.getElementById("img_batch_scope");
     const src = document.getElementById("img_batch_prompt_source");
     if (scope) scope.value = this.imgCfg("batch_scope", "both");
@@ -3657,7 +3743,28 @@ Description: {{DESCRIPTION}}`,
     }
     this.updateImgTargetStatus();
     this.updateBatchStatusHint();
+    this.refreshImgTargetMarks();
     this.updateApplyLocHint();
+  },
+
+  // The ✓ above comes from meta alone. Correct it once the disk probe catches
+  // up, so the list can't promise an image the batch is about to regenerate.
+  async refreshImgTargetMarks() {
+    const cat = this.imgCategory();
+    const sel = document.getElementById("img_target_select");
+    if (!sel) return;
+    const token = (this._targetMarkToken = (this._targetMarkToken || 0) + 1);
+
+    for (const opt of Array.from(sel.options)) {
+      const name = opt.value;
+      if (!name) continue;
+      const meta = this.getMeta(cat, name);
+      const has = cat === "characters" ? meta.image : meta.background;
+      if (!has) continue;
+      const ok = await this.assetFileExists(has);
+      if (token !== this._targetMarkToken) return; // list rebuilt under us
+      opt.textContent = name + (ok ? "  ✓" : "  ⚠ file missing");
+    }
   },
 
   updateImgTargetStatus() {
@@ -3875,6 +3982,7 @@ Description: {{DESCRIPTION}}`,
       meta.backgroundName = file.name;
     }
     if (this._assetUrlCache) delete this._assetUrlCache[path];
+    this.forgetAssetExists(path);
     this.checkpoint();
     this.saveToLocalStorage();
     this.imgLog(`Saved ${path} and linked it to "${name}".`, "success");
@@ -3953,16 +4061,50 @@ Description: {{DESCRIPTION}}`,
     };
   },
 
-  missingAssets(scope) {
+  // A path in meta only proves the file was there once — the writer may have
+  // deleted it from the assets folder behind our back. Without this probe a
+  // stale path makes the batch skip an asset it can no longer display.
+  // Cached, because the batch hint re-checks every asset on each scope toggle.
+  async assetFileExists(path) {
+    if (!path) return false;
+    if (/^(data:|https?:|blob:)/i.test(path)) return true; // not ours to verify
+    if (!this._assetExistsCache) this._assetExistsCache = {};
+    if (path in this._assetExistsCache) return this._assetExistsCache[path];
+    // No folder access means we can't tell — assume intact rather than offer to
+    // regenerate images that are probably fine.
+    if (!(await this.folderReady())) return true;
+
+    let ok = true;
+    try {
+      const parts = path.split("/").filter(Boolean);
+      let dir = this.projectDir;
+      for (let i = 0; i < parts.length - 1; i++) {
+        dir = await dir.getDirectoryHandle(parts[i]);
+      }
+      await dir.getFileHandle(parts[parts.length - 1]);
+    } catch (err) {
+      ok = false;
+    }
+    this._assetExistsCache[path] = ok;
+    return ok;
+  },
+
+  forgetAssetExists(path) {
+    if (this._assetExistsCache) delete this._assetExistsCache[path];
+  },
+
+  // A deleted file counts as missing, exactly like an empty meta field.
+  async missingAssets(scope) {
     const cats = scope === "both" ? ["characters", "locations"] : [scope];
     const out = [];
-    cats.forEach(cat => {
-      (this.globalVars[cat] || []).forEach(name => {
+    for (const cat of cats) {
+      for (const name of (this.globalVars[cat] || [])) {
         const meta = this.getMeta(cat, name);
         const has = cat === "characters" ? meta.image : meta.background;
-        if (!has) out.push({ cat, name });
-      });
-    });
+        if (!has) out.push({ cat, name, orphaned: false });
+        else if (!(await this.assetFileExists(has))) out.push({ cat, name, orphaned: true });
+      }
+    }
     return out;
   },
 
@@ -3980,18 +4122,25 @@ Description: {{DESCRIPTION}}`,
     if (el) el.textContent = text;
   },
 
-  // Shows how much work the current scope implies, before you commit to it
-  updateBatchStatusHint() {
+  // Shows how much work the current scope implies, before you commit to it.
+  // Async now that it touches the filesystem, so a later call has to be able to
+  // win — scope toggles can easily outrun the disk probe.
+  async updateBatchStatusHint() {
     if (this._batchRunning) return;
     const scope = this.imgCfg("batch_scope", "both");
-    const pending = this.missingAssets(scope);
+    const token = (this._batchHintToken = (this._batchHintToken || 0) + 1);
+    const pending = await this.missingAssets(scope);
+    if (token !== this._batchHintToken || this._batchRunning) return; // superseded
+
     if (!pending.length) {
       this.batchStatus("Nothing missing in this scope.");
       return;
     }
     const noDesc = pending.filter(a => !(this.getMeta(a.cat, a.name).info || "").trim()).length;
+    const gone = pending.filter(a => a.orphaned).length;
     this.batchStatus(
       `${pending.length} without an image` +
+      (gone ? ` · ${gone} had the file deleted` : "") +
       (noDesc ? ` · ${noDesc} of them have no description yet` : "")
     );
   },
@@ -4093,7 +4242,7 @@ Description: {{DESCRIPTION}}`,
 
     const scope = this.imgCfg("batch_scope", "both");
     const source = this.imgCfg("batch_prompt_source", "description");
-    const pending = this.missingAssets(scope);
+    const pending = await this.missingAssets(scope);
 
     if (!pending.length) {
       this.imgLog("Nothing to generate — everything in scope already has an image.", "success");
@@ -4109,7 +4258,7 @@ Description: {{DESCRIPTION}}`,
       useLLM = false;
     }
 
-    const summary = pending.map(a => a.name).join(", ");
+    const summary = pending.map(a => a.name + (a.orphaned ? " (file deleted)" : "")).join(", ");
     const how = useLLM ? "LLM-drafted prompts" : "descriptions as-is";
     if (!confirm(`Generate ${pending.length} image(s) using ${how}?\n\n${summary}`)) return;
 
@@ -4328,6 +4477,7 @@ Description: {{DESCRIPTION}}`,
       meta.image = newPath;
       meta.imageName = file.name;
       if (this._assetUrlCache) delete this._assetUrlCache[newPath];
+      this.forgetAssetExists(newPath);
       this._lastGenerated = { cat: category, name, path: newPath };
       this.checkpoint();
       this.saveToLocalStorage();
@@ -5000,6 +5150,14 @@ Globals:
 - Missions: Find the Rusty Key
 ---
 
+## Descriptions
+
+### Hero (Character)
+A wiry teenager in a patched green cloak, quick to speak and slow to trust.
+
+### Dark Forest (Location)
+Black pines packed shoulder to shoulder. The canopy swallows the light and the path is more suggestion than trail.
+
 ## Node 1 (Dialogue)
 Title: Scene title
 Location: Dark Forest
@@ -5035,6 +5193,7 @@ False: Node 8
 Rules:
 - Node headings must be "## Node <integer> (Type)" with Type one of Dialogue, Choice, Traversal, Logic. Number nodes sequentially from 1 and never reuse an id.
 - List EVERY character, location, collectible, knowledge flag and mission you use in the Globals block, comma-separated. Omit a line entirely if that category is empty.
+- Descriptions are optional but strongly preferred: one "### Name (Label)" heading per asset, with Label one of Character, Location, Collectible, Knowledge, Mission, followed by free prose until the next heading. The name must match the Globals entry exactly. These feed the image generator, so describe what a character or location looks like, not just who they are.
 - Dialogue: one beat per line in "Name: line" format; lines without a name are narration. Every line of source dialogue must survive into some node.
 - Everything after a "Dialogue:" line is spoken text until a recognized property line (Next, Title, Location, ...) or the next "## Node" heading. Put descriptive properties before "Dialogue:" and "Next:" after it, as shown.
 - Choices are "- [label] -> Node <id>", optionally followed by "(requires: <condition>)" and "(Starts: <Mission Name>)".

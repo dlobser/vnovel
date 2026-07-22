@@ -117,8 +117,8 @@ class StoryPlayer {
 .sp-ending-text { font-family:'EB Garamond',Georgia,serif; font-size:17px; color:#cbd5e1; line-height:1.6; margin-bottom:24px; }
 .sp-ending-actions { display:flex; gap:12px; justify-content:center; }
 
-.sp-char-container { display:flex; justify-content:center; align-items:flex-end; width:min(860px, 92%); height:240px; pointer-events:none; margin-bottom:12px; z-index:5; }
-.sp-char-img { max-height:100%; max-width:33%; object-fit:contain; animation:spSlideUp .4s ease; }
+.sp-char-container { display:flex; justify-content:center; align-items:flex-end; width:min(860px, 92%); height:min(480px, 48vh); pointer-events:none; margin-bottom:12px; z-index:5; }
+.sp-char-img { max-height:100%; max-width:66%; object-fit:contain; animation:spSlideUp .4s ease; }
 @keyframes spSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 `;
 
