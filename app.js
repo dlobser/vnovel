@@ -342,6 +342,143 @@ const VNovelApp = {
     this.checkpoint();
   },
 
+  selectAllNodes() {
+    const all = this.graph._nodes || [];
+    if (!all.length) return;
+    if (this.canvas.selectNodes) this.canvas.selectNodes(all);
+    else {
+      this.canvas.selected_nodes = {};
+      all.forEach(n => { this.canvas.selected_nodes[n.id] = n; });
+    }
+    this.canvas.setDirty(true, true);
+    this.toast(`Selected ${all.length} node${all.length > 1 ? "s" : ""}`);
+  },
+
+  // ================= AUTO-ARRANGE =================
+  //
+  // Layered left-to-right layout over the SELECTED nodes only. Rank = distance
+  // from the flow's start, so columns read as story depth; within a column,
+  // nodes are ordered by the average position of what feeds them, which is the
+  // cheap standard trick for cutting edge crossings.
+  //
+  // Story graphs are not DAGs — hubs get revisited, mazes loop — so ranking uses
+  // bounded relaxation rather than a topological sort, which would not terminate.
+
+  autoArrangeSelection() {
+    const sel = Object.values(this.canvas.selected_nodes || {});
+    if (sel.length < 2) {
+      this.toast("Select at least two nodes to arrange (Ctrl+A selects all).", "warning");
+      return;
+    }
+
+    const inSel = new Map(sel.map(n => [n.id, n]));
+    const succ = new Map(sel.map(n => [n.id, []]));
+    const pred = new Map(sel.map(n => [n.id, []]));
+
+    Object.values(this.graph.links || {}).forEach(l => {
+      if (!l || !inSel.has(l.origin_id) || !inSel.has(l.target_id)) return;
+      if (l.origin_id === l.target_id) return; // self-loop contributes no ordering
+      succ.get(l.origin_id).push(l.target_id);
+      pred.get(l.target_id).push(l.origin_id);
+    });
+
+    // Find back-edges (the ones that close a loop) so ranking can ignore them.
+    // Without this a cycle inflates ranks on every pass and the layout smears
+    // into a diagonal of single-node columns.
+    const backEdges = new Set();
+    const state = new Map(sel.map(n => [n.id, 0])); // 0 unvisited, 1 on stack, 2 done
+    const visit = (id) => {
+      state.set(id, 1);
+      (succ.get(id) || []).forEach(to => {
+        if (state.get(to) === 1) backEdges.add(id + "->" + to);
+        else if (state.get(to) === 0) visit(to);
+      });
+      state.set(id, 2);
+    };
+    sel.forEach(n => { if (state.get(n.id) === 0) visit(n.id); });
+
+    // Rank by longest path over forward edges only; the pass cap is a backstop
+    const rank = new Map(sel.map(n => [n.id, 0]));
+    for (let pass = 0; pass < sel.length; pass++) {
+      let moved = false;
+      succ.forEach((targets, from) => {
+        targets.forEach(to => {
+          if (backEdges.has(from + "->" + to)) return;
+          if (rank.get(to) < rank.get(from) + 1) { rank.set(to, rank.get(from) + 1); moved = true; }
+        });
+      });
+      if (!moved) break;
+    }
+
+    // Compact ranks to 0..n-1. A sparse columns array would leave holes, and
+    // spreading a hole into Math.max yields NaN — which lands every node on the
+    // same coordinate. This is the guarantee that keeps columns dense.
+    const usedRanks = [...new Set(rank.values())].sort((a, b) => a - b);
+    const rankIndex = new Map(usedRanks.map((r, i) => [r, i]));
+
+    // Bucket into columns, seeding order from where the author already had them
+    const columns = usedRanks.map(() => []);
+    sel.forEach(n => columns[rankIndex.get(rank.get(n.id))].push(n));
+    columns.forEach(col => col.sort((a, b) => a.pos[1] - b.pos[1]));
+
+    // Barycentre sweeps: pull each node toward the mean row of its neighbours
+    const indexOf = new Map();
+    const reindex = () => {
+      indexOf.clear();
+      columns.forEach(col => col && col.forEach((n, i) => indexOf.set(n.id, i)));
+    };
+    reindex();
+    const sweep = (neighbours) => {
+      columns.forEach(col => {
+        if (!col) return;
+        const bary = new Map();
+        col.forEach((n, i) => {
+          const ns = (neighbours.get(n.id) || []).filter(id => indexOf.has(id));
+          bary.set(n.id, ns.length ? ns.reduce((s, id) => s + indexOf.get(id), 0) / ns.length : i);
+        });
+        col.sort((a, b) => bary.get(a.id) - bary.get(b.id));
+      });
+      reindex();
+    };
+    for (let i = 0; i < 3; i++) { sweep(pred); sweep(succ); }
+
+    // Keep the arrangement anchored where the selection already was.
+    // num() coerces anything non-finite to a sane default: one bad node size or
+    // position would otherwise poison every coordinate downstream.
+    const num = (v, fallback) => (Number.isFinite(v) ? v : fallback);
+    const nodeW = n => num(n.size && n.size[0], 220);
+    const nodeH = n => num(n.size && n.size[1], 80);
+
+    const originX = num(Math.min(...sel.map(n => num(n.pos[0], 0))), 0);
+    const originY = num(Math.min(...sel.map(n => num(n.pos[1], 0))), 0);
+    const GAP_X = 90, GAP_Y = 40;
+
+    const colHeights = columns.map(col =>
+      col.reduce((s, n) => s + nodeH(n), 0) + GAP_Y * Math.max(0, col.length - 1)
+    );
+    const tallest = colHeights.length ? Math.max(...colHeights) : 0;
+
+    let x = originX;
+    columns.forEach((col, r) => {
+      if (!col.length) return;
+      const colWidth = Math.max(...col.map(nodeW));
+      let y = originY + (tallest - colHeights[r]) / 2; // centre shorter columns
+      col.forEach(n => {
+        n.pos[0] = num(x, originX);
+        n.pos[1] = num(y, originY);
+        y += nodeH(n) + GAP_Y;
+      });
+      x += colWidth + GAP_X;
+    });
+
+    this.graph.setDirtyCanvas(true, true);
+    this.canvas.setDirty(true, true);
+    this.checkpoint(); // one undo step for the whole arrangement
+    this.saveToLocalStorage();
+    const cols = columns.filter(c => c && c.length).length;
+    this.toast(`Arranged ${sel.length} nodes into ${cols} column${cols > 1 ? "s" : ""} (Ctrl+Z to undo)`, "success");
+  },
+
   duplicateSelection() {
     const sel = Object.values(this.canvas.selected_nodes || {});
     sel.forEach(n => this.duplicateNode(n));
@@ -1974,6 +2111,10 @@ const VNovelApp = {
               ${this.globalVars.missions.map(m => `<option value="${this.escapeHtml(m)}" ${choice.mission === m ? "selected" : ""}>${this.escapeHtml(m)}</option>`).join("")}
             </select>
           </div>
+          <label style="display:flex; align-items:center; gap:7px; font-size:11px; cursor:pointer; font-weight:400;">
+            <input type="checkbox" class="c-once" ${choice.once ? "checked" : ""} style="margin:0;">
+            Once only &mdash; hide this option after it's been taken
+          </label>
         `;
         this.bindLive(row.querySelector(".c-label"), node, el => {
           choice.text = el.value;
@@ -1981,6 +2122,7 @@ const VNovelApp = {
         });
         this.bindLive(row.querySelector(".c-cond"), node, el => { choice.condition = el.value; });
         this.bindLive(row.querySelector(".c-mission"), node, el => { choice.mission = el.value; }, "change");
+        this.bindLive(row.querySelector(".c-once"), node, el => { choice.once = el.checked; }, "change");
         row.querySelector(".row-delete-btn").onclick = () => {
           p.choices.splice(idx, 1);
           node.updateChoiceOutputs();
@@ -1995,7 +2137,7 @@ const VNovelApp = {
     renderChoicesRows();
 
     form.querySelector("#btn_add_choice_item").onclick = () => {
-      p.choices.push({ text: "New Option", condition: "", mission: "" });
+      p.choices.push({ text: "New Option", condition: "", mission: "", once: false });
       node.updateChoiceOutputs();
       node.setDirtyCanvas(true, true);
       this.schedulePersist();
@@ -2778,7 +2920,8 @@ ${scriptClose}
           const targetStr = targetId != null ? ` -> Node ${targetId}` : "";
           const condStr = c.condition ? ` (requires: ${c.condition})` : "";
           const missionStr = c.mission ? ` (Starts: ${c.mission})` : "";
-          md += `- [${c.text}]${targetStr}${condStr}${missionStr}\n`;
+          const onceStr = c.once ? " (once)" : "";
+          md += `- [${c.text}]${targetStr}${condStr}${missionStr}${onceStr}\n`;
         });
       } else if (type === "traversal") {
         if (p.targetAccumulation) md += `Target: ${p.targetAccumulation}\n`;
@@ -3088,8 +3231,11 @@ ${scriptClose}
               mission = startMatch[1].trim();
             }
 
+            const once = /\(\s*once\s*\)/i.test(extra);
+
             const choiceObj = {
               text: cText,
+              once: once,
               condition: condition,
               mission: mission
             };
@@ -4379,6 +4525,11 @@ Description: {{DESCRIPTION}}`,
       document.getElementById("cutout_tol_label").textContent = tol.value;
       this.applyCutout();
     });
+    const grow = document.getElementById("cutout_grow");
+    grow.addEventListener("input", () => {
+      document.getElementById("cutout_grow_label").textContent = grow.value + " px";
+      this.applyCutout();
+    });
     document.getElementById("cutout_from_edges").addEventListener("change", () => this.applyCutout());
     document.getElementById("btn_cutout_reset").addEventListener("click", () => {
       if (!this._cutout) return;
@@ -4390,6 +4541,44 @@ Description: {{DESCRIPTION}}`,
 
   // Flood fill from the image edges (or globally) making every pixel within
   // tolerance of a sampled colour transparent.
+  // Grows a binary mask outward by `radius` pixels using a 3-4 chamfer distance
+  // transform: two passes over the image regardless of radius, and the spread is
+  // near-circular. Repeated neighbour dilation would cost radius × passes and
+  // leave visible diamond corners on the grown edge.
+  growMask(mask, w, h, radius) {
+    const INF = 1 << 28;
+    const dist = new Int32Array(w * h);
+    for (let i = 0; i < mask.length; i++) dist[i] = mask[i] ? 0 : INF;
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        let d = dist[i];
+        if (x > 0) d = Math.min(d, dist[i - 1] + 3);
+        if (y > 0) d = Math.min(d, dist[i - w] + 3);
+        if (x > 0 && y > 0) d = Math.min(d, dist[i - w - 1] + 4);
+        if (x < w - 1 && y > 0) d = Math.min(d, dist[i - w + 1] + 4);
+        dist[i] = d;
+      }
+    }
+    for (let y = h - 1; y >= 0; y--) {
+      for (let x = w - 1; x >= 0; x--) {
+        const i = y * w + x;
+        let d = dist[i];
+        if (x < w - 1) d = Math.min(d, dist[i + 1] + 3);
+        if (y < h - 1) d = Math.min(d, dist[i + w] + 3);
+        if (x < w - 1 && y < h - 1) d = Math.min(d, dist[i + w + 1] + 4);
+        if (x > 0 && y < h - 1) d = Math.min(d, dist[i + w - 1] + 4);
+        dist[i] = d;
+      }
+    }
+
+    const limit = radius * 3; // 3 units per pixel step in the 3-4 metric
+    for (let i = 0; i < mask.length; i++) {
+      if (dist[i] <= limit) mask[i] = 1;
+    }
+  },
+
   applyCutout() {
     if (!this._cutout) return;
     const canvas = document.getElementById("cutout_canvas");
@@ -4422,7 +4611,10 @@ Description: {{DESCRIPTION}}`,
       return false;
     };
 
-    let cleared = 0;
+    // Build the removal mask first, then optionally grow it — expanding a mask
+    // is a separate step from deciding what matched, which is what lets a tight
+    // tolerance stay tight while the cut still reaches past the colour fringe.
+    const removed = new Uint8Array(w * h);
 
     if (edgesOnly) {
       // Queue-based flood fill seeded from every border pixel
@@ -4435,10 +4627,8 @@ Description: {{DESCRIPTION}}`,
         const p = queue.pop();
         if (visited[p]) continue;
         visited[p] = 1;
-        const idx = p * 4;
-        if (!matches(idx)) continue;
-        out.data[idx + 3] = 0;
-        cleared++;
+        if (!matches(p * 4)) continue;
+        removed[p] = 1;
         const x = p % w, y = (p / w) | 0;
         if (x > 0) queue.push(p - 1);
         if (x < w - 1) queue.push(p + 1);
@@ -4447,16 +4637,25 @@ Description: {{DESCRIPTION}}`,
       }
     } else {
       for (let p = 0; p < w * h; p++) {
-        const idx = p * 4;
-        if (matches(idx)) { out.data[idx + 3] = 0; cleared++; }
+        if (matches(p * 4)) removed[p] = 1;
       }
+    }
+
+    const keyed = removed.reduce((s, v) => s + v, 0);
+    const grow = parseInt(document.getElementById("cutout_grow").value, 10) || 0;
+    if (grow > 0 && keyed) this.growMask(removed, w, h, grow);
+
+    let cleared = 0;
+    for (let p = 0; p < w * h; p++) {
+      if (removed[p]) { out.data[p * 4 + 3] = 0; cleared++; }
     }
 
     ctx.putImageData(out, 0, 0);
     this._cutout.result = out;
     const pct = ((cleared / (w * h)) * 100).toFixed(1);
+    const growNote = grow > 0 ? ` · keyed ${keyed.toLocaleString()} + expanded ${(cleared - keyed).toLocaleString()}` : "";
     document.getElementById("cutout_status").textContent =
-      `${samples.length} sample(s) · ${cleared.toLocaleString()} pixels transparent (${pct}%)`;
+      `${samples.length} sample(s) · ${cleared.toLocaleString()} pixels transparent (${pct}%)${growNote}`;
   },
 
   async saveCutout() {
@@ -5043,6 +5242,13 @@ Description: {{DESCRIPTION}}`,
         }
         if (node.type === "vnovel/choice") {
           (node.properties.choices || []).forEach((c, i) => checkCondition(c.condition, `Choice Node #${node.id} option ${i + 1}`));
+          const opts = node.properties.choices || [];
+          if (opts.length && opts.every(c => c.once)) {
+            issues.push({
+              level: 'warning',
+              msg: `Choice Node #${node.id}: every option is "once only", so returning here after taking them all would leave nothing to click. The player falls back to showing them again — add one repeatable option (e.g. "Leave") to control the exit.`
+            });
+          }
         }
       });
 
@@ -5755,6 +5961,7 @@ ${content}`;
     on("btn_save_item_info", () => this.saveItemModal());
 
     // Undo / redo buttons on the palette
+    on("btn_auto_arrange", () => this.autoArrangeSelection());
     on("btn_undo", () => this.undo());
     on("btn_redo", () => this.redo());
 
@@ -5856,6 +6063,9 @@ ${content}`;
       } else if (ctrl && key === "d") {
         e.preventDefault();
         this.duplicateSelection();
+      } else if (ctrl && key === "a") {
+        e.preventDefault();
+        this.selectAllNodes();
       }
     });
 

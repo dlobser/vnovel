@@ -165,7 +165,9 @@ class StoryPlayer {
       knowledge: startState && startState.knowledge ? new Set(startState.knowledge) : new Set(),
       missions: startState && startState.missions ? new Map(Object.entries(startState.missions)) : new Map(),
       diary: [],
-      scores: {}
+      scores: {},
+      // "node:index" for each once-only option already taken this run
+      spentChoices: new Set()
     };
     if (startState) {
       if (startState.inventory && startState.inventory.length) {
@@ -440,13 +442,25 @@ class StoryPlayer {
     if (p.audioOneShot) this._playOneShot(p.audioOneShot);
 
     const choices = p.choices || [];
+    const nodeKey = this._currentId;
+
+    // Once-only options vanish after they've been taken. If that would leave
+    // nothing to click, show them anyway — a blank choice screen is an
+    // unrecoverable soft-lock, and a repeated option is the lesser evil.
+    let shown = choices
+      .map((c, i) => ({ c, i }))
+      .filter(({ c, i }) => !(c.once && this.state.spentChoices.has(nodeKey + ":" + i)));
+    if (shown.length === 0 && choices.length > 0) {
+      shown = choices.map((c, i) => ({ c, i }));
+    }
+
     let html = `
       <div class="sp-dialogue" style="cursor:default; min-height:auto;">
         <div class="sp-speaker" style="color:#94a3b8;">Narrator</div>
         <div class="sp-text">${this._richText(p.title || "What will you do?")}</div>
       </div>
       <div class="sp-choices">`;
-    choices.forEach((c, i) => {
+    shown.forEach(({ c, i }) => {
       const ok = this._evalCond(c.condition);
       const missionBadge = c.mission ? `<span class="sp-choice-mission">&#9873; ${this._esc(c.mission)}</span>` : "";
       if (ok) {
@@ -461,6 +475,7 @@ class StoryPlayer {
       btn.onclick = () => {
         const i = parseInt(btn.dataset.i, 10);
         const choice = choices[i];
+        if (choice.once) this.state.spentChoices.add(nodeKey + ":" + i);
         if (choice.mission) this._acceptMission(choice.mission);
         this._updateHUD();
         this._goto(this._out(node, i));

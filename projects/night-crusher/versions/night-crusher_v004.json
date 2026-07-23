@@ -4,6 +4,96 @@
     "last_link_id": 112,
     "nodes": [
       {
+        "id": 2,
+        "type": "vnovel/choice",
+        "pos": [
+          430,
+          435
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 1,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 19
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Examine the strange sigil carved by the window",
+            "type": -1,
+            "links": [
+              2
+            ],
+            "label": "Examine the stran..."
+          },
+          {
+            "name": "Search the desk drawer",
+            "type": -1,
+            "links": [
+              3
+            ],
+            "label": "Search the desk d..."
+          },
+          {
+            "name": "Look at the framed photograph on the dresser",
+            "type": -1,
+            "links": [
+              4
+            ],
+            "label": "Look at the frame..."
+          },
+          {
+            "name": "Go downstairs",
+            "type": -1,
+            "links": [
+              5
+            ],
+            "label": "Go downstairs"
+          }
+        ],
+        "title": "Bedroom Preparations",
+        "properties": {
+          "title": "Bedroom Preparations",
+          "location": "Kid's Bedroom",
+          "background": "assets/backgrounds/kid-s-bedroom-4.png",
+          "backgroundName": "kid-s-bedroom.png",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Examine the strange sigil carved by the window",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Search the desk drawer",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Look at the framed photograph on the dresser",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Go downstairs",
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
         "id": 4,
         "type": "vnovel/passthrough",
         "pos": [
@@ -101,6 +191,83 @@
           "startMission": "",
           "completeMission": "",
           "isChapterStart": false
+        }
+      },
+      {
+        "id": 6,
+        "type": "vnovel/choice",
+        "pos": [
+          760,
+          660
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 5,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 100
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Speak to Father in the kitchen",
+            "type": -1,
+            "links": [
+              9
+            ],
+            "label": "Speak to Father i..."
+          },
+          {
+            "name": "Examine Father's study door",
+            "type": -1,
+            "links": [
+              10
+            ],
+            "label": "Examine Father's ..."
+          },
+          {
+            "name": "Head down the hallway toward the porch",
+            "type": -1,
+            "links": [
+              11
+            ],
+            "label": "Head down the hal..."
+          }
+        ],
+        "title": "Exploring the House Hub",
+        "properties": {
+          "title": "Exploring the House Hub",
+          "location": "Kitchen & Parlor",
+          "background": "assets/backgrounds/kitchen-parlor.png",
+          "backgroundName": "kitchen-parlor.png",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Speak to Father in the kitchen",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Examine Father's study door",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Head down the hallway toward the porch",
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
         }
       },
       {
@@ -2317,6 +2484,294 @@
         }
       },
       {
+        "id": 48,
+        "type": "vnovel/passthrough",
+        "pos": [
+          11074.399993896484,
+          435
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 55,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 83
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              80
+            ]
+          }
+        ],
+        "title": "The Caverns",
+        "properties": {
+          "title": "The Caverns",
+          "location": "Subterranean Cavern Tunnels",
+          "charactersPresent": "",
+          "text": "Narrator: Stone steps, cut by hand, worn in the middle by more feet than this family has ever had.\nNarrator: The walls change as you go — soil, then root, then soil packed around brass gears gone green, fossilized into the earth at angles no one installed them at.\nNarrator: The gears are older than the factory. The factory was built on top of them. Somebody found this and put a slaughterhouse over it to have a reason to be here.\nNarrator: At the bottom: an iron door, and on it the scales, hanging upside down.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "assets/backgrounds/subterranean-cavern-tunnels.png",
+          "backgroundName": "subterranean-cavern-tunnels.png",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 49,
+        "type": "vnovel/choice",
+        "pos": [
+          10744.399993896484,
+          435
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 56,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 79
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Put the black knife into the Effigy's core",
+            "type": -1,
+            "links": [
+              81
+            ],
+            "label": "Put the black kni..."
+          },
+          {
+            "name": "Lie down on the altar",
+            "type": -1,
+            "links": [
+              82
+            ],
+            "label": "Lie down on the a..."
+          },
+          {
+            "name": "Take the drainage pipe down instead",
+            "type": -1,
+            "links": [
+              83
+            ],
+            "label": "Take the drainage..."
+          }
+        ],
+        "title": "At the Altar",
+        "properties": {
+          "title": "At the Altar",
+          "location": "Effigy Altar Chamber",
+          "background": "assets/backgrounds/effigy-altar-chamber.png",
+          "backgroundName": "effigy-altar-chamber.png",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Put the black knife into the Effigy's core",
+              "condition": "has_item('obsidian_dagger')",
+              "mission": ""
+            },
+            {
+              "text": "Lie down on the altar",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Take the drainage pipe down instead",
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 50,
+        "type": "vnovel/passthrough",
+        "pos": [
+          11404.399993896484,
+          435
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 57,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 80
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              84
+            ]
+          }
+        ],
+        "title": "Grandfather Wieland",
+        "properties": {
+          "title": "Grandfather Wieland",
+          "location": "Wieland Core Chamber",
+          "charactersPresent": "",
+          "text": "Narrator: The chamber is root and stone and a low flame burning in a stone cup, burning without fuel, burning the colour of a held breath.\nNarrator: Grandfather Wieland is in the wall. Grown into it — root through the ribs, soil to the shoulder, only the face and one hand still free of it. He has been here a long time and he is not dead.\nGrandfather Wieland: Jakob. You've got his walk.\nJakob: You're supposed to be buried out by the fence.\nGrandfather Wieland: I am. Both things are true. That's the trouble with this house.\nNarrator: The free hand opens. In it is something that beats — small, warm, and yours in a way you can feel from across the room.\nGrandfather Wieland: Take it. I held it for you as long as I could, and I am nearly all root now.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "assets/backgrounds/wieland-core-chamber.png",
+          "backgroundName": "wieland-core-chamber.png",
+          "showCharacterImages": true,
+          "rewardItems": "effigy_heart",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 51,
+        "type": "vnovel/choice",
+        "pos": [
+          11734.399993896484,
+          435
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 60,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 84
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Ask him what Father actually wants",
+            "type": -1,
+            "links": [
+              85
+            ],
+            "label": "Ask him what Fath..."
+          },
+          {
+            "name": "Say nothing and go to the flame",
+            "type": -1,
+            "links": [
+              86
+            ],
+            "label": "Say nothing and g..."
+          }
+        ],
+        "title": "In the Core Chamber",
+        "properties": {
+          "title": "In the Core Chamber",
+          "location": "Wieland Core Chamber",
+          "background": "assets/backgrounds/wieland-core-chamber.png",
+          "backgroundName": "wieland-core-chamber.png",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Ask him what Father actually wants",
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Say nothing and go to the flame",
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 52,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          12394.399993896484,
+          450
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 63,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 106
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              87
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              88
+            ]
+          }
+        ],
+        "title": "Vision Check - Corrupted?",
+        "properties": {
+          "title": "Vision Check - Corrupted?",
+          "condition": "has_knowledge('symbol_corruption')",
+          "location": "Wieland Core Chamber",
+          "text": "",
+          "background": "assets/backgrounds/wieland-core-chamber.png",
+          "backgroundName": "wieland-core-chamber.png"
+        }
+      },
+      {
         "id": 53,
         "type": "vnovel/choice",
         "pos": [
@@ -2869,6 +3324,53 @@
         }
       },
       {
+        "id": 64,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          12704.399993896484,
+          450
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 64,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 87
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              102
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              103
+            ]
+          }
+        ],
+        "title": "Vision Check - Cleansed?",
+        "properties": {
+          "title": "Vision Check - Cleansed?",
+          "condition": "has_knowledge('eye_cleansing_ritual')",
+          "location": "Wieland Core Chamber",
+          "text": "",
+          "background": "assets/backgrounds/wieland-core-chamber.png",
+          "backgroundName": "wieland-core-chamber.png"
+        }
+      },
+      {
         "id": 65,
         "type": "vnovel/passthrough",
         "pos": [
@@ -2963,6 +3465,56 @@
           "showCharacterImages": true,
           "rewardItems": "",
           "rewardKnowledge": "tobin_patrol_pattern",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 67,
+        "type": "vnovel/passthrough",
+        "pos": [
+          12064.399993896484,
+          435
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 62,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 85
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              106
+            ]
+          }
+        ],
+        "title": "What Father Wants",
+        "properties": {
+          "title": "What Father Wants",
+          "location": "Wieland Core Chamber",
+          "charactersPresent": "",
+          "text": "Jakob: He said you'd tell it straighter.\nGrandfather Wieland: I'll tell it short, which is the same thing down here.\nGrandfather Wieland: There was no drought. There was a bargain, and the price of it was the rain, and your father paid the rain because it wasn't his to keep and he wanted what came after.\nJakob: The dust is his?\nGrandfather Wieland: The dust is the cost of the thing he's building. Ten years of it. Every field, every child that left, every face in that town that went back to being his because there was nothing left to keep it its own.\nGrandfather Wieland: He isn't trying to escape this place, boy. He's trying to become it.\nNarrator: The old man's eye moves to the flame in the stone cup, and back to you.\nGrandfather Wieland: And he can't finish without you handing it over yourself. That is the one thing in all of it he never worked out how to fake.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "assets/backgrounds/wieland-core-chamber.png",
+          "backgroundName": "wieland-core-chamber.png",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "father_apotheosis_truth",
           "startMission": "",
           "completeMission": "",
           "isChapterStart": false
@@ -3131,6 +3683,56 @@
           "text": "",
           "background": "assets/backgrounds/small-town-square.png",
           "backgroundName": "small-town-square.png"
+        }
+      },
+      {
+        "id": 1,
+        "type": "vnovel/passthrough",
+        "pos": [
+          100,
+          431.5
+        ],
+        "size": [
+          240,
+          117
+        ],
+        "flags": {},
+        "order": 0,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": null
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              1
+            ]
+          }
+        ],
+        "title": "Waking in the Dust Bed",
+        "properties": {
+          "title": "Waking in the Dust Bed",
+          "location": "Kid's Bedroom",
+          "charactersPresent": "",
+          "text": "Narrator: Morning light comes through the cracked panes in long yellow bars, and the dust turns over inside them like something breathing.\nNarrator: From the kitchen below: warm bread, and Father's slow footfalls crossing and recrossing the same three boards.\nFather: Jakob? You awake up there? Wind's quiet this morning.\nJakob: I'm up.\nFather: Good boy. Before you eat — your brother left the brass radio out in the corn last night. Go bring it in for me.\nFather: Stay on the path. The fog sits low near the tree line, and it does something to a boy's sense of direction.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "assets/backgrounds/kid-s-bedroom-4.png",
+          "backgroundName": "kid-s-bedroom.png",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "Errand 1: Find Brother's Radio",
+          "completeMission": "",
+          "isChapterStart": false
         }
       },
       {
@@ -3330,611 +3932,6 @@
           "rewardKnowledge": "",
           "startMission": "",
           "completeMission": "Errand 2: Search Grandfather's Cellar",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 49,
-        "type": "vnovel/choice",
-        "pos": [
-          10771,
-          296
-        ],
-        "size": {
-          "0": 240,
-          "1": 110
-        },
-        "flags": {},
-        "order": 56,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 79
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Put the black knife into the Effigy's core",
-            "type": -1,
-            "links": [
-              81
-            ],
-            "label": "Put the black kni..."
-          },
-          {
-            "name": "Lie down on the altar",
-            "type": -1,
-            "links": [
-              82
-            ],
-            "label": "Lie down on the a..."
-          },
-          {
-            "name": "Take the drainage pipe down instead",
-            "type": -1,
-            "links": [
-              83
-            ],
-            "label": "Take the drainage..."
-          }
-        ],
-        "title": "At the Altar",
-        "properties": {
-          "title": "At the Altar",
-          "location": "Effigy Altar Chamber",
-          "background": "assets/backgrounds/effigy-altar-chamber.png",
-          "backgroundName": "effigy-altar-chamber.png",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "choices": [
-            {
-              "text": "Put the black knife into the Effigy's core",
-              "condition": "has_item('obsidian_dagger')",
-              "mission": ""
-            },
-            {
-              "text": "Lie down on the altar",
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "Take the drainage pipe down instead",
-              "condition": "",
-              "mission": ""
-            }
-          ],
-          "text": ""
-        }
-      },
-      {
-        "id": 48,
-        "type": "vnovel/passthrough",
-        "pos": [
-          11077,
-          503
-        ],
-        "size": [
-          240,
-          110
-        ],
-        "flags": {},
-        "order": 55,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 83
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": [
-              80
-            ]
-          }
-        ],
-        "title": "The Caverns",
-        "properties": {
-          "title": "The Caverns",
-          "location": "Subterranean Cavern Tunnels",
-          "charactersPresent": "",
-          "text": "Narrator: Stone steps, cut by hand, worn in the middle by more feet than this family has ever had.\nNarrator: The walls change as you go — soil, then root, then soil packed around brass gears gone green, fossilized into the earth at angles no one installed them at.\nNarrator: The gears are older than the factory. The factory was built on top of them. Somebody found this and put a slaughterhouse over it to have a reason to be here.\nNarrator: At the bottom: an iron door, and on it the scales, hanging upside down.",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "assets/backgrounds/subterranean-cavern-tunnels.png",
-          "backgroundName": "subterranean-cavern-tunnels.png",
-          "showCharacterImages": true,
-          "rewardItems": "",
-          "rewardKnowledge": "",
-          "startMission": "",
-          "completeMission": "",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 50,
-        "type": "vnovel/passthrough",
-        "pos": [
-          11415,
-          493
-        ],
-        "size": [
-          240,
-          110
-        ],
-        "flags": {},
-        "order": 57,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 80
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": [
-              84
-            ]
-          }
-        ],
-        "title": "Grandfather Wieland",
-        "properties": {
-          "title": "Grandfather Wieland",
-          "location": "Wieland Core Chamber",
-          "charactersPresent": "",
-          "text": "Narrator: The chamber is root and stone and a low flame burning in a stone cup, burning without fuel, burning the colour of a held breath.\nNarrator: Grandfather Wieland is in the wall. Grown into it — root through the ribs, soil to the shoulder, only the face and one hand still free of it. He has been here a long time and he is not dead.\nGrandfather Wieland: Jakob. You've got his walk.\nJakob: You're supposed to be buried out by the fence.\nGrandfather Wieland: I am. Both things are true. That's the trouble with this house.\nNarrator: The free hand opens. In it is something that beats — small, warm, and yours in a way you can feel from across the room.\nGrandfather Wieland: Take it. I held it for you as long as I could, and I am nearly all root now.",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "assets/backgrounds/wieland-core-chamber.png",
-          "backgroundName": "wieland-core-chamber.png",
-          "showCharacterImages": true,
-          "rewardItems": "effigy_heart",
-          "rewardKnowledge": "",
-          "startMission": "",
-          "completeMission": "",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 51,
-        "type": "vnovel/choice",
-        "pos": [
-          11737,
-          511
-        ],
-        "size": {
-          "0": 240,
-          "1": 110
-        },
-        "flags": {},
-        "order": 60,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 84
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Ask him what Father actually wants",
-            "type": -1,
-            "links": [
-              85
-            ],
-            "label": "Ask him what Fath..."
-          },
-          {
-            "name": "Say nothing and go to the flame",
-            "type": -1,
-            "links": [
-              86
-            ],
-            "label": "Say nothing and g..."
-          }
-        ],
-        "title": "In the Core Chamber",
-        "properties": {
-          "title": "In the Core Chamber",
-          "location": "Wieland Core Chamber",
-          "background": "assets/backgrounds/wieland-core-chamber.png",
-          "backgroundName": "wieland-core-chamber.png",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "choices": [
-            {
-              "text": "Ask him what Father actually wants",
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "Say nothing and go to the flame",
-              "condition": "",
-              "mission": ""
-            }
-          ],
-          "text": ""
-        }
-      },
-      {
-        "id": 64,
-        "type": "vnovel/logic_gate",
-        "pos": [
-          12699,
-          503
-        ],
-        "size": [
-          220,
-          80
-        ],
-        "flags": {},
-        "order": 64,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 87
-          }
-        ],
-        "outputs": [
-          {
-            "name": "True Path",
-            "type": -1,
-            "links": [
-              102
-            ]
-          },
-          {
-            "name": "False Path",
-            "type": -1,
-            "links": [
-              103
-            ]
-          }
-        ],
-        "title": "Vision Check - Cleansed?",
-        "properties": {
-          "title": "Vision Check - Cleansed?",
-          "condition": "has_knowledge('eye_cleansing_ritual')",
-          "location": "Wieland Core Chamber",
-          "text": "",
-          "background": "assets/backgrounds/wieland-core-chamber.png",
-          "backgroundName": "wieland-core-chamber.png"
-        }
-      },
-      {
-        "id": 52,
-        "type": "vnovel/logic_gate",
-        "pos": [
-          12374,
-          397
-        ],
-        "size": [
-          220,
-          80
-        ],
-        "flags": {},
-        "order": 63,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 106
-          }
-        ],
-        "outputs": [
-          {
-            "name": "True Path",
-            "type": -1,
-            "links": [
-              87
-            ]
-          },
-          {
-            "name": "False Path",
-            "type": -1,
-            "links": [
-              88
-            ]
-          }
-        ],
-        "title": "Vision Check - Corrupted?",
-        "properties": {
-          "title": "Vision Check - Corrupted?",
-          "condition": "has_knowledge('symbol_corruption')",
-          "location": "Wieland Core Chamber",
-          "text": "",
-          "background": "assets/backgrounds/wieland-core-chamber.png",
-          "backgroundName": "wieland-core-chamber.png"
-        }
-      },
-      {
-        "id": 67,
-        "type": "vnovel/passthrough",
-        "pos": [
-          12080,
-          530
-        ],
-        "size": [
-          240,
-          110
-        ],
-        "flags": {},
-        "order": 62,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 85
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": [
-              106
-            ]
-          }
-        ],
-        "title": "What Father Wants",
-        "properties": {
-          "title": "What Father Wants",
-          "location": "Wieland Core Chamber",
-          "charactersPresent": "",
-          "text": "Jakob: He said you'd tell it straighter.\nGrandfather Wieland: I'll tell it short, which is the same thing down here.\nGrandfather Wieland: There was no drought. There was a bargain, and the price of it was the rain, and your father paid the rain because it wasn't his to keep and he wanted what came after.\nJakob: The dust is his?\nGrandfather Wieland: The dust is the cost of the thing he's building. Ten years of it. Every field, every child that left, every face in that town that went back to being his because there was nothing left to keep it its own.\nGrandfather Wieland: He isn't trying to escape this place, boy. He's trying to become it.\nNarrator: The old man's eye moves to the flame in the stone cup, and back to you.\nGrandfather Wieland: And he can't finish without you handing it over yourself. That is the one thing in all of it he never worked out how to fake.",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "assets/backgrounds/wieland-core-chamber.png",
-          "backgroundName": "wieland-core-chamber.png",
-          "showCharacterImages": true,
-          "rewardItems": "",
-          "rewardKnowledge": "father_apotheosis_truth",
-          "startMission": "",
-          "completeMission": "",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 6,
-        "type": "vnovel/choice",
-        "pos": [
-          3028,
-          716
-        ],
-        "size": {
-          "0": 240,
-          "1": 110
-        },
-        "flags": {},
-        "order": 5,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 100
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Speak to Father in the kitchen",
-            "type": -1,
-            "links": [
-              9
-            ],
-            "label": "Speak to Father i..."
-          },
-          {
-            "name": "Examine Father's study door",
-            "type": -1,
-            "links": [
-              10
-            ],
-            "label": "Examine Father's ..."
-          },
-          {
-            "name": "Head down the hallway toward the porch",
-            "type": -1,
-            "links": [
-              11
-            ],
-            "label": "Head down the hal..."
-          }
-        ],
-        "title": "Exploring the House Hub",
-        "properties": {
-          "title": "Exploring the House Hub",
-          "location": "Kitchen & Parlor",
-          "background": "assets/backgrounds/kitchen-parlor.png",
-          "backgroundName": "kitchen-parlor.png",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "choices": [
-            {
-              "text": "Speak to Father in the kitchen",
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "Examine Father's study door",
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "Head down the hallway toward the porch",
-              "condition": "",
-              "mission": ""
-            }
-          ],
-          "text": ""
-        }
-      },
-      {
-        "id": 2,
-        "type": "vnovel/choice",
-        "pos": [
-          430,
-          435
-        ],
-        "size": {
-          "0": 240,
-          "1": 110
-        },
-        "flags": {},
-        "order": 1,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 19
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Examine the strange sigil carved by the window",
-            "type": -1,
-            "links": [
-              2
-            ],
-            "label": "Examine the stran..."
-          },
-          {
-            "name": "Search the desk drawer",
-            "type": -1,
-            "links": [
-              3
-            ],
-            "label": "Search the desk d..."
-          },
-          {
-            "name": "Look at the framed photograph on the dresser",
-            "type": -1,
-            "links": [
-              4
-            ],
-            "label": "Look at the frame..."
-          },
-          {
-            "name": "Go downstairs",
-            "type": -1,
-            "links": [
-              5
-            ],
-            "label": "Go downstairs"
-          }
-        ],
-        "title": "Bedroom Preparations",
-        "properties": {
-          "title": "Bedroom Preparations",
-          "location": "Kid's Bedroom",
-          "background": "assets/backgrounds/kid-s-bedroom-4.png",
-          "backgroundName": "kid-s-bedroom.png",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "choices": [
-            {
-              "text": "Examine the strange sigil carved by the window",
-              "condition": "",
-              "mission": "",
-              "once": true
-            },
-            {
-              "text": "Search the desk drawer",
-              "condition": "",
-              "mission": "",
-              "once": true
-            },
-            {
-              "text": "Look at the framed photograph on the dresser",
-              "condition": "",
-              "mission": "",
-              "once": true
-            },
-            {
-              "text": "Go downstairs",
-              "condition": "",
-              "mission": ""
-            }
-          ],
-          "text": ""
-        }
-      },
-      {
-        "id": 1,
-        "type": "vnovel/passthrough",
-        "pos": [
-          100,
-          432
-        ],
-        "size": [
-          240,
-          117
-        ],
-        "flags": {},
-        "order": 0,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": null
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": [
-              1
-            ]
-          }
-        ],
-        "title": "Waking in the Dust Bed",
-        "properties": {
-          "title": "Waking in the Dust Bed",
-          "location": "Kid's Bedroom",
-          "charactersPresent": "",
-          "text": "Narrator: Morning light comes through the cracked panes in long yellow bars, and the dust turns over inside them like something breathing.\nNarrator: From the kitchen below: warm bread, and Father's slow footfalls crossing and recrossing the same three boards.\nFather: Jakob? You awake up there? Wind's quiet this morning.\nJakob: I'm up.\nFather: Good boy. Before you eat — your brother left the brass radio out in the corn last night. Go bring it in for me.\nFather: Stay on the path. The fog sits low near the tree line, and it does something to a boy's sense of direction.",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "assets/backgrounds/kid-s-bedroom-4.png",
-          "backgroundName": "kid-s-bedroom.png",
-          "showCharacterImages": true,
-          "rewardItems": "",
-          "rewardKnowledge": "",
-          "startMission": "Errand 1: Find Brother's Radio",
-          "completeMission": "",
           "isChapterStart": false
         }
       }
@@ -4908,12 +4905,12 @@
     "characters": {
       "Jakob": {
         "info": "A boy of about ten, narrow through the shoulders, in hand-me-down denim overalls a size too big with the cuffs rolled twice. Home-cut dark hair, uneven over the ears. Sunburnt neck; dust worked into the creases of his knuckles and the seams of his boots. He watches more than he speaks, and he has the particular stillness of a child who has learned that questions have a cost. 1930s Dust Bowl, muted ochre and bone-grey palette, hard low sunlight.",
-        "image": "assets/characters/jakob-5-cutout-2.png",
+        "image": "assets/characters/jakob-5-cutout.png",
         "imageName": "jakob-5-cutout.png"
       },
       "Father": {
         "info": "A lean, close-shaved man in his mid-forties, tall enough to stoop in his own doorways. Collarless work shirt buttoned to the throat, sleeves rolled to the elbow, forearms roped from field work. Sandy hair greying at the temples, deep-set pale eyes, a mouth that rests in something close to kindness. Nothing about him reads as a threat, and that is the point: his warmth is genuine rather than a mask, which is what makes what he is building unbearable. He is the reference face for the Store Clerk, the Town Constable and the Sitting Woman — generate him first and reuse him. If you want his arc on his face, regenerate per chapter: rested and steady at Errand 1, sleepless and glassy by Errand 3, gold-lit and hollowed out at Errand 5.",
-        "image": "assets/characters/father-cutout-2.png",
+        "image": "assets/characters/father-cutout.png",
         "imageName": "father-cutout.png"
       },
       "Tobin": {
