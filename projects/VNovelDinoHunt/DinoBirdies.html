@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freya and the Comet Birdies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; height:100%; background:#05060a; overflow:hidden; }
+  #story_root { position:fixed; inset:0; }
+</style>
+</head>
+<body>
+<div id="story_root"></div>
+<script>
+var STORY = {"title":"Freya and the Comet Birdies","entry":1,"vars":{"characters":["Freya","Plesiosaur","Mosasaur","Triceratops","Velociraptors","Parasaurolophus","T-Rex","Pterodactyls","Comet Birds"],"locations":["St. John Beach","Caribbean Sea","Deep Jungle","Jungle Clearing","Comet Sky","Future Earth","Cruz Bay"],"collectibles":["magic_bird_device","seashell_necklace","glowing_feather"],"knowledge":["knows_comet_is_coming","knows_dinosaurs_can_fly","tried_bbq_in_cruz_bay"],"missions":["Find the Dinosaurs","Save the Dinosaurs","Join the Birdie Dance Party"]},"varMeta":{"characters":{"Freya":{"info":"A cheerful four-year-old girl on vacation in the Virgin Islands, wearing a colorful swimsuit, sun hat, and tiny backpack. She carries a mysterious glowing device that can transform dinosaurs into friendly birdies.","image":"assets/characters/freya-3-cutout.png","imageName":"freya-3-cutout.png"},"Plesiosaur":{"info":"A huge friendly sea dinosaur with a long neck, gentle eyes, flippers, and smooth blue-green skin. It loves splashing and playing in the warm Caribbean water."},"Mosasaur":{"info":"A gigantic but friendly marine dinosaur with a broad toothy grin, dark blue scales, and a powerful tail. Despite its enormous size, it behaves like a playful puppy around Freya."},"Triceratops":{"info":"A chunky, friendly Triceratops with three rounded horns, a big frill, sturdy legs, and a curious expression. It enjoys eating tropical leaves."},"Velociraptors":{"info":"A group of small, energetic Velociraptors with colorful feathers, oversized curious eyes, and playful personalities. They run around the jungle like excited puppies."},"Parasaurolophus":{"info":"A tall, gentle dinosaur with a long curved crest, soft green skin, and a sweet personality. It makes musical calls that echo through the jungle."},"T-Rex":{"info":"A huge friendly Tyrannosaurus with tiny arms, enormous feet, bright expressive eyes, and a goofy smile. It tries very hard to be gentle around Freya."},"Pterodactyls":{"info":"A flock of colorful flying dinosaurs with broad wings and long beaks. They soar above St. John in enormous graceful circles."},"Comet Birds":{"info":"Hundreds of newly transformed dinosaurs, now magnificent birds of every imaginable shape, color, and size. They have feathers, wings, crests, tails, and bright joyful eyes."}},"locations":{"St. John Beach":{"info":"A beautiful Caribbean beach on St. John with turquoise water, warm white sand, palm trees, tropical flowers, and enormous views of the sky. The perfect place to watch the approaching comet.","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png"},"Caribbean Sea":{"info":"Warm crystal-clear Caribbean water surrounding St. John, filled with coral, colorful fish, sea grass, and mysterious shapes moving beneath the surface."},"Deep Jungle":{"info":"Dense tropical jungle on St. John, filled with giant leaves, vines, palms, flowers, mossy rocks, and shafts of golden sunlight."},"Jungle Clearing":{"info":"A wide sunny clearing surrounded by dense jungle. Tropical plants grow around the edges, while enormous dinosaur footprints cover the soft earth."},"Comet Sky":{"info":"A spectacular night sky above St. John filled with stars and a gigantic glowing comet streaking toward Earth, surrounded by brilliant colors and sparkling trails."},"Future Earth":{"info":"The whole planet, fifteen hundred years after Freya's vacation on St. John. Crystal dinosaur cities rise above the clouds, and humans live happily as the dinosaurs' beloved pets."},"Cruz Bay":{"info":"The bustling harbor town on St. John, lined with restaurants, boats, and the smell of delicious food drifting along the waterfront."}},"collectibles":{"magic_bird_device":{"info":"A small magical device belonging to Freya. It glows with rainbow-colored light and has a single large button covered in mysterious dinosaur-shaped symbols."},"seashell_necklace":{"info":"A little necklace Freya makes from beautiful pink, white, and lavender Caribbean seashells. It rattles softly whenever she runs."},"glowing_feather":{"info":"A shimmering feather that appears after a dinosaur touches Freya's magical device. It glows softly in rainbow colors."}},"knowledge":{"knows_comet_is_coming":{"info":"Freya knows that the enormous comet is coming toward Earth and that something magical needs to happen before it arrives."},"knows_dinosaurs_can_fly":{"info":"Freya has discovered that her magical device can turn dinosaurs into birdies so they can fly safely away from the comet."},"tried_bbq_in_cruz_bay":{"info":"Freya tried BBQ for the very first time during a dinner stop in Cruz Bay, and loved it."}},"missions":{"Find the Dinosaurs":{"info":"Freya must explore St. John and find all the dinosaurs before the comet reaches Earth."},"Save the Dinosaurs":{"info":"Freya must bring all the dinosaurs together on the beach and use her magical bird device to save them."},"Join the Birdie Dance Party":{"info":"After the dinosaurs become birds and the comet explodes into fireworks, Freya must choose which birdies to join and where to celebrate."}}},"nodes":{"1":{"type":"dialogue","p":{"title":"Vacation on St. John","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya is four years old, and she is on vacation in the beautiful Virgin Islands. It's her second time on the island and she's glad to be back.\nFreya: Wow! The water is so blue! Even bluer than last time!\nNarrator: But high above the island, something enormous is getting closer. It's darkening the whole sky.\nFreya: Is that a giant glowing rock? A spaceship? A huge bird?\nNarrator: It is a gigantic comet, streaking through the sky toward Earth. No one knew it was coming, but now it's almost here.\nFreya: Oh no! We have to help everybody!\nNarrator: Freya reaches into her backpack and pulls out a strange glowing device.\nFreya: My magic birdie machine can turn dinosaurs into birds!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"knows_comet_is_coming","startMission":"Find the Dinosaurs","completeMission":"","isChapterStart":false},"out":[2]},"2":{"type":"choice","p":{"title":"Where should Freya explore?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Splash into the water","once":false,"condition":"","mission":""},{"text":"Explore deep in the jungle","once":false,"condition":"","mission":""},{"text":"Stay on the beach","once":false,"condition":"","mission":""}],"text":""},"out":[3,7,11]},"3":{"type":"dialogue","p":{"title":"Dinosaurs Beneath the Waves","location":"Caribbean Sea","charactersPresent":"","text":"Narrator: Freya wades into the warm Caribbean water and looks beneath the waves.\nFreya: Hello? Is anybody down there?\nNarrator: A gigantic shadow glides underneath her.\nPlesiosaur: Splooooosh!\nFreya: A dinosaur!\nNarrator: A friendly Plesiosaur rises from the water and gives Freya a giant splash.\nFreya: You're very friendly!\nNarrator: Something even bigger swims behind the Plesiosaur.\nMosasaur: Grrrrr!\nFreya: You're friendly too, aren't you?\nNarrator: The Mosasaur gives a happy little wiggle and sprays water into the air.\nFreya: We need to get you both to the beach before the comet comes!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"seashell_necklace","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[4]},"4":{"type":"choice","p":{"title":"What should Freya do in the water?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Make a seashell necklace","once":false,"condition":"","mission":""},{"text":"Race the Plesiosaur","once":false,"condition":"","mission":""}],"text":""},"out":[5,6]},"5":{"type":"dialogue","p":{"title":"The Seashell Necklace","location":"Caribbean Sea","charactersPresent":"","text":"Narrator: Freya collects the prettiest shells she can find.\nFreya: This one is pink, and this one is purple!\nNarrator: She makes a tiny necklace and holds it up proudly.\nPlesiosaur: Splish!\nFreya: You like it!\nNarrator: The Plesiosaur nudges Freya gently toward the beach.\nFreya: Okay! Let's go find the other dinosaurs!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"seashell_necklace","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"6":{"type":"dialogue","p":{"title":"The Great Sea Race","location":"Caribbean Sea","charactersPresent":"","text":"Narrator: Freya climbs onto the Plesiosaur's back.\nFreya: Ready, set, GO!\nNarrator: The Plesiosaur zooms through the water while Freya laughs and holds on tight.\nMosasaur: Splash!\nNarrator: The Mosasaur races alongside them, making enormous waves.\nFreya: We're the fastest dinosaur team ever!\nNarrator: Together they race back toward St. John Beach.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"7":{"type":"dialogue","p":{"title":"Deep in the Jungle","location":"Deep Jungle","charactersPresent":"","text":"Narrator: Freya follows a trail of enormous footprints into the deep jungle.\nFreya: These footprints are HUGE!\nNarrator: Leaves shake nearby.\nVelociraptors: Chirp! Chirp! Chirp!\nFreya: Tiny dinosaurs!\nNarrator: A group of colorful feathered Velociraptors races around Freya in happy circles.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[8]},"8":{"type":"choice","p":{"title":"Which dinosaur should Freya follow?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Follow the musical dinosaur","once":false,"condition":"","mission":""},{"text":"Follow the leafy footprints","once":false,"condition":"","mission":""}],"text":""},"out":[9,10]},"9":{"type":"dialogue","p":{"title":"The Dinosaur Song","location":"Jungle Clearing","charactersPresent":"","text":"Narrator: Freya follows a strange musical sound into a sunny jungle clearing.\nParasaurolophus: Hoooooo-oooooo!\nFreya: That's beautiful!\nNarrator: The Parasaurolophus plays a long musical note with its enormous crest.\nFreya: I think your music could help everybody find the beach!\nNarrator: The dinosaur calls again, and the sound echoes across the island.\nFreya: Come on! Let's get everyone together!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"knows_dinosaurs_can_fly","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"10":{"type":"dialogue","p":{"title":"The Giant Footprints","location":"Deep Jungle","charactersPresent":"","text":"Narrator: Freya follows enormous footprints through the jungle.\nFreya: Who could have feet this big?\nNarrator: The trees part, revealing a giant friendly T-Rex beside a leafy Triceratops.\nTriceratops: Munch munch!\nT-Rex: Grrrrrr!\nFreya: Don't worry! I'm here to help you!\nNarrator: The T-Rex gives Freya a goofy smile.\nFreya: We have to go to the beach. The comet is coming!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"knows_dinosaurs_can_fly","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"11":{"type":"dialogue","p":{"title":"Dinosaurs on the Beach","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya stays on the beach and searches between the palm trees.\nNarrator: Suddenly, a giant Triceratops walks out of the jungle.\nTriceratops: Munch munch munch!\nFreya: Hi! You must be hungry.\nNarrator: Freya gives the Triceratops some tropical leaves.\nNarrator: Then several colorful Velociraptors race onto the sand.\nVelociraptors: Chirp! Chirp! Chirp!\nFreya: There are dinosaurs everywhere!\nNarrator: A gigantic T-Rex appears behind them.\nT-Rex: Grrrrr!\nFreya: And you too!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"magic_bird_device","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[12]},"12":{"type":"choice","p":{"title":"What should Freya do with the dinosaurs?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Make friends with the Triceratops","once":false,"condition":"","mission":""},{"text":"Play with the Velociraptors","once":false,"condition":"","mission":""},{"text":"Climb onto the T-Rex","once":false,"condition":"","mission":""}],"text":""},"out":[13,14,15]},"13":{"type":"dialogue","p":{"title":"Triceratops Cuddle","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya walks right up to the Triceratops.\nFreya: Can I give you a hug?\nNarrator: The Triceratops lowers its enormous head.\nFreya: You're very soft!\nNarrator: Freya hugs the dinosaur's giant nose.\nTriceratops: Mmmmm!\nFreya: Now let's get everybody together!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"14":{"type":"dialogue","p":{"title":"Velociraptor Parade","location":"St. John Beach","charactersPresent":"","text":"Narrator: The Velociraptors run in a circle around Freya.\nFreya: Let's have a dinosaur parade!\nNarrator: Freya marches down the beach while the Velociraptors follow in a colorful line.\nVelociraptors: Chirp chirp chirp!\nFreya: Everybody to the beach!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"15":{"type":"dialogue","p":{"title":"T-Rex Taxi","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya climbs carefully onto the T-Rex's back.\nFreya: T-Rex taxi!\nNarrator: The T-Rex takes tiny careful steps along the beach.\nT-Rex: Grrrrr!\nFreya: You're a very good taxi.\nNarrator: Freya can see dinosaurs gathering all around the island.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[16]},"16":{"type":"dialogue","p":{"title":"The Dinosaurs Gather","location":"St. John Beach","charactersPresent":"","text":"Narrator: Dinosaurs arrive from the jungle, the water, and every corner of St. John.\nPlesiosaur: Splooooosh!\nMosasaur: Splash!\nTriceratops: Munch!\nVelociraptors: Chirp chirp!\nParasaurolophus: Hoooooo!\nT-Rex: Grrrr!\nNarrator: Soon the entire beach is covered with happy dinosaurs.\nFreya: Everybody's here!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"magic_bird_device","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[17]},"17":{"type":"logic","p":{"title":"Can Freya Save the Dinosaurs?","condition":"has_item('magic_bird_device') AND has_knowledge('knows_comet_is_coming')","location":"","text":""},"out":[18,19]},"18":{"type":"choice","p":{"title":"How should Freya transform the dinosaurs?","location":"St. John Beach","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Press the big rainbow button","once":false,"condition":"","mission":""},{"text":"Let the dinosaurs press it together","once":false,"condition":"","mission":""},{"text":"Point it at the sky","once":false,"condition":"","mission":""}],"text":""},"out":[20,21,22]},"19":{"type":"dialogue","p":{"title":"Find the Magic Device","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya suddenly remembers the glowing device in her backpack.\nFreya: Wait! I have my birdie machine!\nNarrator: She holds the device up high.\nFreya: Everybody, come close!\nNarrator: Every dinosaur on the island gathers around Freya.\nFreya: When the comet comes, we're going to fly away together!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"magic_bird_device","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[18]},"20":{"type":"dialogue","p":{"title":"Rainbow Transformation","location":"Comet Sky","charactersPresent":"","text":"Narrator: Freya presses the giant rainbow button.\nFreya: BEEP!\nNarrator: A rainbow beam shoots across the beach.\nNarrator: One by one, the dinosaurs transform into magnificent birds.\nTriceratops: Tweet!\nT-Rex: CAW!\nVelociraptors: Chirp chirp chirp!\nNarrator: The enormous comet reaches the sky above St. John.\nFreya: Look!\nNarrator: The comet suddenly bursts into a gigantic explosion of colorful fireworks.\nFreya: It worked!\nNarrator: The sky fills with sparkling stars, rainbow fireworks, and hundreds of happy birds.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"glowing_feather","rewardKnowledge":"","startMission":"Join the Birdie Dance Party","completeMission":"Save the Dinosaurs","isChapterStart":false},"out":[23]},"21":{"type":"dialogue","p":{"title":"Everybody Press Together","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya holds the device while all the dinosaurs touch it together.\nFreya: Everybody press!\nNarrator: Hundreds of little dinosaur noses, paws, claws, and tails touch the glowing machine.\nNarrator: BOOOOM! A rainbow wave sweeps across St. John.\nNarrator: Every dinosaur transforms into a beautiful bird.\nFreya: We did it together!\nNarrator: At that exact moment, the comet explodes harmlessly into a spectacular fireworks show.\nNarrator: The entire sky sparkles above Freya and her new bird friends.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"glowing_feather","rewardKnowledge":"","startMission":"Join the Birdie Dance Party","completeMission":"Save the Dinosaurs","isChapterStart":false},"out":[23]},"22":{"type":"dialogue","p":{"title":"Birdies in the Sky","location":"Comet Sky","charactersPresent":"","text":"Narrator: Freya points the magical device toward the enormous comet.\nFreya: Fly, little birdies!\nNarrator: A rainbow beam shoots upward and surrounds every dinosaur.\nNarrator: The dinosaurs transform into birds and immediately soar into the sky.\nNarrator: The comet reaches the atmosphere and bursts apart into a gigantic fireworks celebration.\nFreya: It's beautiful!\nNarrator: The birds swoop around Freya in enormous sparkling circles.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"glowing_feather","rewardKnowledge":"","startMission":"Join the Birdie Dance Party","completeMission":"Save the Dinosaurs","isChapterStart":false},"out":[23]},"23":{"type":"choice","p":{"title":"Which birdies should Freya join?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Dance with the tiny colorful birds","once":false,"condition":"","mission":""},{"text":"Fly with the giant sea birds","once":false,"condition":"","mission":""},{"text":"Soar with the jungle birds","once":false,"condition":"","mission":""},{"text":"Ride with the biggest bird","once":false,"condition":"","mission":""}],"text":""},"out":[24,25,26,27]},"24":{"type":"dialogue","p":{"title":"Tiny Birdie Dance","location":"St. John Beach","charactersPresent":"","text":"Narrator: Hundreds of tiny colorful birds land around Freya.\nFreya: Dance with me!\nNarrator: The little birds hop left, hop right, flap their wings, and spin in circles.\nNarrator: Freya dances in the middle of them, laughing.\nFreya: This is the best vacation ever!\nNarrator: Fireworks sparkle above the beach as the tiny birds dance faster and faster.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Join the Birdie Dance Party","isChapterStart":false},"out":[28]},"25":{"type":"dialogue","p":{"title":"The Great Sea Bird Flight","location":"Caribbean Sea","charactersPresent":"","text":"Narrator: The giant sea birds swoop down toward the ocean.\nFreya: Can I fly with you?\nNarrator: A huge blue bird gently lifts Freya onto its back.\nNarrator: They soar above the sparkling Caribbean Sea while fireworks reflect in the water.\nFreya: We're flying!\nNarrator: The sea birds circle the island in a beautiful glowing formation.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Join the Birdie Dance Party","isChapterStart":false},"out":[28]},"26":{"type":"dialogue","p":{"title":"Jungle Bird Adventure","location":"Deep Jungle","charactersPresent":"","text":"Narrator: The colorful jungle birds fly toward the treetops.\nFreya: Wait for me!\nNarrator: Freya follows them into the jungle as they swoop between palms and giant flowers.\nNarrator: The birds make a musical chorus with their calls.\nFreya: You're making a jungle song!\nNarrator: Fireworks flash through the leaves like colorful stars.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Join the Birdie Dance Party","isChapterStart":false},"out":[28]},"27":{"type":"dialogue","p":{"title":"The Biggest Bird","location":"Comet Sky","charactersPresent":"","text":"Narrator: The biggest bird of all lands gently beside Freya.\nFreya: You are HUGE!\nNarrator: The giant bird lowers one enormous wing like a staircase.\nFreya: Up we go!\nNarrator: Freya climbs aboard and rises high above St. John.\nNarrator: Below her, every bird circles the island while fireworks explode across the sky.\nFreya: I can see everything!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"Join the Birdie Dance Party","isChapterStart":false},"out":[28]},"28":{"type":"choice","p":{"title":"Where should Freya go next?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"Dance on the beach","once":false,"condition":"","mission":""},{"text":"Explore the jungle with the birds","once":false,"condition":"","mission":""},{"text":"Fly over the Caribbean","once":false,"condition":"","mission":""}],"text":""},"out":[29,30,31]},"29":{"type":"dialogue","p":{"title":"Beach Dance Party","location":"St. John Beach","charactersPresent":"","text":"Narrator: Freya returns to the warm sand.\nNarrator: Every bird lands around her and forms a giant circle.\nFreya: Everybody dance!\nNarrator: The birds flap, hop, spin, and wiggle while Freya dances in the middle.\nNarrator: The fireworks continue sparkling overhead.\nFreya: I love birdies!\nNarrator: The whole beach becomes one enormous happy dance party.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[33]},"30":{"type":"dialogue","p":{"title":"Jungle Celebration","location":"Jungle Clearing","charactersPresent":"","text":"Narrator: Freya follows the birds into a sunny jungle clearing.\nNarrator: The birds decorate the trees with glowing feathers.\nFreya: It's like a jungle party!\nNarrator: The birds sing while Freya dances between giant flowers.\nNarrator: Rainbow fireworks shine through the leaves.\nFreya: We can have adventures here forever!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[36]},"31":{"type":"dialogue","p":{"title":"Flying Over the Island","location":"Comet Sky","charactersPresent":"","text":"Narrator: Freya flies high above St. John with her bird friends.\nNarrator: Below them, the island glows beneath the stars.\nNarrator: The ocean sparkles, the jungle sways, and fireworks fill the sky.\nFreya: This is the most amazing thing I've ever seen!\nNarrator: The birds fly in a giant heart-shaped formation around Freya.\nFreya: Let's come back tomorrow!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[33]},"32":{"type":"dialogue","p":{"title":"Happily Ever After","location":"St. John Beach","charactersPresent":"","text":"Narrator: The fireworks slowly fade into twinkling stars.\nNarrator: Every bird gathers around Freya one more time.\nFreya: Goodnight, birdies!\nNarrator: The birds chirp a giant musical goodnight.\nNarrator: Freya smiles as the moon rises over St. John.\nNarrator: The dinosaurs are safe, the island is happy, and Freya has made hundreds of wonderful new friends.\nNarrator: And tomorrow, there will be another adventure.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[]},"33":{"type":"choice","p":{"title":"How does Freya imagine her friends in the future?","location":"","background":"","backgroundName":"","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","choices":[{"text":"The birdies stay forever","once":false,"condition":"","mission":""},{"text":"The dinosaurs come back one day","once":false,"condition":"","mission":""},{"text":"The dinosaurs will rule the world","once":false,"condition":"","mission":""}],"text":""},"out":[32,34,35]},"34":{"type":"dialogue","p":{"title":"The Dinosaurs Return","location":"St. John Beach","charactersPresent":"","text":"Narrator: The seasons turn, again and again, as Freya grows a little bigger every summer.\nNarrator: She never stops visiting St. John, and she never stops watching the sky.\nNarrator: Then one warm morning in 2026, something wonderful happens.\nFreya: The birdies... they're glowing!\nNarrator: One by one, the magical birds shimmer with rainbow light.\nTriceratops: Munch munch!\nT-Rex: Grrrrrr!\nNarrator: Right before Freya's eyes, the birdies transform back into dinosaurs.\nFreya: You're dinosaurs again! You came back!\nNarrator: It turns out the magic device had one more secret all along - once the danger had truly passed, it could bring her friends all the way home.\nVelociraptors: Chirp! Chirp! Chirp!\nFreya: Welcome back, everybody! Let's go play!\nNarrator: And so, in the summer of 2026, the dinosaurs of St. John came home to stay - safe, happy, and free, forever.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"assets/backgrounds/st-john-beach.png","backgroundName":"st-john-beach.png","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[]},"35":{"type":"dialogue","p":{"title":"The Year 3535","location":"Future Earth","charactersPresent":"","text":"Narrator: Freya's story is told again and again, for a hundred years, then a thousand.\nNarrator: The dinosaurs never forget the little girl who saved them, and they never stop growing - in numbers, in size, and in confidence.\nNarrator: By the year 3535, the dinosaurs don't just live on St. John anymore. They live everywhere. And they are in charge of everything.\nT-Rex: GRRRRRR! (Which, by now, means \"Good morning, Earth!\")\nNarrator: Shiny dinosaur cities rise above the clouds, built from crystal and vines and a thousand years of careful engineering.\nNarrator: And humans? Humans are the dinosaurs' favorite little creatures - fed the best snacks, walked twice a day, and cuddled whenever they want.\nTriceratops: Munch munch! (Time for treats!)\nNarrator: In the grandest city of all stands a statue of a four-year-old girl with a tiny backpack and a glowing device.\nVelociraptors: Chirp chirp chirp!\nNarrator: Every dinosaur, big or small, knows her name, and every dinosaur follows her very first rule, passed down for fifteen hundred years: always be kind to your creatures.\nNarrator: Freya would be proud.","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"","startMission":"","completeMission":"","isChapterStart":false},"out":[]},"36":{"type":"dialogue","p":{"title":"Dinner in Cruz Bay","location":"Cruz Bay","charactersPresent":"","text":"Narrator: Before heading back to celebrate, Freya and a few curious birds make a quick stop in Cruz Bay for dinner.\nFreya: I'm hungry after all that dancing!\nNarrator: A little restaurant by the harbor is grilling something smoky and delicious.\nFreya: What's that yummy smell?\nNarrator: It's BBQ, and Freya has never tried it before in her life.\nFreya: Can I have a bite?\nNarrator: She takes her very first taste of BBQ, and her eyes go wide.\nFreya: Mmmmm! This might be the best thing I've ever eaten!\nNarrator: Even the birds hop closer, curious about the smoky new smell.\nFreya: Okay, NOW I'm ready to go back and celebrate!","audioLoop":"","audioLoopName":"","audioOneShot":"","audioOneShotName":"","background":"","backgroundName":"","showCharacterImages":true,"rewardItems":"","rewardKnowledge":"tried_bbq_in_cruz_bay","startMission":"","completeMission":"","isChapterStart":false},"out":[33]}}};
+class StoryPlayer {
+
+  static CSS = `
+.sp-root { position:absolute; inset:0; overflow:hidden; background:#05060a; font-family:'Inter',system-ui,sans-serif; color:#e2e8f0; }
+.sp-bg { position:absolute; inset:0; background-size:cover; background-position:center; transition:background-image .6s ease, opacity .6s ease; }
+.sp-vignette { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(0,0,0,.35) 0%, rgba(0,0,0,.1) 40%, rgba(0,0,0,.88) 100%); pointer-events:none; }
+
+.sp-topbar { position:absolute; top:0; left:0; right:0; height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; z-index:20; background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent); }
+.sp-title { font-family:'EB Garamond',Georgia,serif; font-size:19px; letter-spacing:.5px; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.8); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34%; }
+.sp-hud { display:flex; align-items:center; gap:8px; }
+.sp-hud-btn { background:rgba(10,12,18,.6); border:1px solid rgba(255,255,255,.14); color:#e2e8f0; border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:.15s ease; backdrop-filter:blur(6px); }
+.sp-hud-btn:hover { background:rgba(99,102,241,.35); border-color:rgba(99,102,241,.6); }
+.sp-hud-btn.sp-attn { border-color:rgba(245,158,11,.8); box-shadow:0 0 12px rgba(245,158,11,.35); }
+.sp-badge { background:#6366f1; color:#fff; border-radius:10px; min-width:17px; height:17px; font-size:10px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; padding:0 4px; }
+
+.sp-inv { display:flex; align-items:center; gap:5px; background:rgba(10,12,18,.6); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:5px 12px; font-size:11px; max-width:340px; overflow-x:auto; backdrop-filter:blur(6px); }
+.sp-inv::-webkit-scrollbar { height:0; }
+.sp-inv-chip { background:rgba(6,182,212,.18); border:1px solid rgba(6,182,212,.4); color:#67e8f9; border-radius:10px; padding:2px 8px; white-space:nowrap; }
+.sp-inv-empty { color:#64748b; font-style:italic; }
+
+.sp-panel { position:absolute; top:60px; right:12px; width:320px; max-height:calc(100% - 140px); background:rgba(12,14,20,.92); border:1px solid rgba(255,255,255,.12); border-radius:12px; z-index:30; display:flex; flex-direction:column; box-shadow:0 18px 50px rgba(0,0,0,.6); backdrop-filter:blur(10px); overflow:hidden; animation:spFadeIn .25s ease; }
+.sp-panel.sp-hidden { display:none; }
+.sp-panel-head { padding:12px 16px; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#94a3b8; border-bottom:1px solid rgba(255,255,255,.09); display:flex; justify-content:space-between; align-items:center; }
+.sp-panel-x { background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer; }
+.sp-panel-body { overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+
+.sp-mission { border:1px solid rgba(255,255,255,.1); border-left:3px solid #f59e0b; border-radius:0 8px 8px 0; background:rgba(255,255,255,.03); padding:10px 12px; font-size:12.5px; line-height:1.5; }
+.sp-mission.sp-required { border-left-color:#ef4444; }
+.sp-mission.sp-done { border-left-color:#10b981; opacity:.65; }
+.sp-mission.sp-done .sp-mission-name { text-decoration:line-through; }
+.sp-mission-name { font-weight:600; color:#fff; display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.sp-mission-tag { font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; border-radius:8px; padding:2px 7px; }
+.sp-mission-tag.sp-req { background:rgba(239,68,68,.18); color:#f87171; border:1px solid rgba(239,68,68,.4); }
+.sp-mission-tag.sp-opt { background:rgba(148,163,184,.15); color:#94a3b8; border:1px solid rgba(148,163,184,.3); }
+.sp-mission-tag.sp-donetag { background:rgba(16,185,129,.18); color:#34d399; border:1px solid rgba(16,185,129,.4); }
+.sp-mission-info { color:#94a3b8; font-size:11.5px; margin-top:4px; font-family:'EB Garamond',Georgia,serif; font-size:13px; }
+.sp-panel-empty { color:#64748b; font-size:12px; font-style:italic; padding:6px 0; }
+
+.sp-diary-entry { background:rgba(255,255,255,.03); border-left:3px solid #a855f7; padding:10px 12px; border-radius:0 8px 8px 0; font-size:13.5px; line-height:1.55; font-family:'EB Garamond',Georgia,serif; }
+.sp-diary-label { color:#e2e8f0; }
+.sp-diary-info { color:#94a3b8; font-size:13px; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,.07); white-space:pre-wrap; }
+
+.sp-stage { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:36px; }
+
+.sp-dialogue { width:min(860px, 92%); background:rgba(14,16,24,.88); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:26px 30px 34px; box-shadow:0 14px 40px rgba(0,0,0,.55); cursor:pointer; position:relative; backdrop-filter:blur(8px); animation:spFadeIn .3s ease; min-height:130px; }
+.sp-dialogue:hover { border-color:rgba(99,102,241,.45); }
+.sp-speaker { font-family:'EB Garamond',Georgia,serif; font-size:21px; font-weight:700; letter-spacing:.5px; display:inline-block; margin-bottom:10px; padding-bottom:3px; border-bottom:2px solid currentColor; }
+.sp-text { font-family:'EB Garamond',Georgia,serif; font-size:19px; line-height:1.65; color:#f1f5f9; }
+.sp-text .sp-tok { font-weight:600; }
+.sp-next { position:absolute; bottom:12px; right:18px; font-size:11px; color:#94a3b8; animation:spPulse 1.6s infinite; font-family:'Inter',sans-serif; }
+@keyframes spPulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+@keyframes spFadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.sp-choices { width:min(620px,92%); display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.sp-choice { background:rgba(22,28,44,.85); border:1px solid rgba(255,255,255,.13); color:#fff; padding:13px 22px; border-radius:30px; font-size:15px; font-family:'EB Garamond',Georgia,serif; cursor:pointer; transition:.15s ease; text-align:center; backdrop-filter:blur(6px); position:relative; }
+.sp-choice:hover { background:linear-gradient(135deg,#6366f1,#a855f7); border-color:transparent; transform:translateY(-2px); box-shadow:0 6px 20px rgba(99,102,241,.4); }
+.sp-choice.sp-locked { opacity:.45; cursor:not-allowed; }
+.sp-choice.sp-locked:hover { background:rgba(22,28,44,.85); transform:none; box-shadow:none; border-color:rgba(255,255,255,.13); }
+.sp-choice-mission { display:inline-block; margin-left:8px; font-size:10px; font-family:'Inter',sans-serif; font-weight:700; letter-spacing:.5px; text-transform:uppercase; background:rgba(245,158,11,.2); color:#fbbf24; border:1px solid rgba(245,158,11,.45); border-radius:10px; padding:2px 8px; vertical-align:2px; }
+.sp-lock-why { display:block; font-size:10.5px; font-family:'Inter',sans-serif; color:#94a3b8; margin-top:3px; }
+
+.sp-dice { width:min(430px,92%); background:rgba(14,16,24,.92); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:24px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px; box-shadow:0 16px 44px rgba(0,0,0,.6); backdrop-filter:blur(8px); animation:spFadeIn .3s ease; }
+.sp-dice-title { font-family:'EB Garamond',Georgia,serif; font-size:21px; font-weight:700; color:#fbbf24; }
+.sp-dice-score { font-size:13px; color:#94a3b8; }
+.sp-dice-score b { color:#fff; font-size:16px; }
+.sp-cube { width:76px; height:76px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:12px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; box-shadow:0 8px 24px rgba(245,158,11,.4); }
+.sp-cube.sp-rolling { animation:spRoll .5s infinite linear; }
+@keyframes spRoll { 0% { transform:rotate(0deg) scale(.9); } 50% { transform:rotate(180deg) scale(1.1); } 100% { transform:rotate(360deg) scale(.9); } }
+.sp-roll-btn { background:linear-gradient(135deg,#6366f1,#a855f7); border:none; color:#fff; border-radius:30px; padding:12px 26px; font-size:14px; font-weight:600; cursor:pointer; width:100%; transition:.15s ease; }
+.sp-roll-btn:hover { filter:brightness(1.15); }
+.sp-roll-btn:disabled { opacity:.5; cursor:default; }
+.sp-exit-btn { background:rgba(148,163,184,.12); border:1px solid rgba(148,163,184,.35); color:#cbd5e1; border-radius:30px; padding:9px 20px; font-size:12.5px; cursor:pointer; width:100%; transition:.15s ease; }
+.sp-exit-btn:hover { background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.4); color:#fca5a5; }
+.sp-dice-desc { font-size:12px; color:#94a3b8; min-height:18px; }
+.sp-dice-risks { width:100%; text-align:left; background:rgba(0,0,0,.25); border-radius:8px; padding:10px 12px; font-size:11px; color:#94a3b8; }
+.sp-dice-risks div { display:flex; justify-content:space-between; margin-bottom:2px; }
+.sp-risk-pct { color:#f87171; font-weight:600; }
+
+.sp-toasts { position:absolute; top:64px; left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+.sp-toast { background:rgba(16,185,129,.92); color:#fff; padding:8px 18px; border-radius:20px; font-size:12.5px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.4); animation:spFadeIn .25s ease; }
+.sp-toast.sp-toast-mission { background:rgba(245,158,11,.94); }
+.sp-toast.sp-toast-info { background:rgba(99,102,241,.94); }
+
+.sp-splash { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; background:radial-gradient(ellipse at center, #131627 0%, #05060a 75%); }
+.sp-splash-title { font-family:'EB Garamond',Georgia,serif; font-size:clamp(34px, 6vw, 62px); color:#fff; text-align:center; letter-spacing:1px; text-shadow:0 4px 30px rgba(99,102,241,.5); padding:0 20px; }
+.sp-splash-sub { color:#94a3b8; font-size:13px; letter-spacing:3px; text-transform:uppercase; }
+.sp-begin { background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; border:none; border-radius:34px; padding:15px 52px; font-size:17px; font-family:'EB Garamond',Georgia,serif; letter-spacing:1px; cursor:pointer; box-shadow:0 10px 34px rgba(99,102,241,.45); transition:.2s ease; }
+.sp-begin:hover { transform:translateY(-2px); box-shadow:0 14px 44px rgba(99,102,241,.65); }
+
+.sp-ending { width:min(600px,92%); background:rgba(14,16,24,.92); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:36px; text-align:center; box-shadow:0 16px 44px rgba(0,0,0,.6); animation:spFadeIn .4s ease; margin-bottom:10vh; }
+.sp-ending-title { font-family:'EB Garamond',Georgia,serif; font-size:30px; color:#34d399; margin-bottom:14px; }
+.sp-ending-text { font-family:'EB Garamond',Georgia,serif; font-size:17px; color:#cbd5e1; line-height:1.6; margin-bottom:24px; }
+.sp-ending-actions { display:flex; gap:12px; justify-content:center; }
+
+/* Cast layer: everyone present in the scene, speaker emphasised.
+   Lives outside .sp-stage so advancing a line doesn't remount the portraits. */
+.sp-cast { position:absolute; left:0; right:0; bottom:150px; display:flex; justify-content:center; align-items:flex-end; gap:2%; pointer-events:none; z-index:5; height:min(480px,48vh); }
+.sp-cast:empty { display:none; }
+/* Scale/dim live on .sp-char; the entrance animation lives on the inner <img>.
+   Kept apart because spSlideUp animates transform, which would otherwise
+   override the speaker scale for the whole 0.4s the animation runs. */
+.sp-char { display:flex; align-items:flex-end; justify-content:center; height:100%; flex:0 1 auto; min-width:0;
+  transition:transform .3s ease, filter .3s ease, opacity .3s ease; transform-origin:bottom center;
+  transform:scale(.86); opacity:.62; filter:brightness(.6) saturate(.8); }
+.sp-char.sp-active { transform:scale(1); opacity:1; filter:none; z-index:6; }
+.sp-char img { max-height:100%; max-width:100%; object-fit:contain; object-position:bottom; display:block; animation:spSlideUp .4s ease; }
+
+/* Legacy single-portrait classes, retained for older published files */
+.sp-char-container { display:flex; justify-content:center; align-items:flex-end; width:min(860px, 92%); height:min(480px, 48vh); pointer-events:none; margin-bottom:12px; z-index:5; }
+.sp-char-img { max-height:100%; max-width:66%; object-fit:contain; animation:spSlideUp .4s ease; }
+@keyframes spSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+`;
+
+  constructor(container, story, opts = {}) {
+    this.container = container;
+    this.story = story || { nodes: {}, vars: {}, entry: null };
+    this.opts = opts; // { onExit: fn, standalone: bool }
+    this.state = null;
+    this._loopAudio = null;
+    this._loopSrc = null;
+    this._fadeTimer = null;
+    this._begun = false;
+    this._injectStyles();
+  }
+
+  _injectStyles() {
+    if (document.getElementById("sp-player-styles")) return;
+    const s = document.createElement("style");
+    s.id = "sp-player-styles";
+    s.textContent = StoryPlayer.CSS;
+    document.head.appendChild(s);
+  }
+
+  // ---------- lifecycle ----------
+
+  start(entryId, startState = null) {
+    this._entryId = (entryId !== undefined && entryId !== null) ? entryId : this.story.entry;
+    this.state = {
+      inventory: startState && startState.inventory ? new Set(startState.inventory) : new Set(),
+      knowledge: startState && startState.knowledge ? new Set(startState.knowledge) : new Set(),
+      missions: startState && startState.missions ? new Map(Object.entries(startState.missions)) : new Map(),
+      diary: [],
+      scores: {},
+      // "node:index" for each once-only option already taken this run
+      spentChoices: new Set()
+    };
+    if (startState) {
+      if (startState.inventory && startState.inventory.length) {
+        this.state.diary.push("Started with items: " + startState.inventory.join(", "));
+      }
+      if (startState.knowledge && startState.knowledge.length) {
+        // One entry each, so every preset flag can show its own description
+        startState.knowledge.forEach(k => {
+          this.state.diary.push({ label: "Started knowing: " + k, key: k });
+        });
+      }
+      if (startState.missions) {
+        Object.entries(startState.missions).forEach(([name, status]) => {
+          this.state.diary.push(`Mission "${name}" preset to: ${status}`);
+        });
+      }
+    }
+    this._stopAllAudio();
+    if (this.opts.standalone && !this._begun) {
+      this._renderSplash();
+    } else {
+      this._begin();
+    }
+  }
+
+  destroy() {
+    this._stopAllAudio();
+    this.container.innerHTML = "";
+    this.container.classList.remove("sp-root");
+  }
+
+  _begin() {
+    this._begun = true;
+    this._buildShell();
+    const entryNode = this._node(this._entryId);
+    if (!entryNode) {
+      this._renderEnding("This story has no scenes yet. Add a Dialogue node in the editor to begin.");
+      return;
+    }
+    this._goto(this._entryId);
+  }
+
+  _renderSplash() {
+    this.container.classList.add("sp-root");
+    this.container.innerHTML = `
+      <div class="sp-splash">
+        <div class="sp-splash-sub">A Story</div>
+        <div class="sp-splash-title">${this._esc(this.story.title || "Untitled Story")}</div>
+        <button class="sp-begin">Begin</button>
+      </div>`;
+    this.container.querySelector(".sp-begin").onclick = () => this._begin();
+  }
+
+  _buildShell() {
+    this.container.classList.add("sp-root");
+    this.container.innerHTML = `
+      <div class="sp-bg"></div>
+      <div class="sp-vignette"></div>
+      <div class="sp-topbar">
+        <div class="sp-title">${this._esc(this.story.title || "Untitled Story")}</div>
+        <div class="sp-hud">
+          <div class="sp-inv"><span>&#128188;</span><span class="sp-inv-items"><span class="sp-inv-empty">empty</span></span></div>
+          <button class="sp-hud-btn sp-btn-missions">&#9873; Missions <span class="sp-badge">0</span></button>
+          <button class="sp-hud-btn sp-btn-diary">&#128214; Diary</button>
+          <button class="sp-hud-btn sp-btn-restart" title="Restart story">&#8635;</button>
+          ${this.opts.onExit ? '<button class="sp-hud-btn sp-btn-exit">&#10005; Exit</button>' : ""}
+        </div>
+      </div>
+      <div class="sp-panel sp-hidden sp-missions-panel">
+        <div class="sp-panel-head"><span>Missions</span><button class="sp-panel-x">&times;</button></div>
+        <div class="sp-panel-body"></div>
+      </div>
+      <div class="sp-panel sp-hidden sp-diary-panel">
+        <div class="sp-panel-head"><span>Diary</span><button class="sp-panel-x">&times;</button></div>
+        <div class="sp-panel-body"></div>
+      </div>
+      <div class="sp-toasts"></div>
+      <div class="sp-cast"></div>
+      <div class="sp-stage"></div>`;
+
+    const q = sel => this.container.querySelector(sel);
+    this.el = {
+      bg: q(".sp-bg"),
+      cast: q(".sp-cast"),
+      stage: q(".sp-stage"),
+      inv: q(".sp-inv-items"),
+      missionsBtn: q(".sp-btn-missions"),
+      missionsBadge: q(".sp-btn-missions .sp-badge"),
+      missionsPanel: q(".sp-missions-panel"),
+      diaryPanel: q(".sp-diary-panel"),
+      toasts: q(".sp-toasts")
+    };
+
+    this.el.missionsBtn.onclick = () => this._togglePanel(this.el.missionsPanel);
+    q(".sp-btn-diary").onclick = () => this._togglePanel(this.el.diaryPanel);
+    q(".sp-btn-restart").onclick = () => this.start(this.story.entry);
+    this.el.missionsPanel.querySelector(".sp-panel-x").onclick = () => this.el.missionsPanel.classList.add("sp-hidden");
+    this.el.diaryPanel.querySelector(".sp-panel-x").onclick = () => this.el.diaryPanel.classList.add("sp-hidden");
+    if (this.opts.onExit) q(".sp-btn-exit").onclick = () => this.opts.onExit();
+    this._updateHUD();
+  }
+
+  _togglePanel(panel) {
+    const others = [this.el.missionsPanel, this.el.diaryPanel].filter(p => p !== panel);
+    others.forEach(p => p.classList.add("sp-hidden"));
+    panel.classList.toggle("sp-hidden");
+    this._renderPanels();
+  }
+
+  // ---------- graph walking ----------
+
+  _node(id) { return (id === null || id === undefined) ? null : this.story.nodes[id]; }
+
+  _goto(id) {
+    const node = this._node(id);
+    if (!node) { this._clearCast(); this._renderEnding("The narrative reaches a quiet end. Thank you for playing."); return; }
+    this._currentId = id;
+    // The cast layer sits outside .sp-stage, so it survives the stage rebuild —
+    // clear it here or portraits linger over choices, traversals and endings.
+    if (node.type !== "dialogue") this._clearCast();
+    switch (node.type) {
+      case "dialogue": return this._playDialogue(node);
+      case "choice": return this._playChoice(node);
+      case "traversal": return this._playTraversal(node, id);
+      case "logic": return this._playLogic(node);
+      default: return this._playDialogue(node);
+    }
+  }
+
+  _out(node, slot) {
+    const t = node.out && node.out[slot];
+    return (t === undefined || t === null) ? null : t;
+  }
+
+  // ---------- dialogue ----------
+
+  _playDialogue(node) {
+    const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
+    // Rewards & mission transitions on entering the node
+    if (p.rewardItems && !this.state.inventory.has(p.rewardItems)) {
+      this.state.inventory.add(p.rewardItems);
+      this._toast("Acquired: " + p.rewardItems);
+    }
+    if (p.rewardKnowledge && !this.state.knowledge.has(p.rewardKnowledge)) {
+      this.state.knowledge.add(p.rewardKnowledge);
+      // Keep the key alongside the label so the diary can show what the author
+      // wrote about this flag, not just that it was found
+      this.state.diary.push({ label: 'Discovered: "' + p.rewardKnowledge + '"', key: p.rewardKnowledge });
+      this._toast("Diary updated", "info");
+    }
+    if (p.startMission) this._acceptMission(p.startMission);
+    if (p.completeMission) this._completeMission(p.completeMission);
+    this._updateHUD();
+
+    this._queue = String(p.text || "...").split("\n").map(l => l.trim()).filter(Boolean);
+    if (this._queue.length === 0) this._queue = ["..."];
+    this._queueIdx = 0;
+    this._renderLine(node);
+  }
+
+  _renderLine(node) {
+    const p = node.p || {};
+    const line = this._queue[this._queueIdx];
+    const parsed = this._parseLine(line);
+    const last = this._queueIdx >= this._queue.length - 1;
+
+    this._renderCast(node, parsed.speaker);
+
+    this.el.stage.innerHTML = `
+      <div class="sp-dialogue">
+        ${parsed.speaker ? `<div class="sp-speaker" style="color:${this._charColor(parsed.speaker)}">${this._esc(parsed.speaker)}</div>` : ""}
+        <div class="sp-text">${this._richText(parsed.text)}</div>
+        <div class="sp-next">${last ? "click to continue" : `next (${this._queueIdx + 1}/${this._queue.length})`} &#8250;</div>
+      </div>`;
+    this.el.stage.querySelector(".sp-dialogue").onclick = () => {
+      if (this._queueIdx < this._queue.length - 1) {
+        this._queueIdx++;
+        this._renderLine(node);
+      } else {
+        this._goto(this._out(node, 0));
+      }
+    };
+  }
+
+  _clearCast() {
+    this._castKey = null;
+    if (this.el && this.el.cast) this.el.cast.innerHTML = "";
+  }
+
+  _charImage(name) {
+    const chars = this.story.varMeta && this.story.varMeta.characters;
+    const meta = chars && chars[name];
+    const img = meta && meta.image;
+    return (typeof img === "string" && img.trim()) ? img : null;
+  }
+
+  // Who to show for this node: every distinct speaker in its dialogue, in first-
+  // spoken order, skipping anyone with no portrait so they get no slot at all.
+  _castForNode(node) {
+    const p = node.p || {};
+    if (p.showCharacterImages === false) return [];
+    const seen = new Set();
+    const cast = [];
+    String(p.text || "").split("\n").forEach(line => {
+      const t = line.trim();
+      if (!t) return;
+      const speaker = this._parseLine(t).speaker;
+      if (!speaker || seen.has(speaker)) return;
+      seen.add(speaker);
+      const img = this._charImage(speaker);
+      if (img) cast.push({ name: speaker, img });
+    });
+    return cast;
+  }
+
+  // Rebuilds the row only when the cast changes; otherwise just moves the
+  // highlight, so portraits don't replay their entrance on every click.
+  _renderCast(node, speaker) {
+    if (!this.el || !this.el.cast) return;
+    const cast = this._castForNode(node);
+    const key = cast.map(c => c.name + "|" + c.img).join("~");
+
+    if (key !== this._castKey) {
+      this._castKey = key;
+      this.el.cast.innerHTML = cast.map(c =>
+        `<div class="sp-char" data-char="${this._esc(c.name)}">
+           <img src="${this._esc(c.img)}" alt="${this._esc(c.name)}">
+         </div>`
+      ).join("");
+    }
+
+    this.el.cast.querySelectorAll(".sp-char").forEach(el => {
+      el.classList.toggle("sp-active", el.dataset.char === speaker);
+    });
+  }
+
+  // Accepts "{Name}: text", "{Name} text", "Name: text"
+  _parseLine(line) {
+    let m = line.match(/^\{([^}]+)\}\s*:?\s*(.*)$/s);
+    if (m) return { speaker: m[1].trim(), text: m[2] };
+    m = line.match(/^([A-Za-z][A-Za-z0-9 .'\-]{0,28}?)\s*:\s+(.*)$/s);
+    if (m) return { speaker: m[1].trim(), text: m[2] };
+    return { speaker: null, text: line };
+  }
+
+  _richText(text) {
+    // Inline {Token} references get colored
+    let html = this._esc(text);
+    html = html.replace(/\{([^}]+)\}/g, (_, name) =>
+      `<span class="sp-tok" style="color:${this._charColor(name)}">${name}</span>`);
+    return html;
+  }
+
+  _charColor(name) {
+    const n = String(name).toLowerCase().trim();
+    if (n === "narrator") return "#94a3b8";
+    let h = 0;
+    for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+    return `hsl(${h % 360}, 70%, 68%)`;
+  }
+
+  // ---------- choice ----------
+
+  _playChoice(node) {
+    const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
+    const choices = p.choices || [];
+    const nodeKey = this._currentId;
+
+    // Once-only options vanish after they've been taken. If that would leave
+    // nothing to click, show them anyway — a blank choice screen is an
+    // unrecoverable soft-lock, and a repeated option is the lesser evil.
+    let shown = choices
+      .map((c, i) => ({ c, i }))
+      .filter(({ c, i }) => !(c.once && this.state.spentChoices.has(nodeKey + ":" + i)));
+    if (shown.length === 0 && choices.length > 0) {
+      shown = choices.map((c, i) => ({ c, i }));
+    }
+
+    let html = `
+      <div class="sp-dialogue" style="cursor:default; min-height:auto;">
+        <div class="sp-speaker" style="color:#94a3b8;">Narrator</div>
+        <div class="sp-text">${this._richText(p.title || "What will you do?")}</div>
+      </div>
+      <div class="sp-choices">`;
+    shown.forEach(({ c, i }) => {
+      const ok = this._evalCond(c.condition);
+      const missionBadge = c.mission ? `<span class="sp-choice-mission">&#9873; ${this._esc(c.mission)}</span>` : "";
+      if (ok) {
+        html += `<button class="sp-choice" data-i="${i}">${this._esc(c.text)}${missionBadge}</button>`;
+      } else {
+        html += `<button class="sp-choice sp-locked" disabled>${this._esc(c.text)}${missionBadge}<span class="sp-lock-why">requires: ${this._esc(c.condition)}</span></button>`;
+      }
+    });
+    html += "</div>";
+    this.el.stage.innerHTML = html;
+    this.el.stage.querySelectorAll(".sp-choice:not(.sp-locked)").forEach(btn => {
+      btn.onclick = () => {
+        const i = parseInt(btn.dataset.i, 10);
+        const choice = choices[i];
+        if (choice.once) this.state.spentChoices.add(nodeKey + ":" + i);
+        if (choice.mission) this._acceptMission(choice.mission);
+        this._updateHUD();
+        this._goto(this._out(node, i));
+      };
+    });
+    this._updateHUD();
+  }
+
+  // ---------- traversal (dice maze) ----------
+
+  _playTraversal(node, id) {
+    const p = node.p || {};
+    this._setBackground(p.background);
+    if (p.audioLoop) this._setLoop(p.audioLoop);
+    if (p.audioOneShot) this._playOneShot(p.audioOneShot);
+
+    const key = "n" + id;
+    if (this.state.scores[key] === undefined) this.state.scores[key] = 0;
+    const target = p.targetAccumulation || 100;
+    const outcomes = p.outcomes || [];
+    const earlyExitSlot = outcomes.length + 1;
+    const hasEarlyExit = this._out(node, earlyExitSlot) !== null;
+
+    let risksHtml = "";
+    if (outcomes.length) {
+      risksHtml = `<div class="sp-dice-risks">
+        ${outcomes.map(o => `<div><span>&bull; ${this._esc(o.label)}</span><span class="sp-risk-pct">${o.probability}%</span></div>`).join("")}
+      </div>`;
+    }
+
+    this.el.stage.innerHTML = `
+      <div class="sp-dice">
+        <div class="sp-dice-title">${this._esc(p.title || "Maze Challenge")}</div>
+        <div class="sp-dice-score">Progress: <b class="sp-score-val">${this.state.scores[key]}</b> / ${target}</div>
+        <div class="sp-cube">?</div>
+        <button class="sp-roll-btn">Roll d20</button>
+        ${hasEarlyExit ? '<button class="sp-exit-btn">&#128682; Take the early exit &mdash; leave before risking another roll</button>' : ""}
+        <div class="sp-dice-desc">Each roll adds points toward escape&hellip; but every roll is a risk.</div>
+        ${risksHtml}
+      </div>`;
+
+    const cube = this.el.stage.querySelector(".sp-cube");
+    const btn = this.el.stage.querySelector(".sp-roll-btn");
+    const desc = this.el.stage.querySelector(".sp-dice-desc");
+    const scoreEl = this.el.stage.querySelector(".sp-score-val");
+    const exitBtn = this.el.stage.querySelector(".sp-exit-btn");
+    if (exitBtn) exitBtn.onclick = () => this._goto(this._out(node, earlyExitSlot));
+
+    btn.onclick = () => {
+      btn.disabled = true;
+      if (exitBtn) exitBtn.disabled = true;
+      cube.classList.add("sp-rolling");
+      cube.textContent = "?";
+      setTimeout(() => {
+        cube.classList.remove("sp-rolling");
+        const roll = Math.floor(Math.random() * 20) + 1;
+        cube.textContent = roll;
+
+        let triggered = null;
+        for (const o of outcomes) {
+          const chance = o.probability !== undefined ? o.probability : 10;
+          if (Math.random() * 100 < chance) { triggered = o; break; }
+        }
+
+        if (triggered) {
+          desc.innerHTML = `<span style="color:#f87171;font-weight:600;">${this._esc(triggered.label)}!</span> ${this._esc(triggered.description || "")}`;
+          setTimeout(() => {
+            const slot = outcomes.indexOf(triggered) + 1;
+            const targetId = this._out(node, slot);
+            if (targetId !== null) {
+              this._goto(targetId);
+            } else {
+              this._toast("Event path not connected — restarting room", "info");
+              this.state.scores[key] = 0;
+              this._playTraversal(node, id);
+            }
+          }, 1800);
+          return;
+        }
+
+        this.state.scores[key] += roll;
+        scoreEl.textContent = this.state.scores[key];
+        if (this.state.scores[key] >= target) {
+          desc.innerHTML = `<span style="color:#34d399;font-weight:600;">You made it out! (+${roll})</span>`;
+          setTimeout(() => this._goto(this._out(node, 0)), 1300);
+        } else {
+          desc.textContent = `Rolled ${roll} — keep going to reach ${target}.`;
+          btn.disabled = false;
+          if (exitBtn) exitBtn.disabled = false;
+        }
+      }, 700);
+    };
+  }
+
+  // ---------- logic gate ----------
+
+  _playLogic(node) {
+    const ok = this._evalCond((node.p || {}).condition);
+    this._goto(this._out(node, ok ? 0 : 1));
+  }
+
+  // ---------- missions ----------
+
+  _acceptMission(name) {
+    if (!name || this.state.missions.has(name)) return;
+    this.state.missions.set(name, "active");
+    this._toast("Mission accepted: " + name, "mission");
+    this._pulseMissions();
+  }
+
+  _completeMission(name) {
+    if (!name) return;
+    if (this.state.missions.get(name) === "done") return;
+    this.state.missions.set(name, "done");
+    this._toast("Mission complete: " + name, "mission");
+    this._pulseMissions();
+  }
+
+  _missionMeta(name) {
+    const vm = this.story.varMeta || {};
+    return (vm.missions && vm.missions[name]) || {};
+  }
+
+  _knowledgeMeta(name) {
+    const vm = this.story.varMeta || {};
+    return (vm.knowledge && vm.knowledge[name]) || {};
+  }
+
+  _pulseMissions() {
+    this._updateHUD();
+    if (!this.el) return;
+    this.el.missionsBtn.classList.add("sp-attn");
+    setTimeout(() => this.el.missionsBtn && this.el.missionsBtn.classList.remove("sp-attn"), 2600);
+  }
+
+  // ---------- conditions ----------
+  // Supported: has_item('x')  has_knowledge('x')  mission_active('x')  mission_done('x')
+  // Multiple checks in one expression are ANDed together.
+
+  _evalCond(cond) {
+    if (!cond || !String(cond).trim()) return true;
+    let ok = true;
+    const scan = (fnName, test) => {
+      const re = new RegExp(fnName + "\\(['\"]([^'\"]+)['\"]\\)", "g");
+      let m;
+      while ((m = re.exec(cond))) { if (!test(m[1])) ok = false; }
+    };
+    scan("has_item", v => this.state.inventory.has(v));
+    scan("has_knowledge", v => this.state.knowledge.has(v));
+    scan("mission_active", v => this.state.missions.get(v) === "active");
+    scan("mission_done", v => this.state.missions.get(v) === "done");
+    return ok;
+  }
+
+  // ---------- HUD, panels, endings ----------
+
+  _updateHUD() {
+    if (!this.el) return;
+    // Inventory
+    if (this.state.inventory.size === 0) {
+      this.el.inv.innerHTML = '<span class="sp-inv-empty">empty</span>';
+    } else {
+      this.el.inv.innerHTML = Array.from(this.state.inventory)
+        .map(i => `<span class="sp-inv-chip">${this._esc(i)}</span>`).join("");
+    }
+    // Missions badge counts active only
+    let active = 0;
+    this.state.missions.forEach(v => { if (v === "active") active++; });
+    this.el.missionsBadge.textContent = active;
+    this._renderPanels();
+  }
+
+  _renderPanels() {
+    if (!this.el) return;
+    // Missions panel
+    const mBody = this.el.missionsPanel.querySelector(".sp-panel-body");
+    if (this.state.missions.size === 0) {
+      mBody.innerHTML = '<div class="sp-panel-empty">No missions accepted yet.</div>';
+    } else {
+      let html = "";
+      this.state.missions.forEach((status, name) => {
+        const meta = this._missionMeta(name);
+        const done = status === "done";
+        html += `
+          <div class="sp-mission ${meta.required ? "sp-required" : ""} ${done ? "sp-done" : ""}">
+            <div class="sp-mission-name">
+              <span>${this._esc(name)}</span>
+              ${done
+                ? '<span class="sp-mission-tag sp-donetag">done</span>'
+                : (meta.required ? '<span class="sp-mission-tag sp-req">required</span>' : '<span class="sp-mission-tag sp-opt">optional</span>')}
+            </div>
+            ${meta.info ? `<div class="sp-mission-info">${this._esc(meta.info)}</div>` : ""}
+          </div>`;
+      });
+      mBody.innerHTML = html;
+    }
+    // Diary panel
+    const dBody = this.el.diaryPanel.querySelector(".sp-panel-body");
+    dBody.innerHTML = this.state.diary.length
+      ? this.state.diary.map(e => {
+          // Entries are {label, key}; bare strings are still accepted
+          const entry = (typeof e === "string") ? { label: e } : (e || {});
+          const info = entry.key ? this._knowledgeMeta(entry.key).info : "";
+          return `<div class="sp-diary-entry">
+            <div class="sp-diary-label">${this._esc(entry.label || "")}</div>
+            ${info ? `<div class="sp-diary-info">${this._esc(info)}</div>` : ""}
+          </div>`;
+        }).join("")
+      : '<div class="sp-panel-empty">Nothing discovered yet.</div>';
+  }
+
+  _renderEnding(message) {
+    if (!this.el) this._buildShell();
+    // Any required missions left unfinished?
+    let unfinished = [];
+    this.state.missions.forEach((status, name) => {
+      if (status !== "done" && this._missionMeta(name).required) unfinished.push(name);
+    });
+    const missionNote = unfinished.length
+      ? `<div style="color:#f87171; font-size:13px; margin-bottom:16px;">Unfinished required missions: ${unfinished.map(n => this._esc(n)).join(", ")}</div>`
+      : "";
+    this.el.stage.innerHTML = `
+      <div class="sp-ending">
+        <div class="sp-ending-title">&#10022; The End &#10022;</div>
+        <div class="sp-ending-text">${this._esc(message)}</div>
+        ${missionNote}
+        <div class="sp-ending-actions">
+          <button class="sp-roll-btn" style="width:auto;" data-act="restart">Play Again</button>
+          ${this.opts.onExit ? '<button class="sp-exit-btn" style="width:auto;" data-act="exit">Back to Editor</button>' : ""}
+        </div>
+      </div>`;
+    this.el.stage.querySelector('[data-act="restart"]').onclick = () => this.start(this.story.entry);
+    const ex = this.el.stage.querySelector('[data-act="exit"]');
+    if (ex) ex.onclick = () => this.opts.onExit();
+  }
+
+  // ---------- background & audio ----------
+
+  _setBackground(value) {
+    if (!this.el) return;
+    const v = String(value || "").trim();
+    let css;
+    if (!v) {
+      css = "linear-gradient(135deg, #1e1b4b, #0f172a)";
+    } else if (v.includes("gradient(")) {
+      css = v;
+      // blob: has no file extension, so it needs the protocol test — the editor
+      // resolves project-folder images to blob URLs for playback
+    } else if (/^(blob:|data:|https?:|\.{0,2}\/)/.test(v) || /\.(png|jpe?g|gif|webp|avif)$/i.test(v)) {
+      css = `url("${v.replace(/"/g, '%22')}")`;
+    } else {
+      css = "linear-gradient(135deg, #1e1b4b, #0f172a)";
+    }
+    this.el.bg.style.backgroundImage = css;
+  }
+
+  _setLoop(src) {
+    if (!src || src === this._loopSrc) return;
+    this._loopSrc = src;
+    if (this._fadeTimer) { clearInterval(this._fadeTimer); this._fadeTimer = null; }
+    const old = this._loopAudio;
+    const next = new Audio(src);
+    next.loop = true;
+    next.volume = 0;
+    const p = next.play();
+    if (p && p.catch) p.catch(() => {});
+    this._loopAudio = next;
+    // Crossfade over ~700ms
+    let step = 0;
+    this._fadeTimer = setInterval(() => {
+      step++;
+      const t = Math.min(1, step / 14);
+      next.volume = t;
+      if (old) old.volume = Math.max(0, 1 - t);
+      if (t >= 1) {
+        clearInterval(this._fadeTimer);
+        this._fadeTimer = null;
+        if (old) { old.pause(); old.src = ""; }
+      }
+    }, 50);
+  }
+
+  _playOneShot(src) {
+    if (!src) return;
+    const a = new Audio(src);
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});
+  }
+
+  _stopAllAudio() {
+    if (this._fadeTimer) { clearInterval(this._fadeTimer); this._fadeTimer = null; }
+    if (this._loopAudio) { this._loopAudio.pause(); this._loopAudio.src = ""; this._loopAudio = null; }
+    this._loopSrc = null;
+  }
+
+  // ---------- misc ----------
+
+  _toast(msg, kind) {
+    if (!this.el) return;
+    const t = document.createElement("div");
+    t.className = "sp-toast" + (kind ? " sp-toast-" + kind : "");
+    t.textContent = msg;
+    this.el.toasts.appendChild(t);
+    setTimeout(() => t.remove(), 2800);
+  }
+
+  _esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+}
+new StoryPlayer(document.getElementById("story_root"), STORY, { standalone: true }).start(STORY.entry);
+</script>
+</body>
+</html>

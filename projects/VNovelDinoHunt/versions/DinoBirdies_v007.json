@@ -1,7 +1,7 @@
 {
   "graphSchema": {
     "last_node_id": 36,
-    "last_link_id": 53,
+    "last_link_id": 50,
     "nodes": [
       {
         "id": 2,
@@ -131,6 +131,72 @@
           "startMission": "",
           "completeMission": "",
           "isChapterStart": false
+        }
+      },
+      {
+        "id": 4,
+        "type": "vnovel/choice",
+        "pos": [
+          1090,
+          450
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 5,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 5
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Make a seashell necklace",
+            "type": -1,
+            "links": [
+              6
+            ],
+            "label": "Make a seashell n..."
+          },
+          {
+            "name": "Race the Plesiosaur",
+            "type": -1,
+            "links": [
+              7
+            ],
+            "label": "Race the Plesiosaur"
+          }
+        ],
+        "title": "What should Freya do in the water?",
+        "properties": {
+          "title": "What should Freya do in the water?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Make a seashell necklace",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Race the Plesiosaur",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
         }
       },
       {
@@ -278,6 +344,122 @@
           "showCharacterImages": true,
           "rewardItems": "",
           "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 8,
+        "type": "vnovel/choice",
+        "pos": [
+          1090,
+          600
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 6,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 10
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Follow the musical dinosaur",
+            "type": -1,
+            "links": [
+              11
+            ],
+            "label": "Follow the musica..."
+          },
+          {
+            "name": "Follow the leafy footprints",
+            "type": -1,
+            "links": [
+              12
+            ],
+            "label": "Follow the leafy ..."
+          }
+        ],
+        "title": "Which dinosaur should Freya follow?",
+        "properties": {
+          "title": "Which dinosaur should Freya follow?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Follow the musical dinosaur",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Follow the leafy footprints",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 9,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          450
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 10,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 11
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              13
+            ]
+          }
+        ],
+        "title": "The Dinosaur Song",
+        "properties": {
+          "title": "The Dinosaur Song",
+          "location": "Jungle Clearing",
+          "charactersPresent": "",
+          "text": "Narrator: Freya follows a strange musical sound into a sunny jungle clearing.\nParasaurolophus: Hoooooo-oooooo!\nFreya: That's beautiful!\nNarrator: The Parasaurolophus plays a long musical note with its enormous crest.\nFreya: I think your music could help everybody find the beach!\nNarrator: The dinosaur calls again, and the sound echoes across the island.\nFreya: Come on! Let's get everyone together!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "knows_dinosaurs_can_fly",
           "startMission": "",
           "completeMission": "",
           "isChapterStart": false
@@ -1698,8 +1880,8 @@
           "audioLoopName": "",
           "audioOneShot": "",
           "audioOneShotName": "",
-          "background": "assets/backgrounds/cruz-bay-5.png",
-          "backgroundName": "cruz-bay-5.png",
+          "background": "",
+          "backgroundName": "",
           "showCharacterImages": true,
           "rewardItems": "",
           "rewardKnowledge": "tried_bbq_in_cruz_bay",
@@ -1835,196 +2017,6 @@
           ],
           "text": ""
         }
-      },
-      {
-        "id": 9,
-        "type": "vnovel/passthrough",
-        "pos": [
-          1414,
-          444
-        ],
-        "size": {
-          "0": 142.8000030517578,
-          "1": 87
-        },
-        "flags": {},
-        "order": 10,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 52,
-            "label": "In"
-          },
-          {
-            "name": "In 2",
-            "type": -1,
-            "link": 53,
-            "label": "In 2"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": [
-              13
-            ]
-          }
-        ],
-        "title": "The Dinosaur Song",
-        "properties": {
-          "title": "The Dinosaur Song",
-          "location": "Jungle Clearing",
-          "charactersPresent": "",
-          "text": "Narrator: Freya follows a strange musical sound into a sunny jungle clearing.\nParasaurolophus: Hoooooo-oooooo!\nFreya: That's beautiful!\nNarrator: The Parasaurolophus plays a long musical note with its enormous crest.\nFreya: I think your music could help everybody find the beach!\nNarrator: The dinosaur calls again, and the sound echoes across the island.\nFreya: Come on! Let's get everyone together!",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "",
-          "backgroundName": "",
-          "showCharacterImages": true,
-          "rewardItems": "",
-          "rewardKnowledge": "knows_dinosaurs_can_fly",
-          "startMission": "",
-          "completeMission": "",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 8,
-        "type": "vnovel/choice",
-        "pos": [
-          1090,
-          600
-        ],
-        "size": {
-          "0": 240,
-          "1": 110
-        },
-        "flags": {},
-        "order": 6,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 10
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Follow the musical dinosaur",
-            "type": -1,
-            "links": [
-              52
-            ],
-            "label": "Follow the musica..."
-          },
-          {
-            "name": "Follow the leafy footprints",
-            "type": -1,
-            "links": [
-              12
-            ],
-            "label": "Follow the leafy ..."
-          }
-        ],
-        "title": "Which dinosaur should Freya follow?",
-        "properties": {
-          "title": "Which dinosaur should Freya follow?",
-          "location": "",
-          "background": "",
-          "backgroundName": "",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "choices": [
-            {
-              "text": "Follow the musical dinosaur",
-              "once": false,
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "Follow the leafy footprints",
-              "once": false,
-              "condition": "",
-              "mission": ""
-            }
-          ],
-          "text": ""
-        }
-      },
-      {
-        "id": 4,
-        "type": "vnovel/choice",
-        "pos": [
-          1090,
-          450
-        ],
-        "size": {
-          "0": 240,
-          "1": 110
-        },
-        "flags": {},
-        "order": 5,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 5
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Make a seashell necklace",
-            "type": -1,
-            "links": [
-              6
-            ],
-            "label": "Make a seashell n..."
-          },
-          {
-            "name": "Race the Plesiosaur",
-            "type": -1,
-            "links": [
-              7,
-              53
-            ],
-            "label": "Race the Plesiosaur"
-          }
-        ],
-        "title": "What should Freya do in the water?",
-        "properties": {
-          "title": "What should Freya do in the water?",
-          "location": "",
-          "background": "",
-          "backgroundName": "",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "choices": [
-            {
-              "text": "Make a seashell necklace",
-              "once": false,
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "Race the Plesiosaur",
-              "once": false,
-              "condition": "",
-              "mission": ""
-            }
-          ],
-          "text": ""
-        }
       }
     ],
     "links": [
@@ -2105,6 +2097,14 @@
         7,
         0,
         8,
+        0,
+        -1
+      ],
+      [
+        11,
+        8,
+        0,
+        9,
         0,
         -1
       ],
@@ -2411,22 +2411,6 @@
         32,
         0,
         -1
-      ],
-      [
-        52,
-        8,
-        0,
-        9,
-        0,
-        -1
-      ],
-      [
-        53,
-        4,
-        1,
-        9,
-        1,
-        -1
       ]
     ],
     "groups": [],
@@ -2524,9 +2508,7 @@
         "info": "The whole planet, fifteen hundred years after Freya's vacation on St. John. Crystal dinosaur cities rise above the clouds, and humans live happily as the dinosaurs' beloved pets."
       },
       "Cruz Bay": {
-        "info": "The bustling harbor town on St. John, lined with restaurants, boats, and the smell of delicious food drifting along the waterfront.",
-        "background": "assets/backgrounds/cruz-bay-5.png",
-        "backgroundName": "cruz-bay.png"
+        "info": "The bustling harbor town on St. John, lined with restaurants, boats, and the smell of delicious food drifting along the waterfront."
       }
     },
     "collectibles": {
