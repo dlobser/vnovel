@@ -1,0 +1,2276 @@
+{
+  "graphSchema": {
+    "last_node_id": 32,
+    "last_link_id": 45,
+    "nodes": [
+      {
+        "id": 1,
+        "type": "vnovel/passthrough",
+        "pos": [
+          100,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 0,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": null
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              1
+            ]
+          }
+        ],
+        "title": "Vacation on St. John",
+        "properties": {
+          "title": "Vacation on St. John",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya is four years old, and she is on vacation in the beautiful Virgin Islands.\nFreya: Wow! The water is so blue!\nNarrator: But high above the island, something enormous is getting closer.\nFreya: Is that a giant glowing rock?\nNarrator: It is a gigantic comet, streaking through the sky toward Earth.\nFreya: Oh no! We have to help everybody!\nNarrator: Freya reaches into her backpack and pulls out a strange glowing device.\nFreya: My magic birdie machine can turn dinosaurs into birds!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "knows_comet_is_coming",
+          "startMission": "Find the Dinosaurs",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 2,
+        "type": "vnovel/choice",
+        "pos": [
+          430,
+          600
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 1,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 1
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Splash into the water",
+            "type": -1,
+            "links": [
+              2
+            ],
+            "label": "Splash into the w..."
+          },
+          {
+            "name": "Explore deep in the jungle",
+            "type": -1,
+            "links": [
+              3
+            ],
+            "label": "Explore deep in t..."
+          },
+          {
+            "name": "Stay on the beach",
+            "type": -1,
+            "links": [
+              4
+            ],
+            "label": "Stay on the beach"
+          }
+        ],
+        "title": "Where should Freya explore?",
+        "properties": {
+          "title": "Where should Freya explore?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Splash into the water",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Explore deep in the jungle",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Stay on the beach",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 3,
+        "type": "vnovel/passthrough",
+        "pos": [
+          760,
+          450
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 2,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 2
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              5
+            ]
+          }
+        ],
+        "title": "Dinosaurs Beneath the Waves",
+        "properties": {
+          "title": "Dinosaurs Beneath the Waves",
+          "location": "Caribbean Sea",
+          "charactersPresent": "",
+          "text": "Narrator: Freya wades into the warm Caribbean water and looks beneath the waves.\nFreya: Hello? Is anybody down there?\nNarrator: A gigantic shadow glides underneath her.\nPlesiosaur: Splooooosh!\nFreya: A dinosaur!\nNarrator: A friendly Plesiosaur rises from the water and gives Freya a giant splash.\nFreya: You're very friendly!\nNarrator: Something even bigger swims behind the Plesiosaur.\nMosasaur: Grrrrr!\nFreya: You're friendly too, aren't you?\nNarrator: The Mosasaur gives a happy little wiggle and sprays water into the air.\nFreya: We need to get you both to the beach before the comet comes!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "seashell_necklace",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 4,
+        "type": "vnovel/choice",
+        "pos": [
+          1090,
+          450
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 5,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 5
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Make a seashell necklace",
+            "type": -1,
+            "links": [
+              6
+            ],
+            "label": "Make a seashell n..."
+          },
+          {
+            "name": "Race the Plesiosaur",
+            "type": -1,
+            "links": [
+              7
+            ],
+            "label": "Race the Plesiosaur"
+          }
+        ],
+        "title": "What should Freya do in the water?",
+        "properties": {
+          "title": "What should Freya do in the water?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Make a seashell necklace",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Race the Plesiosaur",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 5,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          150
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 8,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 6
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              8
+            ]
+          }
+        ],
+        "title": "The Seashell Necklace",
+        "properties": {
+          "title": "The Seashell Necklace",
+          "location": "Caribbean Sea",
+          "charactersPresent": "",
+          "text": "Narrator: Freya collects the prettiest shells she can find.\nFreya: This one is pink, and this one is purple!\nNarrator: She makes a tiny necklace and holds it up proudly.\nPlesiosaur: Splish!\nFreya: You like it!\nNarrator: The Plesiosaur nudges Freya gently toward the beach.\nFreya: Okay! Let's go find the other dinosaurs!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "seashell_necklace",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 6,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          300
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 9,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 7
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              9
+            ]
+          }
+        ],
+        "title": "The Great Sea Race",
+        "properties": {
+          "title": "The Great Sea Race",
+          "location": "Caribbean Sea",
+          "charactersPresent": "",
+          "text": "Narrator: Freya climbs onto the Plesiosaur's back.\nFreya: Ready, set, GO!\nNarrator: The Plesiosaur zooms through the water while Freya laughs and holds on tight.\nMosasaur: Splash!\nNarrator: The Mosasaur races alongside them, making enormous waves.\nFreya: We're the fastest dinosaur team ever!\nNarrator: Together they race back toward St. John Beach.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 7,
+        "type": "vnovel/passthrough",
+        "pos": [
+          760,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 3,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 3
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              10
+            ]
+          }
+        ],
+        "title": "Deep in the Jungle",
+        "properties": {
+          "title": "Deep in the Jungle",
+          "location": "Deep Jungle",
+          "charactersPresent": "",
+          "text": "Narrator: Freya follows a trail of enormous footprints into the deep jungle.\nFreya: These footprints are HUGE!\nNarrator: Leaves shake nearby.\nVelociraptors: Chirp! Chirp! Chirp!\nFreya: Tiny dinosaurs!\nNarrator: A group of colorful feathered Velociraptors races around Freya in happy circles.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 8,
+        "type": "vnovel/choice",
+        "pos": [
+          1090,
+          600
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 6,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 10
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Follow the musical dinosaur",
+            "type": -1,
+            "links": [
+              11
+            ],
+            "label": "Follow the musica..."
+          },
+          {
+            "name": "Follow the leafy footprints",
+            "type": -1,
+            "links": [
+              12
+            ],
+            "label": "Follow the leafy ..."
+          }
+        ],
+        "title": "Which dinosaur should Freya follow?",
+        "properties": {
+          "title": "Which dinosaur should Freya follow?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Follow the musical dinosaur",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Follow the leafy footprints",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 9,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          450
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 10,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 11
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              13
+            ]
+          }
+        ],
+        "title": "The Dinosaur Song",
+        "properties": {
+          "title": "The Dinosaur Song",
+          "location": "Jungle Clearing",
+          "charactersPresent": "",
+          "text": "Narrator: Freya follows a strange musical sound into a sunny jungle clearing.\nParasaurolophus: Hoooooo-oooooo!\nFreya: That's beautiful!\nNarrator: The Parasaurolophus plays a long musical note with its enormous crest.\nFreya: I think your music could help everybody find the beach!\nNarrator: The dinosaur calls again, and the sound echoes across the island.\nFreya: Come on! Let's get everyone together!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "knows_dinosaurs_can_fly",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 10,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 11,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 12
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              14
+            ]
+          }
+        ],
+        "title": "The Giant Footprints",
+        "properties": {
+          "title": "The Giant Footprints",
+          "location": "Deep Jungle",
+          "charactersPresent": "",
+          "text": "Narrator: Freya follows enormous footprints through the jungle.\nFreya: Who could have feet this big?\nNarrator: The trees part, revealing a giant friendly T-Rex beside a leafy Triceratops.\nTriceratops: Munch munch!\nT-Rex: Grrrrrr!\nFreya: Don't worry! I'm here to help you!\nNarrator: The T-Rex gives Freya a goofy smile.\nFreya: We have to go to the beach. The comet is coming!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "knows_dinosaurs_can_fly",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 11,
+        "type": "vnovel/passthrough",
+        "pos": [
+          760,
+          750
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 4,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 4
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              15
+            ]
+          }
+        ],
+        "title": "Dinosaurs on the Beach",
+        "properties": {
+          "title": "Dinosaurs on the Beach",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya stays on the beach and searches between the palm trees.\nNarrator: Suddenly, a giant Triceratops walks out of the jungle.\nTriceratops: Munch munch munch!\nFreya: Hi! You must be hungry.\nNarrator: Freya gives the Triceratops some tropical leaves.\nNarrator: Then several colorful Velociraptors race onto the sand.\nVelociraptors: Chirp! Chirp! Chirp!\nFreya: There are dinosaurs everywhere!\nNarrator: A gigantic T-Rex appears behind them.\nT-Rex: Grrrrr!\nFreya: And you too!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "magic_bird_device",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 12,
+        "type": "vnovel/choice",
+        "pos": [
+          1090,
+          750
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 7,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 15
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Make friends with the Triceratops",
+            "type": -1,
+            "links": [
+              16
+            ],
+            "label": "Make friends with..."
+          },
+          {
+            "name": "Play with the Velociraptors",
+            "type": -1,
+            "links": [
+              17
+            ],
+            "label": "Play with the Vel..."
+          },
+          {
+            "name": "Climb onto the T-Rex",
+            "type": -1,
+            "links": [
+              18
+            ],
+            "label": "Climb onto the T-Rex"
+          }
+        ],
+        "title": "What should Freya do with the dinosaurs?",
+        "properties": {
+          "title": "What should Freya do with the dinosaurs?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Make friends with the Triceratops",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Play with the Velociraptors",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Climb onto the T-Rex",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 13,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          750
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 12,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 16
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              19
+            ]
+          }
+        ],
+        "title": "Triceratops Cuddle",
+        "properties": {
+          "title": "Triceratops Cuddle",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya walks right up to the Triceratops.\nFreya: Can I give you a hug?\nNarrator: The Triceratops lowers its enormous head.\nFreya: You're very soft!\nNarrator: Freya hugs the dinosaur's giant nose.\nTriceratops: Mmmmm!\nFreya: Now let's get everybody together!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 14,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          900
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 13,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 17
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              20
+            ]
+          }
+        ],
+        "title": "Velociraptor Parade",
+        "properties": {
+          "title": "Velociraptor Parade",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: The Velociraptors run in a circle around Freya.\nFreya: Let's have a dinosaur parade!\nNarrator: Freya marches down the beach while the Velociraptors follow in a colorful line.\nVelociraptors: Chirp chirp chirp!\nFreya: Everybody to the beach!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 15,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          1050
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 14,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 18
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              21
+            ]
+          }
+        ],
+        "title": "T-Rex Taxi",
+        "properties": {
+          "title": "T-Rex Taxi",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya climbs carefully onto the T-Rex's back.\nFreya: T-Rex taxi!\nNarrator: The T-Rex takes tiny careful steps along the beach.\nT-Rex: Grrrrr!\nFreya: You're a very good taxi.\nNarrator: Freya can see dinosaurs gathering all around the island.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 16,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1750,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 15,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 21
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              22
+            ]
+          }
+        ],
+        "title": "The Dinosaurs Gather",
+        "properties": {
+          "title": "The Dinosaurs Gather",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Dinosaurs arrive from the jungle, the water, and every corner of St. John.\nPlesiosaur: Splooooosh!\nMosasaur: Splash!\nTriceratops: Munch!\nVelociraptors: Chirp chirp!\nParasaurolophus: Hoooooo!\nT-Rex: Grrrr!\nNarrator: Soon the entire beach is covered with happy dinosaurs.\nFreya: Everybody's here!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "magic_bird_device",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 17,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          2080,
+          615
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 16,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 22
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              23
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              24
+            ]
+          }
+        ],
+        "title": "Can Freya Save the Dinosaurs?",
+        "properties": {
+          "title": "Can Freya Save the Dinosaurs?",
+          "condition": "has_item('magic_bird_device') AND has_knowledge('knows_comet_is_coming')",
+          "location": "",
+          "text": ""
+        }
+      },
+      {
+        "id": 18,
+        "type": "vnovel/choice",
+        "pos": [
+          2720,
+          600
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 17,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 28
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Press the big rainbow button",
+            "type": -1,
+            "links": [
+              25
+            ],
+            "label": "Press the big rai..."
+          },
+          {
+            "name": "Let the dinosaurs press it together",
+            "type": -1,
+            "links": [
+              26
+            ],
+            "label": "Let the dinosaurs..."
+          },
+          {
+            "name": "Point it at the sky",
+            "type": -1,
+            "links": [
+              27
+            ],
+            "label": "Point it at the sky"
+          }
+        ],
+        "title": "How should Freya transform the dinosaurs?",
+        "properties": {
+          "title": "How should Freya transform the dinosaurs?",
+          "location": "St. John Beach",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Press the big rainbow button",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Let the dinosaurs press it together",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Point it at the sky",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 19,
+        "type": "vnovel/passthrough",
+        "pos": [
+          2390,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 18,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 24
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              28
+            ]
+          }
+        ],
+        "title": "Find the Magic Device",
+        "properties": {
+          "title": "Find the Magic Device",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya suddenly remembers the glowing device in her backpack.\nFreya: Wait! I have my birdie machine!\nNarrator: She holds the device up high.\nFreya: Everybody, come close!\nNarrator: Every dinosaur on the island gathers around Freya.\nFreya: When the comet comes, we're going to fly away together!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "magic_bird_device",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 20,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3050,
+          439.5
+        ],
+        "size": [
+          240,
+          117
+        ],
+        "flags": {},
+        "order": 19,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 25
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              29
+            ]
+          }
+        ],
+        "title": "Rainbow Transformation",
+        "properties": {
+          "title": "Rainbow Transformation",
+          "location": "Comet Sky",
+          "charactersPresent": "",
+          "text": "Narrator: Freya presses the giant rainbow button.\nFreya: BEEP!\nNarrator: A rainbow beam shoots across the beach.\nNarrator: One by one, the dinosaurs transform into magnificent birds.\nTriceratops: Tweet!\nT-Rex: CAW!\nVelociraptors: Chirp chirp chirp!\nNarrator: The enormous comet reaches the sky above St. John.\nFreya: Look!\nNarrator: The comet suddenly bursts into a gigantic explosion of colorful fireworks.\nFreya: It worked!\nNarrator: The sky fills with sparkling stars, rainbow fireworks, and hundreds of happy birds.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "glowing_feather",
+          "rewardKnowledge": "",
+          "startMission": "Join the Birdie Dance Party",
+          "completeMission": "Save the Dinosaurs",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 21,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3050,
+          596.5
+        ],
+        "size": [
+          240,
+          117
+        ],
+        "flags": {},
+        "order": 20,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 26
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              30
+            ]
+          }
+        ],
+        "title": "Everybody Press Together",
+        "properties": {
+          "title": "Everybody Press Together",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya holds the device while all the dinosaurs touch it together.\nFreya: Everybody press!\nNarrator: Hundreds of little dinosaur noses, paws, claws, and tails touch the glowing machine.\nNarrator: BOOOOM! A rainbow wave sweeps across St. John.\nNarrator: Every dinosaur transforms into a beautiful bird.\nFreya: We did it together!\nNarrator: At that exact moment, the comet explodes harmlessly into a spectacular fireworks show.\nNarrator: The entire sky sparkles above Freya and her new bird friends.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "glowing_feather",
+          "rewardKnowledge": "",
+          "startMission": "Join the Birdie Dance Party",
+          "completeMission": "Save the Dinosaurs",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 22,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3050,
+          753.5
+        ],
+        "size": [
+          240,
+          117
+        ],
+        "flags": {},
+        "order": 21,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 27
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              31
+            ]
+          }
+        ],
+        "title": "Birdies in the Sky",
+        "properties": {
+          "title": "Birdies in the Sky",
+          "location": "Comet Sky",
+          "charactersPresent": "",
+          "text": "Narrator: Freya points the magical device toward the enormous comet.\nFreya: Fly, little birdies!\nNarrator: A rainbow beam shoots upward and surrounds every dinosaur.\nNarrator: The dinosaurs transform into birds and immediately soar into the sky.\nNarrator: The comet reaches the atmosphere and bursts apart into a gigantic fireworks celebration.\nFreya: It's beautiful!\nNarrator: The birds swoop around Freya in enormous sparkling circles.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "glowing_feather",
+          "rewardKnowledge": "",
+          "startMission": "Join the Birdie Dance Party",
+          "completeMission": "Save the Dinosaurs",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 23,
+        "type": "vnovel/choice",
+        "pos": [
+          3380,
+          600
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 22,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 31
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Dance with the tiny colorful birds",
+            "type": -1,
+            "links": [
+              32
+            ],
+            "label": "Dance with the ti..."
+          },
+          {
+            "name": "Fly with the giant sea birds",
+            "type": -1,
+            "links": [
+              33
+            ],
+            "label": "Fly with the gian..."
+          },
+          {
+            "name": "Soar with the jungle birds",
+            "type": -1,
+            "links": [
+              34
+            ],
+            "label": "Soar with the jun..."
+          },
+          {
+            "name": "Ride with the biggest bird",
+            "type": -1,
+            "links": [
+              35
+            ],
+            "label": "Ride with the big..."
+          }
+        ],
+        "title": "Which birdies should Freya join?",
+        "properties": {
+          "title": "Which birdies should Freya join?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Dance with the tiny colorful birds",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Fly with the giant sea birds",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Soar with the jungle birds",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Ride with the biggest bird",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 24,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3710,
+          375
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 23,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 32
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              36
+            ]
+          }
+        ],
+        "title": "Tiny Birdie Dance",
+        "properties": {
+          "title": "Tiny Birdie Dance",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Hundreds of tiny colorful birds land around Freya.\nFreya: Dance with me!\nNarrator: The little birds hop left, hop right, flap their wings, and spin in circles.\nNarrator: Freya dances in the middle of them, laughing.\nFreya: This is the best vacation ever!\nNarrator: Fireworks sparkle above the beach as the tiny birds dance faster and faster.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "Join the Birdie Dance Party",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 25,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3710,
+          525
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 24,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 33
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              37
+            ]
+          }
+        ],
+        "title": "The Great Sea Bird Flight",
+        "properties": {
+          "title": "The Great Sea Bird Flight",
+          "location": "Caribbean Sea",
+          "charactersPresent": "",
+          "text": "Narrator: The giant sea birds swoop down toward the ocean.\nFreya: Can I fly with you?\nNarrator: A huge blue bird gently lifts Freya onto its back.\nNarrator: They soar above the sparkling Caribbean Sea while fireworks reflect in the water.\nFreya: We're flying!\nNarrator: The sea birds circle the island in a beautiful glowing formation.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "Join the Birdie Dance Party",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 26,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3710,
+          675
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 25,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 34
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              38
+            ]
+          }
+        ],
+        "title": "Jungle Bird Adventure",
+        "properties": {
+          "title": "Jungle Bird Adventure",
+          "location": "Deep Jungle",
+          "charactersPresent": "",
+          "text": "Narrator: The colorful jungle birds fly toward the treetops.\nFreya: Wait for me!\nNarrator: Freya follows them into the jungle as they swoop between palms and giant flowers.\nNarrator: The birds make a musical chorus with their calls.\nFreya: You're making a jungle song!\nNarrator: Fireworks flash through the leaves like colorful stars.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "Join the Birdie Dance Party",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 27,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3710,
+          825
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 26,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 35
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              39
+            ]
+          }
+        ],
+        "title": "The Biggest Bird",
+        "properties": {
+          "title": "The Biggest Bird",
+          "location": "Comet Sky",
+          "charactersPresent": "",
+          "text": "Narrator: The biggest bird of all lands gently beside Freya.\nFreya: You are HUGE!\nNarrator: The giant bird lowers one enormous wing like a staircase.\nFreya: Up we go!\nNarrator: Freya climbs aboard and rises high above St. John.\nNarrator: Below her, every bird circles the island while fireworks explode across the sky.\nFreya: I can see everything!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "Join the Birdie Dance Party",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 28,
+        "type": "vnovel/choice",
+        "pos": [
+          4040,
+          600
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 27,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 39
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Dance on the beach",
+            "type": -1,
+            "links": [
+              40
+            ],
+            "label": "Dance on the beach"
+          },
+          {
+            "name": "Explore the jungle with the birds",
+            "type": -1,
+            "links": [
+              41
+            ],
+            "label": "Explore the jungl..."
+          },
+          {
+            "name": "Fly over the Caribbean",
+            "type": -1,
+            "links": [
+              42
+            ],
+            "label": "Fly over the Cari..."
+          }
+        ],
+        "title": "Where should Freya go next?",
+        "properties": {
+          "title": "Where should Freya go next?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Dance on the beach",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Explore the jungle with the birds",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Fly over the Caribbean",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 29,
+        "type": "vnovel/passthrough",
+        "pos": [
+          4370,
+          450
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 28,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 40
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              43
+            ]
+          }
+        ],
+        "title": "Beach Dance Party",
+        "properties": {
+          "title": "Beach Dance Party",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: Freya returns to the warm sand.\nNarrator: Every bird lands around her and forms a giant circle.\nFreya: Everybody dance!\nNarrator: The birds flap, hop, spin, and wiggle while Freya dances in the middle.\nNarrator: The fireworks continue sparkling overhead.\nFreya: I love birdies!\nNarrator: The whole beach becomes one enormous happy dance party.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 30,
+        "type": "vnovel/passthrough",
+        "pos": [
+          4370,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 29,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 41
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              44
+            ]
+          }
+        ],
+        "title": "Jungle Celebration",
+        "properties": {
+          "title": "Jungle Celebration",
+          "location": "Jungle Clearing",
+          "charactersPresent": "",
+          "text": "Narrator: Freya follows the birds into a sunny jungle clearing.\nNarrator: The birds decorate the trees with glowing feathers.\nFreya: It's like a jungle party!\nNarrator: The birds sing while Freya dances between giant flowers.\nNarrator: Rainbow fireworks shine through the leaves.\nFreya: We can have adventures here forever!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 31,
+        "type": "vnovel/passthrough",
+        "pos": [
+          4370,
+          750
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 30,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 42
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              45
+            ]
+          }
+        ],
+        "title": "Flying Over the Island",
+        "properties": {
+          "title": "Flying Over the Island",
+          "location": "Comet Sky",
+          "charactersPresent": "",
+          "text": "Narrator: Freya flies high above St. John with her bird friends.\nNarrator: Below them, the island glows beneath the stars.\nNarrator: The ocean sparkles, the jungle sways, and fireworks fill the sky.\nFreya: This is the most amazing thing I've ever seen!\nNarrator: The birds fly in a giant heart-shaped formation around Freya.\nFreya: Let's come back tomorrow!",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 32,
+        "type": "vnovel/passthrough",
+        "pos": [
+          4700,
+          600
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 31,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 45
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": []
+          }
+        ],
+        "title": "Happily Ever After",
+        "properties": {
+          "title": "Happily Ever After",
+          "location": "St. John Beach",
+          "charactersPresent": "",
+          "text": "Narrator: The fireworks slowly fade into twinkling stars.\nNarrator: Every bird gathers around Freya one more time.\nFreya: Goodnight, birdies!\nNarrator: The birds chirp a giant musical goodnight.\nNarrator: Freya smiles as the moon rises over St. John.\nNarrator: The dinosaurs are safe, the island is happy, and Freya has made hundreds of wonderful new friends.\nNarrator: And tomorrow, there will be another adventure.\n```",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      }
+    ],
+    "links": [
+      [
+        1,
+        1,
+        0,
+        2,
+        0,
+        -1
+      ],
+      [
+        2,
+        2,
+        0,
+        3,
+        0,
+        -1
+      ],
+      [
+        3,
+        2,
+        1,
+        7,
+        0,
+        -1
+      ],
+      [
+        4,
+        2,
+        2,
+        11,
+        0,
+        -1
+      ],
+      [
+        5,
+        3,
+        0,
+        4,
+        0,
+        -1
+      ],
+      [
+        6,
+        4,
+        0,
+        5,
+        0,
+        -1
+      ],
+      [
+        7,
+        4,
+        1,
+        6,
+        0,
+        -1
+      ],
+      [
+        8,
+        5,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        9,
+        6,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        10,
+        7,
+        0,
+        8,
+        0,
+        -1
+      ],
+      [
+        11,
+        8,
+        0,
+        9,
+        0,
+        -1
+      ],
+      [
+        12,
+        8,
+        1,
+        10,
+        0,
+        -1
+      ],
+      [
+        13,
+        9,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        14,
+        10,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        15,
+        11,
+        0,
+        12,
+        0,
+        -1
+      ],
+      [
+        16,
+        12,
+        0,
+        13,
+        0,
+        -1
+      ],
+      [
+        17,
+        12,
+        1,
+        14,
+        0,
+        -1
+      ],
+      [
+        18,
+        12,
+        2,
+        15,
+        0,
+        -1
+      ],
+      [
+        19,
+        13,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        20,
+        14,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        21,
+        15,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        22,
+        16,
+        0,
+        17,
+        0,
+        -1
+      ],
+      [
+        23,
+        17,
+        0,
+        18,
+        0,
+        -1
+      ],
+      [
+        24,
+        17,
+        1,
+        19,
+        0,
+        -1
+      ],
+      [
+        25,
+        18,
+        0,
+        20,
+        0,
+        -1
+      ],
+      [
+        26,
+        18,
+        1,
+        21,
+        0,
+        -1
+      ],
+      [
+        27,
+        18,
+        2,
+        22,
+        0,
+        -1
+      ],
+      [
+        28,
+        19,
+        0,
+        18,
+        0,
+        -1
+      ],
+      [
+        29,
+        20,
+        0,
+        23,
+        0,
+        -1
+      ],
+      [
+        30,
+        21,
+        0,
+        23,
+        0,
+        -1
+      ],
+      [
+        31,
+        22,
+        0,
+        23,
+        0,
+        -1
+      ],
+      [
+        32,
+        23,
+        0,
+        24,
+        0,
+        -1
+      ],
+      [
+        33,
+        23,
+        1,
+        25,
+        0,
+        -1
+      ],
+      [
+        34,
+        23,
+        2,
+        26,
+        0,
+        -1
+      ],
+      [
+        35,
+        23,
+        3,
+        27,
+        0,
+        -1
+      ],
+      [
+        36,
+        24,
+        0,
+        28,
+        0,
+        -1
+      ],
+      [
+        37,
+        25,
+        0,
+        28,
+        0,
+        -1
+      ],
+      [
+        38,
+        26,
+        0,
+        28,
+        0,
+        -1
+      ],
+      [
+        39,
+        27,
+        0,
+        28,
+        0,
+        -1
+      ],
+      [
+        40,
+        28,
+        0,
+        29,
+        0,
+        -1
+      ],
+      [
+        41,
+        28,
+        1,
+        30,
+        0,
+        -1
+      ],
+      [
+        42,
+        28,
+        2,
+        31,
+        0,
+        -1
+      ],
+      [
+        43,
+        29,
+        0,
+        32,
+        0,
+        -1
+      ],
+      [
+        44,
+        30,
+        0,
+        32,
+        0,
+        -1
+      ],
+      [
+        45,
+        31,
+        0,
+        32,
+        0,
+        -1
+      ]
+    ],
+    "groups": [],
+    "config": {},
+    "version": 0.4
+  },
+  "globalVars": {
+    "characters": [
+      "Freya",
+      "Plesiosaur",
+      "Mosasaur",
+      "Triceratops",
+      "Velociraptors",
+      "Parasaurolophus",
+      "T-Rex",
+      "Pterodactyls",
+      "Comet Birds"
+    ],
+    "locations": [
+      "St. John Beach",
+      "Caribbean Sea",
+      "Deep Jungle",
+      "Jungle Clearing",
+      "Comet Sky"
+    ],
+    "collectibles": [
+      "magic_bird_device",
+      "seashell_necklace",
+      "glowing_feather"
+    ],
+    "knowledge": [
+      "knows_comet_is_coming",
+      "knows_dinosaurs_can_fly"
+    ],
+    "missions": [
+      "Find the Dinosaurs",
+      "Save the Dinosaurs",
+      "Join the Birdie Dance Party"
+    ]
+  },
+  "varMeta": {
+    "characters": {
+      "Freya": {
+        "info": "A cheerful four-year-old girl on vacation in the Virgin Islands, wearing a colorful swimsuit, sun hat, and tiny backpack. She carries a mysterious glowing device that can transform dinosaurs into friendly birdies."
+      },
+      "Plesiosaur": {
+        "info": "A huge friendly sea dinosaur with a long neck, gentle eyes, flippers, and smooth blue-green skin. It loves splashing and playing in the warm Caribbean water."
+      },
+      "Mosasaur": {
+        "info": "A gigantic but friendly marine dinosaur with a broad toothy grin, dark blue scales, and a powerful tail. Despite its enormous size, it behaves like a playful puppy around Freya."
+      },
+      "Triceratops": {
+        "info": "A chunky, friendly Triceratops with three rounded horns, a big frill, sturdy legs, and a curious expression. It enjoys eating tropical leaves."
+      },
+      "Velociraptors": {
+        "info": "A group of small, energetic Velociraptors with colorful feathers, oversized curious eyes, and playful personalities. They run around the jungle like excited puppies."
+      },
+      "Parasaurolophus": {
+        "info": "A tall, gentle dinosaur with a long curved crest, soft green skin, and a sweet personality. It makes musical calls that echo through the jungle."
+      },
+      "T-Rex": {
+        "info": "A huge friendly Tyrannosaurus with tiny arms, enormous feet, bright expressive eyes, and a goofy smile. It tries very hard to be gentle around Freya."
+      },
+      "Pterodactyls": {
+        "info": "A flock of colorful flying dinosaurs with broad wings and long beaks. They soar above St. John in enormous graceful circles."
+      },
+      "Comet Birds": {
+        "info": "Hundreds of newly transformed dinosaurs, now magnificent birds of every imaginable shape, color, and size. They have feathers, wings, crests, tails, and bright joyful eyes."
+      }
+    },
+    "locations": {
+      "St. John Beach": {
+        "info": "A beautiful Caribbean beach on St. John with turquoise water, warm white sand, palm trees, tropical flowers, and enormous views of the sky. The perfect place to watch the approaching comet."
+      },
+      "Caribbean Sea": {
+        "info": "Warm crystal-clear Caribbean water surrounding St. John, filled with coral, colorful fish, sea grass, and mysterious shapes moving beneath the surface."
+      },
+      "Deep Jungle": {
+        "info": "Dense tropical jungle on St. John, filled with giant leaves, vines, palms, flowers, mossy rocks, and shafts of golden sunlight."
+      },
+      "Jungle Clearing": {
+        "info": "A wide sunny clearing surrounded by dense jungle. Tropical plants grow around the edges, while enormous dinosaur footprints cover the soft earth."
+      },
+      "Comet Sky": {
+        "info": "A spectacular night sky above St. John filled with stars and a gigantic glowing comet streaking toward Earth, surrounded by brilliant colors and sparkling trails."
+      }
+    },
+    "collectibles": {
+      "magic_bird_device": {
+        "info": "A small magical device belonging to Freya. It glows with rainbow-colored light and has a single large button covered in mysterious dinosaur-shaped symbols."
+      },
+      "seashell_necklace": {
+        "info": "A little necklace Freya makes from beautiful pink, white, and lavender Caribbean seashells. It rattles softly whenever she runs."
+      },
+      "glowing_feather": {
+        "info": "A shimmering feather that appears after a dinosaur touches Freya's magical device. It glows softly in rainbow colors."
+      }
+    },
+    "knowledge": {
+      "knows_comet_is_coming": {
+        "info": "Freya knows that the enormous comet is coming toward Earth and that something magical needs to happen before it arrives."
+      },
+      "knows_dinosaurs_can_fly": {
+        "info": "Freya has discovered that her magical device can turn dinosaurs into birdies so they can fly safely away from the comet."
+      }
+    },
+    "missions": {
+      "Find the Dinosaurs": {
+        "info": "Freya must explore St. John and find all the dinosaurs before the comet reaches Earth."
+      },
+      "Save the Dinosaurs": {
+        "info": "Freya must bring all the dinosaurs together on the beach and use her magical bird device to save them."
+      },
+      "Join the Birdie Dance Party": {
+        "info": "After the dinosaurs become birds and the comet explodes into fireworks, Freya must choose which birdies to join and where to celebrate."
+      }
+    }
+  },
+  "projectTitle": "Freya and the Comet Birdies",
+  "bookmarks": []
+}
