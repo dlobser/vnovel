@@ -1,7 +1,7 @@
 {
   "graphSchema": {
-    "last_node_id": 36,
-    "last_link_id": 49,
+    "last_node_id": 34,
+    "last_link_id": 47,
     "nodes": [
       {
         "id": 2,
@@ -1829,14 +1829,6 @@
               47
             ],
             "label": "The dinosaurs com..."
-          },
-          {
-            "name": "The dinosaurs will rule the world",
-            "type": -1,
-            "links": [
-              48
-            ],
-            "label": "The dinosaurs wil..."
           }
         ],
         "title": "How does Freya imagine her friends in the future?",
@@ -1858,12 +1850,6 @@
             },
             {
               "text": "The dinosaurs come back one day",
-              "once": false,
-              "condition": "",
-              "mission": ""
-            },
-            {
-              "text": "The dinosaurs will rule the world",
               "once": false,
               "condition": "",
               "mission": ""
@@ -1915,104 +1901,6 @@
           "showCharacterImages": true,
           "rewardItems": "",
           "rewardKnowledge": "",
-          "startMission": "",
-          "completeMission": "",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 35,
-        "type": "vnovel/passthrough",
-        "pos": [
-          5030,
-          900
-        ],
-        "size": [
-          240,
-          140
-        ],
-        "flags": {},
-        "order": 34,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 48
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": []
-          }
-        ],
-        "title": "The Year 3535",
-        "properties": {
-          "title": "The Year 3535",
-          "location": "Future Earth",
-          "charactersPresent": "",
-          "text": "Narrator: Freya's story is told again and again, for a hundred years, then a thousand.\nNarrator: The dinosaurs never forget the little girl who saved them, and they never stop growing - in numbers, in size, and in confidence.\nNarrator: By the year 3535, the dinosaurs don't just live on St. John anymore. They live everywhere. And they are in charge of everything.\nT-Rex: GRRRRRR! (Which, by now, means \"Good morning, Earth!\")\nNarrator: Shiny dinosaur cities rise above the clouds, built from crystal and vines and a thousand years of careful engineering.\nNarrator: And humans? Humans are the dinosaurs' favorite little creatures - fed the best snacks, walked twice a day, and cuddled whenever they want.\nTriceratops: Munch munch! (Time for treats!)\nNarrator: In the grandest city of all stands a statue of a four-year-old girl with a tiny backpack and a glowing device.\nVelociraptors: Chirp chirp chirp!\nNarrator: Every dinosaur, big or small, knows her name, and every dinosaur follows her very first rule, passed down for fifteen hundred years: always be kind to your creatures.\nNarrator: Freya would be proud.",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "",
-          "backgroundName": "",
-          "showCharacterImages": true,
-          "rewardItems": "",
-          "rewardKnowledge": "",
-          "startMission": "",
-          "completeMission": "",
-          "isChapterStart": false
-        }
-      },
-      {
-        "id": 36,
-        "type": "vnovel/passthrough",
-        "pos": [
-          4700,
-          320
-        ],
-        "size": [
-          240,
-          130
-        ],
-        "flags": {},
-        "order": 30,
-        "mode": 0,
-        "inputs": [
-          {
-            "name": "In",
-            "type": -1,
-            "link": 49
-          }
-        ],
-        "outputs": [
-          {
-            "name": "Out",
-            "type": -1,
-            "links": [
-              44
-            ]
-          }
-        ],
-        "title": "Dinner in Cruz Bay",
-        "properties": {
-          "title": "Dinner in Cruz Bay",
-          "location": "Cruz Bay",
-          "charactersPresent": "",
-          "text": "Narrator: Before heading back to celebrate, Freya and a few curious birds make a quick stop in Cruz Bay for dinner.\nFreya: I'm hungry after all that dancing!\nNarrator: A little restaurant by the harbor is grilling something smoky and delicious.\nFreya: What's that yummy smell?\nNarrator: It's BBQ, and Freya has never tried it before in her life.\nFreya: Can I have a bite?\nNarrator: She takes her very first taste of BBQ, and her eyes go wide.\nFreya: Mmmmm! This might be the best thing I've ever eaten!\nNarrator: Even the birds hop closer, curious about the smoky new smell.\nFreya: Okay, NOW I'm ready to go back and celebrate!",
-          "audioLoop": "",
-          "audioLoopName": "",
-          "audioOneShot": "",
-          "audioOneShotName": "",
-          "background": "",
-          "backgroundName": "",
-          "showCharacterImages": true,
-          "rewardItems": "",
-          "rewardKnowledge": "tried_bbq_in_cruz_bay",
           "startMission": "",
           "completeMission": "",
           "isChapterStart": false
@@ -2366,7 +2254,7 @@
       ],
       [
         44,
-        36,
+        30,
         0,
         33,
         0,
@@ -2395,22 +2283,6 @@
         34,
         0,
         -1
-      ],
-      [
-        48,
-        33,
-        2,
-        35,
-        0,
-        -1
-      ],
-      [
-        49,
-        30,
-        0,
-        36,
-        0,
-        -1
       ]
     ],
     "groups": [],
@@ -2434,9 +2306,7 @@
       "Caribbean Sea",
       "Deep Jungle",
       "Jungle Clearing",
-      "Comet Sky",
-      "Future Earth",
-      "Cruz Bay"
+      "Comet Sky"
     ],
     "collectibles": [
       "magic_bird_device",
@@ -2445,8 +2315,7 @@
     ],
     "knowledge": [
       "knows_comet_is_coming",
-      "knows_dinosaurs_can_fly",
-      "tried_bbq_in_cruz_bay"
+      "knows_dinosaurs_can_fly"
     ],
     "missions": [
       "Find the Dinosaurs",
@@ -2503,12 +2372,6 @@
       },
       "Comet Sky": {
         "info": "A spectacular night sky above St. John filled with stars and a gigantic glowing comet streaking toward Earth, surrounded by brilliant colors and sparkling trails."
-      },
-      "Future Earth": {
-        "info": "The whole planet, fifteen hundred years after Freya's vacation on St. John. Crystal dinosaur cities rise above the clouds, and humans live happily as the dinosaurs' beloved pets."
-      },
-      "Cruz Bay": {
-        "info": "The bustling harbor town on St. John, lined with restaurants, boats, and the smell of delicious food drifting along the waterfront."
       }
     },
     "collectibles": {
@@ -2528,9 +2391,6 @@
       },
       "knows_dinosaurs_can_fly": {
         "info": "Freya has discovered that her magical device can turn dinosaurs into birdies so they can fly safely away from the comet."
-      },
-      "tried_bbq_in_cruz_bay": {
-        "info": "Freya tried BBQ for the very first time during a dinner stop in Cruz Bay, and loved it."
       }
     },
     "missions": {
