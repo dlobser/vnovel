@@ -1,0 +1,1855 @@
+{
+  "graphSchema": {
+    "last_node_id": 27,
+    "last_link_id": 41,
+    "nodes": [
+      {
+        "id": 1,
+        "type": "vnovel/passthrough",
+        "pos": [
+          100,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 0,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": null
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              1
+            ]
+          }
+        ],
+        "title": "Wake in the Closet",
+        "properties": {
+          "title": "Wake in the Closet",
+          "location": "The Closet",
+          "charactersPresent": "",
+          "text": "You wake up on the quilt under the stairs. The coats sway though there's no wind.\nThrough the floorboards, the clink of plates. Dad is setting the table.\nDad: Up, boy. Supper's getting cold, and so is your mother.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 2,
+        "type": "vnovel/passthrough",
+        "pos": [
+          430,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 1,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 1
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              2
+            ]
+          }
+        ],
+        "title": "Supper with Dad",
+        "properties": {
+          "title": "Supper with Dad",
+          "location": "Dining Room",
+          "charactersPresent": "",
+          "text": "Dad sits at the head of the table. Across from him, the Effigy, its sack head turned slightly toward you.\nDad: Sit. Eat. Your mother's watching.\nYou eat the gray soup. It tastes like pennies.\nDad: The Last Supper is coming. The sabbath. When it's laid out, this house will be consecrated, and she'll be whole.\nDad: But the dust is getting thicker. I need to see farther in the dark.\nDad: Out in the corn there's a battery, a wire, and a mirror. Bring them to me and I'll make you a flashlight.\nDad: You'll have ten minutes before the Night Crusher comes for you. Don't make him carry you home.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 3,
+        "type": "vnovel/choice",
+        "pos": [
+          760,
+          360
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 2,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 2
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Go out into the dust",
+            "type": -1,
+            "links": [
+              3
+            ],
+            "label": "Go out into the dust"
+          },
+          {
+            "name": "Ask about the Night Crusher",
+            "type": -1,
+            "links": [
+              4
+            ],
+            "label": "Ask about the Nig..."
+          }
+        ],
+        "title": "Dad waits for an answer.",
+        "properties": {
+          "title": "Dad waits for an answer.",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Go out into the dust",
+              "once": false,
+              "condition": "",
+              "mission": "Build the Flashlight"
+            },
+            {
+              "text": "Ask about the Night Crusher",
+              "once": false,
+              "condition": "",
+              "mission": "Build the Flashlight"
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 4,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1090,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 4,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 4
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              5
+            ]
+          }
+        ],
+        "title": "Dad on the Night Crusher",
+        "properties": {
+          "title": "Dad on the Night Crusher",
+          "location": "Dining Room",
+          "charactersPresent": "",
+          "text": "Boy: Who is the Night Crusher?\nDad: He keeps the yard. He keeps the hours. He's not cruel, but he's very strong.\nDad: He hears footfalls, not voices. When the ground shakes, stop. Walk on your toes. Breathe through your nose.\nDad: Do that and he'll pass you by.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "tiptoe_rule",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 5,
+        "type": "vnovel/passthrough",
+        "pos": [
+          1420,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 3,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 41
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              6
+            ]
+          }
+        ],
+        "title": "Out the Back Door",
+        "properties": {
+          "title": "Out the Back Door",
+          "location": "Back Field",
+          "charactersPresent": "",
+          "text": "The back door swings shut behind you. The dust is so thick it tastes like chalk.\nThe orange glow sits low on the horizon. It's dimmer than it was yesterday.\nFar away across the field, a white house is lit up like a lantern. You've never been able to reach it.\nAhead, the corn begins.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 6,
+        "type": "vnovel/traversal",
+        "pos": [
+          1750,
+          360
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 5,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 11
+          }
+        ],
+        "outputs": [
+          {
+            "name": "🎉 Escape / Success",
+            "type": -1,
+            "links": [
+              7
+            ],
+            "label": "🎉 Escape / Success"
+          },
+          {
+            "name": "Rustling Scarecrow",
+            "type": -1,
+            "links": [
+              8
+            ],
+            "label": "Rustling Scarecrow"
+          },
+          {
+            "name": "Something Heavy in the Rows",
+            "type": -1,
+            "links": [
+              9
+            ],
+            "label": "Something Heavy in the Rows"
+          },
+          {
+            "name": "🚪 Early Exit",
+            "type": -1,
+            "links": [
+              10
+            ],
+            "label": "🚪 Early Exit"
+          }
+        ],
+        "title": "The Corn Maze",
+        "properties": {
+          "title": "The Corn Maze",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "targetAccumulation": 50,
+          "outcomes": [
+            {
+              "label": "Rustling Scarecrow",
+              "probability": 15,
+              "description": "A scarecrow turns its head as you pass"
+            },
+            {
+              "label": "Something Heavy in the Rows",
+              "probability": 15,
+              "description": "The ground trembles behind you"
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 7,
+        "type": "vnovel/passthrough",
+        "pos": [
+          2080,
+          225
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 7,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 8
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              11
+            ]
+          }
+        ],
+        "title": "The Scarecrow Whispers",
+        "properties": {
+          "title": "The Scarecrow Whispers",
+          "location": "Corn Maze",
+          "charactersPresent": "",
+          "text": "A scarecrow in a church suit leans toward you. Straw pokes out of its collar.\nIts button eyes don't move, but its burlap mouth does.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "scarecrow_warning",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 8,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          2080,
+          525
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 8,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 9
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              12
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              13
+            ]
+          }
+        ],
+        "title": "Do You Know How to Tiptoe?",
+        "properties": {
+          "title": "Do You Know How to Tiptoe?",
+          "condition": "has_knowledge('tiptoe_rule')",
+          "location": "",
+          "text": ""
+        }
+      },
+      {
+        "id": 9,
+        "type": "vnovel/passthrough",
+        "pos": [
+          2410,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 11,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 12
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              14
+            ]
+          }
+        ],
+        "title": "Slipping Past",
+        "properties": {
+          "title": "Slipping Past",
+          "location": "Corn Maze",
+          "charactersPresent": "",
+          "text": "You freeze. You rise onto your toes. You breathe through your nose.\nA shape taller than the corn passes two rows over. The stalks bend under it and spring back.\nIt doesn't stop.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 10,
+        "type": "vnovel/passthrough",
+        "pos": [
+          2740,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 6,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 14
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              15
+            ]
+          }
+        ],
+        "title": "The Crash",
+        "properties": {
+          "title": "The Crash",
+          "location": "The Crash",
+          "charactersPresent": "",
+          "text": "The rows open into a clearing. In the middle, a pileup of old cars has rusted into a single heap.\nScarecrows lie everywhere, crushed under fenders, tangled in axles, as if they all ran here at once.\nSomewhere in this mess are the battery, the wire, and the mirror.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 11,
+        "type": "vnovel/choice",
+        "pos": [
+          3070,
+          360
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 10,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 29
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Search the pickup's dashboard",
+            "type": -1,
+            "links": [
+              16
+            ],
+            "label": "Search the pickup..."
+          },
+          {
+            "name": "Crawl under the crushed sedan",
+            "type": -1,
+            "links": [
+              17
+            ],
+            "label": "Crawl under the c..."
+          },
+          {
+            "name": "Dig through the scarecrow pile",
+            "type": -1,
+            "links": [
+              18
+            ],
+            "label": "Dig through the s..."
+          },
+          {
+            "name": "Head home",
+            "type": -1,
+            "links": [
+              19
+            ],
+            "label": "Head home"
+          }
+        ],
+        "title": "Where do you search?",
+        "properties": {
+          "title": "Where do you search?",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "choices": [
+            {
+              "text": "Search the pickup's dashboard",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Crawl under the crushed sedan",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Dig through the scarecrow pile",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            },
+            {
+              "text": "Head home",
+              "once": false,
+              "condition": "",
+              "mission": ""
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 12,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3400,
+          150
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 13,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 16
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              20
+            ]
+          }
+        ],
+        "title": "The Pickup",
+        "properties": {
+          "title": "The Pickup",
+          "location": "The Crash",
+          "charactersPresent": "",
+          "text": "The pickup's door hangs by one hinge. Behind the cracked dashboard, a heavy battery is still bolted in.\nYou work it loose. It's warm, like it's been sitting in the sun, though there is no sun.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "battery",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 13,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3400,
+          300
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 14,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 17
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              21
+            ]
+          }
+        ],
+        "title": "Under the Sedan",
+        "properties": {
+          "title": "Under the Sedan",
+          "location": "The Crash",
+          "charactersPresent": "",
+          "text": "You wriggle under the sedan on your belly. A scarecrow's arm is pinned beside you, its straw fingers curled.\nA length of copper wire dangles from the engine. You pull until it snaps free.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "wire",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 14,
+        "type": "vnovel/passthrough",
+        "pos": [
+          3400,
+          450
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 15,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 18
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              22
+            ]
+          }
+        ],
+        "title": "The Scarecrow Pile",
+        "properties": {
+          "title": "The Scarecrow Pile",
+          "location": "The Crash",
+          "charactersPresent": "",
+          "text": "You dig through gray straw and rotten overalls. Some of the scarecrows are wearing wedding rings.\nAt the bottom, clutched in a burlap hand, a small round mirror.\nYou look into it. For a moment, your face isn't there.\nThen it is.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "mirror",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 15,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          3400,
+          600
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 16,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 19
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              23
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              24
+            ]
+          }
+        ],
+        "title": "Got the Battery?",
+        "properties": {
+          "title": "Got the Battery?",
+          "condition": "has_item('battery')",
+          "location": "",
+          "text": ""
+        }
+      },
+      {
+        "id": 16,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          3730,
+          375
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 18,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 23
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              25
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              26
+            ]
+          }
+        ],
+        "title": "Got the Wire?",
+        "properties": {
+          "title": "Got the Wire?",
+          "condition": "has_item('wire')",
+          "location": "",
+          "text": ""
+        }
+      },
+      {
+        "id": 17,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          4040,
+          375
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 21,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 25
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              27
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              28
+            ]
+          }
+        ],
+        "title": "Got the Mirror?",
+        "properties": {
+          "title": "Got the Mirror?",
+          "condition": "has_item('mirror')",
+          "location": "",
+          "text": ""
+        }
+      },
+      {
+        "id": 18,
+        "type": "vnovel/passthrough",
+        "pos": [
+          4350,
+          285
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 19,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 28
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              29
+            ]
+          }
+        ],
+        "title": "Not Yet",
+        "properties": {
+          "title": "Not Yet",
+          "location": "The Crash",
+          "charactersPresent": "",
+          "text": "You think of Dad's face if you come home with empty hands.\nYou're still missing something.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 19,
+        "type": "vnovel/traversal",
+        "pos": [
+          4350,
+          435
+        ],
+        "size": {
+          "0": 240,
+          "1": 110
+        },
+        "flags": {},
+        "order": 22,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 34
+          }
+        ],
+        "outputs": [
+          {
+            "name": "🎉 Escape / Success",
+            "type": -1,
+            "links": [
+              30
+            ],
+            "label": "🎉 Escape / Success"
+          },
+          {
+            "name": "A Hole in the Earth",
+            "type": -1,
+            "links": [
+              31
+            ],
+            "label": "A Hole in the Earth"
+          },
+          {
+            "name": "Footsteps Behind You",
+            "type": -1,
+            "links": [
+              32
+            ],
+            "label": "Footsteps Behind You"
+          },
+          {
+            "name": "🚪 Early Exit",
+            "type": -1,
+            "links": [
+              33
+            ],
+            "label": "🚪 Early Exit"
+          }
+        ],
+        "title": "Back Through the Corn",
+        "properties": {
+          "title": "Back Through the Corn",
+          "location": "",
+          "background": "",
+          "backgroundName": "",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "targetAccumulation": 50,
+          "outcomes": [
+            {
+              "label": "A Hole in the Earth",
+              "probability": 20,
+              "description": "You find a dark opening between the rows"
+            },
+            {
+              "label": "Footsteps Behind You",
+              "probability": 20,
+              "description": "The stalks start to bend toward you"
+            }
+          ],
+          "text": ""
+        }
+      },
+      {
+        "id": 20,
+        "type": "vnovel/passthrough",
+        "pos": [
+          4680,
+          300
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 24,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 31
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              34
+            ]
+          }
+        ],
+        "title": "The Burrow Mouth",
+        "properties": {
+          "title": "The Burrow Mouth",
+          "location": "Corn Maze",
+          "charactersPresent": "",
+          "text": "Between two rows, the ground falls away into a tunnel big enough for something much larger than you.\nA coal-red glow pulses deep inside. The walls are scored with long, even furrows, like fingers dragged through clay.\nThe air coming up smells like a cellar. This is where he lives.\nYou back away slowly.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "crusher_lair",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 21,
+        "type": "vnovel/logic_gate",
+        "pos": [
+          4680,
+          450
+        ],
+        "size": [
+          220,
+          80
+        ],
+        "flags": {},
+        "order": 25,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 32
+          }
+        ],
+        "outputs": [
+          {
+            "name": "True Path",
+            "type": -1,
+            "links": [
+              35
+            ]
+          },
+          {
+            "name": "False Path",
+            "type": -1,
+            "links": [
+              36
+            ]
+          }
+        ],
+        "title": "Do You Know How to Tiptoe?",
+        "properties": {
+          "title": "Do You Know How to Tiptoe?",
+          "condition": "has_knowledge('tiptoe_rule')",
+          "location": "",
+          "text": ""
+        }
+      },
+      {
+        "id": 22,
+        "type": "vnovel/passthrough",
+        "pos": [
+          5010,
+          285
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 26,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 35
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              37
+            ]
+          }
+        ],
+        "title": "Holding Your Breath",
+        "properties": {
+          "title": "Holding Your Breath",
+          "location": "Corn Maze",
+          "charactersPresent": "",
+          "text": "You stop. Toes. Nose. The battery is heavy in your arms.\nA blank clay face rises above the corn, turns one way, then the other.\nIt sinks back down. The footsteps fade toward the burrow.\nYou run the rest of the way.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 23,
+        "type": "vnovel/passthrough",
+        "pos": [
+          5010,
+          435
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 12,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 36
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              38
+            ]
+          }
+        ],
+        "title": "The Night Crusher",
+        "properties": {
+          "title": "The Night Crusher",
+          "location": "Corn Maze",
+          "charactersPresent": "",
+          "text": "The corn parts. A hand the size of a wagon wheel closes around you.\nIt isn't rough. It's patient.\nNight Crusher: Time.\nThe ground opens and you go down with him into the dark.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 24,
+        "type": "vnovel/passthrough",
+        "pos": [
+          5340,
+          435
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 17,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 38
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              39
+            ]
+          }
+        ],
+        "title": "Below the Yard",
+        "properties": {
+          "title": "Below the Yard",
+          "location": "Night Crusher's Burrow",
+          "charactersPresent": "",
+          "text": "You wake on a thin pallet with a clean white sheet. Coal glows in the wall.\nThe Night Crusher sits hunched in the corner with his back to you, like he's giving you privacy.\nDown here you don't feel tired anymore. Just very small.\nNight Crusher: Rest. Then up you go.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 25,
+        "type": "vnovel/passthrough",
+        "pos": [
+          5670,
+          360
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 20,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 39
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              40
+            ]
+          }
+        ],
+        "title": "The House Is Bigger",
+        "properties": {
+          "title": "The House Is Bigger",
+          "location": "The Closet",
+          "charactersPresent": "",
+          "text": "You wake on the quilt under the stairs. You feel worn thin, like a shirt washed too many times.\nThe hallway outside the closet is longer than it was. There's a new door at the end of it.\nBehind the door, a boy is crying. He sounds like you.\nYou reach for the knob. The door slams in your face.\nDad: Back out, boy. The corn's still waiting.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "rooms_opening",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 26,
+        "type": "vnovel/passthrough",
+        "pos": [
+          5340,
+          285
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 23,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 37
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": []
+          }
+        ],
+        "title": "The Flashlight",
+        "properties": {
+          "title": "The Flashlight",
+          "location": "Dining Room",
+          "charactersPresent": "",
+          "text": "You stumble in the back door, coated in dust, arms full.\nDad lays the battery, the wire, and the mirror on the table beside the Effigy's empty plate.\nHis soot-black fingers twist and solder. A beam of white light cuts through the dust in the room.\nDad: Good job. This is your flashlight. Use it sparingly, because the dark notices light.\nHe turns the beam across the Effigy's blank burlap face.\nDad: Your mother needs eyes. And teeth. We'll talk about that tomorrow.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "flashlight",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "Build the Flashlight",
+          "isChapterStart": false
+        }
+      },
+      {
+        "id": 27,
+        "type": "vnovel/passthrough",
+        "pos": [
+          2080,
+          375
+        ],
+        "size": [
+          240,
+          110
+        ],
+        "flags": {},
+        "order": 9,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "In",
+            "type": -1,
+            "link": 10
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Out",
+            "type": -1,
+            "links": [
+              41
+            ]
+          }
+        ],
+        "title": "Back Too Soon",
+        "properties": {
+          "title": "Back Too Soon",
+          "location": "Dining Room",
+          "charactersPresent": "",
+          "text": "You creep back into the house with nothing in your hands.\nDad doesn't look up from his glassware.\nDad: Your mother can't see what you didn't bring her.\nDad: Go back out.",
+          "audioLoop": "",
+          "audioLoopName": "",
+          "audioOneShot": "",
+          "audioOneShotName": "",
+          "background": "",
+          "backgroundName": "",
+          "showCharacterImages": true,
+          "rewardItems": "",
+          "rewardKnowledge": "",
+          "startMission": "",
+          "completeMission": "",
+          "isChapterStart": false
+        }
+      }
+    ],
+    "links": [
+      [
+        1,
+        1,
+        0,
+        2,
+        0,
+        -1
+      ],
+      [
+        2,
+        2,
+        0,
+        3,
+        0,
+        -1
+      ],
+      [
+        3,
+        3,
+        0,
+        5,
+        0,
+        -1
+      ],
+      [
+        4,
+        3,
+        1,
+        4,
+        0,
+        -1
+      ],
+      [
+        5,
+        4,
+        0,
+        5,
+        0,
+        -1
+      ],
+      [
+        6,
+        5,
+        0,
+        6,
+        0,
+        -1
+      ],
+      [
+        7,
+        6,
+        0,
+        10,
+        0,
+        -1
+      ],
+      [
+        8,
+        6,
+        1,
+        7,
+        0,
+        -1
+      ],
+      [
+        9,
+        6,
+        2,
+        8,
+        0,
+        -1
+      ],
+      [
+        10,
+        6,
+        3,
+        27,
+        0,
+        -1
+      ],
+      [
+        11,
+        7,
+        0,
+        6,
+        0,
+        -1
+      ],
+      [
+        12,
+        8,
+        0,
+        9,
+        0,
+        -1
+      ],
+      [
+        13,
+        8,
+        1,
+        23,
+        0,
+        -1
+      ],
+      [
+        14,
+        9,
+        0,
+        10,
+        0,
+        -1
+      ],
+      [
+        15,
+        10,
+        0,
+        11,
+        0,
+        -1
+      ],
+      [
+        16,
+        11,
+        0,
+        12,
+        0,
+        -1
+      ],
+      [
+        17,
+        11,
+        1,
+        13,
+        0,
+        -1
+      ],
+      [
+        18,
+        11,
+        2,
+        14,
+        0,
+        -1
+      ],
+      [
+        19,
+        11,
+        3,
+        15,
+        0,
+        -1
+      ],
+      [
+        20,
+        12,
+        0,
+        11,
+        0,
+        -1
+      ],
+      [
+        21,
+        13,
+        0,
+        11,
+        0,
+        -1
+      ],
+      [
+        22,
+        14,
+        0,
+        11,
+        0,
+        -1
+      ],
+      [
+        23,
+        15,
+        0,
+        16,
+        0,
+        -1
+      ],
+      [
+        24,
+        15,
+        1,
+        18,
+        0,
+        -1
+      ],
+      [
+        25,
+        16,
+        0,
+        17,
+        0,
+        -1
+      ],
+      [
+        26,
+        16,
+        1,
+        18,
+        0,
+        -1
+      ],
+      [
+        27,
+        17,
+        0,
+        19,
+        0,
+        -1
+      ],
+      [
+        28,
+        17,
+        1,
+        18,
+        0,
+        -1
+      ],
+      [
+        29,
+        18,
+        0,
+        11,
+        0,
+        -1
+      ],
+      [
+        30,
+        19,
+        0,
+        26,
+        0,
+        -1
+      ],
+      [
+        31,
+        19,
+        1,
+        20,
+        0,
+        -1
+      ],
+      [
+        32,
+        19,
+        2,
+        21,
+        0,
+        -1
+      ],
+      [
+        33,
+        19,
+        3,
+        23,
+        0,
+        -1
+      ],
+      [
+        34,
+        20,
+        0,
+        19,
+        0,
+        -1
+      ],
+      [
+        35,
+        21,
+        0,
+        22,
+        0,
+        -1
+      ],
+      [
+        36,
+        21,
+        1,
+        23,
+        0,
+        -1
+      ],
+      [
+        37,
+        22,
+        0,
+        26,
+        0,
+        -1
+      ],
+      [
+        38,
+        23,
+        0,
+        24,
+        0,
+        -1
+      ],
+      [
+        39,
+        24,
+        0,
+        25,
+        0,
+        -1
+      ],
+      [
+        40,
+        25,
+        0,
+        5,
+        0,
+        -1
+      ],
+      [
+        41,
+        27,
+        0,
+        5,
+        0,
+        -1
+      ]
+    ],
+    "groups": [],
+    "config": {},
+    "version": 0.4
+  },
+  "globalVars": {
+    "characters": [
+      "Boy",
+      "Dad",
+      "Effigy",
+      "Night Crusher"
+    ],
+    "locations": [
+      "The Closet",
+      "Dining Room",
+      "Back Field",
+      "Corn Maze",
+      "The Crash",
+      "Night Crusher's Burrow"
+    ],
+    "collectibles": [
+      "battery",
+      "wire",
+      "mirror",
+      "flashlight"
+    ],
+    "knowledge": [
+      "tiptoe_rule",
+      "scarecrow_warning",
+      "crusher_lair",
+      "rooms_opening"
+    ],
+    "missions": [
+      "Build the Flashlight"
+    ]
+  },
+  "varMeta": {
+    "characters": {
+      "Boy": {
+        "info": "A four-year-old in an oversized flannel nightshirt and scuffed boots, hair full of dust, eyes too large for his narrow face. He is small enough to slip between cornstalks and under car wrecks. Rendered as a simple bold silhouette, pale against the dark."
+      },
+      "Dad": {
+        "info": "A tall, gaunt man in a stained leather apron over a Depression-era waistcoat, sleeves rolled to the elbow, forearms blackened with soot. Round smoked-glass spectacles hide his eyes. He moves little and speaks as if reciting scripture or a recipe. Half father, half warlock-alchemist."
+      },
+      "Effigy": {
+        "info": "A crude life-size figure of the Boy's missing mother propped in a high-backed chair. Its body is a dress form stuffed with straw and wrapped in a faded floral housedress. The head is a burlap sack with no features yet. Empty spaces where eyes, teeth and hands should be are marked with pins and chalk."
+      },
+      "Night Crusher": {
+        "info": "A hulking chthonic shape, taller than the cornstalks, made of packed earth, root and coal dust, with a long stooped back. Its face is a smooth blank of clay with a single horizontal crack. It drags one enormous hand along the ground and leaves a furrow behind it. It is seen mostly in silhouette, black against black."
+      }
+    },
+    "locations": {
+      "The Closet": {
+        "info": "A narrow coat closet under the stairs where the Boy sleeps on a folded quilt. Moth-eaten coats hang overhead like sleeping bats. A thin blade of yellow light comes under the door. The walls feel slightly farther apart each time he wakes."
+      },
+      "Dining Room": {
+        "info": "A long farmhouse table under a single bare bulb, set with mismatched plates and a tureen of something gray. Dust sifts constantly through the window frames. At the head of the table sits Dad, and across from him sits the Effigy. Alchemical glassware crowds the sideboard."
+      },
+      "Back Field": {
+        "info": "A flat expanse of Dust Bowl Kansas behind the house, black and white like an old photograph, with dust hanging in the air like fog. A dim orange glow sits on the horizon. Very far off, impossibly bright, a gleaming white house stands alone in the field. It never seems to get closer."
+      },
+      "Corn Maze": {
+        "info": "High dead corn and wheat, taller than a man, rattling in the wind, with narrow rows that twist back on themselves. Scarecrows stand at odd intervals, some tilted, some face-down. Visibility is a few feet at most. Pools of faint light come from nowhere in particular."
+      },
+      "The Crash": {
+        "info": "A clearing at the heart of the maze where several 1930s cars have collided and rusted together into one heap: a pickup, a sedan, a delivery truck on its side. Dozens of scarecrows are piled and crushed among the wreckage, their straw gone gray, as if they have been out here for years."
+      },
+      "Night Crusher's Burrow": {
+        "info": "A low earthen chamber beneath the yard, lit by a smoldering coal seam in the wall. Roots hang from the ceiling. In one corner lies a thin pallet with a clean white sheet, oddly cared-for. It is quiet down here, like being inside a held breath."
+      }
+    }
+  },
+  "projectTitle": "Night of the Night Crusher",
+  "bookmarks": []
+}

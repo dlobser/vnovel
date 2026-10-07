@@ -613,6 +613,7 @@ class StoryPlayer {
 
   // ---------- conditions ----------
   // Supported: has_item('x')  has_knowledge('x')  mission_active('x')  mission_done('x')
+  //            chance(50)  -- passes that percent of the time, rolled fresh on each visit
   // Multiple checks in one expression are ANDed together.
 
   _evalCond(cond) {
@@ -627,6 +628,9 @@ class StoryPlayer {
     scan("has_knowledge", v => this.state.knowledge.has(v));
     scan("mission_active", v => this.state.missions.get(v) === "active");
     scan("mission_done", v => this.state.missions.get(v) === "done");
+    const chanceRe = /chance\(\s*(\d+(?:\.\d+)?)\s*\)/g;
+    let c;
+    while ((c = chanceRe.exec(cond))) { if (Math.random() * 100 >= parseFloat(c[1])) ok = false; }
     return ok;
   }
 

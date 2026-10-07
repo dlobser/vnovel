@@ -2311,7 +2311,8 @@ const VNovelApp = {
           <code>has_item('item_id')</code><br>
           <code>has_knowledge('flag_name')</code><br>
           <code>mission_active('Mission Name')</code><br>
-          <code>mission_done('Mission Name')</code>
+          <code>mission_done('Mission Name')</code><br>
+          <code>chance(50)</code> &mdash; random, passes 50% of the time
         </div>
       </div>
     `;
